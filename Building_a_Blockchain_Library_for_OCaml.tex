@@ -364,6 +364,9 @@ end
 
 	\chapter{Implementation} \label{Implementation}
 	\section{The Blockchain Data Structure}
+	Irmin is a library for OCaml providing data store functionality with a Git backend. 
+	I used Irmin to build the blockchain data structure, however, this first required some analysis of the data models that Irmin exposes.
+	I also did some research on Git to validate that it fulfilled the necessary criteria to be used as a blockchain.
 	\subsection*{Git as a blockchain}
 		Git provides a data structure which can be interacted with via a command line API. However, it is not trivial why these data structure is classed as a blockchain. \\
 		\\
@@ -374,7 +377,7 @@ end
 			\item Blocks are ordered.
 			\item Each block contains a link to its parent block.
 		\end{enumerate}
-		Now we can consider the promises that Git makes and ensure that the above conditions are satisfied.\\
+		Now we can consider the promises that Git makes and ensure that the above conditions are satisfied.
 		\begin{enumerate}
 			\item Git stores data as sequences of 'commits' which can be thought of as blocks.
 			\item Git history is stored as a tree structure with arbitrary branching. This imposes an order on commits or blocks.
@@ -399,8 +402,6 @@ end
 		Irmin Stores can be though of in terms of the following API, expressed in OCaml code. Here, we expose types for keys which address values, and tags which point to keys. The read and update functions allow us to interact with the block store. \\
 		\begin{lstlisting}
   type t
-  (* The type for Irmin store. *)
-
   type tag
   type key 
   type value
@@ -419,33 +420,50 @@ end
 	\subsection*{Ezirmin}
 	Ezirmin is a library that provides a simplified interface to the Irmin library. It is designed to provide a interface to Irmin without functors, but with some useful defaults. Importantly, it has a built in log data structure which uses Irmin's append-only store, saved on disk in the git format.\\
 	\begin{lstlisting}
-type elt 
-type cursor 
-val append : ?message:string -> branch -> path:string list -> elt -> unit Lwt.t
-val get_cursor : branch -> path:string list -> cursor option Lwt.t
-val read : cursor -> num_items:int -> (elt list * cursor option) Lwt.t
-val read_all : branch -> path:string list -> elt list Lwt.t
+module type FS_Log = sig
+  type elt 
+  type cursor 
+  val append : ?message:string -> branch -> path:string list -> elt -> unit Lwt.t
+  val get_cursor : branch -> path:string list -> cursor option Lwt.t
+  val read : cursor -> num_items:int -> (elt list * cursor option) Lwt.t
+  val read_all : branch -> path:string list -> elt list Lwt.t
+  ...
+end
 	\end{lstlisting}
-	For this reason, I decided that it would be a suitable data structure to use in this project.
+	The above code gives some of the interface for an Ezirmin log which uses a file system backend.
+	The log allows for items to be appended to and read from a log.
+	In particular, the function \texttt{read} will read from the position of a cursor into the log, and will return a new cursor for the next unread log item, alongside the result.
+	This interface therefore provides all the functionality required to build a blockchain.
 	\section{Mempools}
 	When making a transaction using Bitcoin or some other cryptocurrencies, a request for this transaction is placed in what is known as a Mempool\footnote{Mempool is short for Memory Pool}.
 	This Mempool can be thought of as a waiting room for transactions. When miners are assembling and mining blocks, this is where they will pick the transactions from.
 	
 	\section{Consensus Algorithms}
-	%TODO: Explain how this was an important part of work.
-	%TODO: Explain what are the problems with all of these consensus algorithms and why would they not work in my case.
-	%TODO: Explain what the algorithm that I developed is and why it solves these problems
-	Typically, cryptocurrencies (which rely on blockchain technology) use a Proof of Work protocol to achieve consensus. 
-	There are, however, other ways of achieving consensus, and I evaluated a number of these in order to inform my approach to building consensus into my project. \\ 
+	Building consensus was by far the most important part of work completed for this project. 
+	In order to guide the design of the consensus mechanism, I completed an extensive amount of research on existing algorithms
+	This section will briefly summarise this research and my conclusions about their suitability for the project. 
+	The resulting design for consensus is a leader based approach, where participant nodes can commit transactions to a mempool.
+	This mempool is then polled for updates by the leader, and these updates are then validated and committed to the main blockchain.
+	This blockchain can be read by all participants, and provides a definitive source of ordered, committed transactions.
+
 		\subsection*{Existing Algorithms}
 			\subsubsection*{Proof of Work}
 			%TODO: This is good for solving double spending
 			%TODO: How does it work in Bitcoin
 			%TODO: Use a diagram, mention nonces, yada yada yada
-			The proof of work method for achieving consensus is actually very simple. 
-			Whenever a block is received by a participating node, the node will check that the block contains a proof of computational work done. 
-			In the field of cryptocurrencies, this proof takes the form of a random sequence of data which, when appended to the end of the block, causes its hash to be prefixed with a set number of 0s.
-			Because the data appended to the end of a block can only be found by a brute force method, which will require lots of computation/work.
+			Proof of Work is a deceptively simple consensus mechanism, used by most cryptocurrencies to avoid the double spending problem.
+			Transactions are contained within blocks which can be broadcast out to the network of participating nodes. 
+			Whenever a block is received by a participating node, the node checks that the block contains a proof of computational work done. 
+			This proof usually takes the form of a random sequence of data (this is known as a nonce) appended to the end of the block, causing the block's hash to be prefixed with a set number of 0s.
+			This acts as a proof of computation work, because the data appended to the end of a block can only be found by a brute force method called mining, but can also be verified easily by simply computing the block's hash.\\
+			
+			Why is this useful? 
+			Well, this allows us to make guarantees on the validity of the blockchain based on the simple assumption that more that 50\% of the workforce is genuine.
+			If we assume that the longest chain of blocks is the correct one, then in order to create a sequence of biased transactions, we would have to create a chain longer than the correct one. 
+			This would require an equal number of 'Proof of Work's, which, due to the random nature of block mining, would require more than 50\% of the workforce.
+			Whilst it may be possible to maintain an equally sized chain with less that 50\% of the workforce for a short period of time, the chances of this decrease rapidly as time passes.
+			All in all this means that the longer a block has been in the chain, the more likely it is that the block is valid. 
+
 			\subsubsection*{Proof of Stake}
 			%TODO: Flesh this out with small amount of detail
 			%TODO: Not good for this projects as you need the concept of Stake

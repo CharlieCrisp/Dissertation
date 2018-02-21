@@ -317,23 +317,39 @@ val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 module type I_LogStringCoder = sig
   type t
   val encode_string: t -> string
+  val decode_string: string -> t option
+end
+
+module type I_Config = sig
+  type t
+  module LogCoder: I_LogStringCoder with type t = t
+
+  val validator: (t list -> t -> bool) option
 end
 
 module type I_Blockchain = sig
-  val add_transaction_to_blockchain: 't -> [> `Error | `Ok] Lwt.t
-  val get_all_transactions: unit -> 'a list Lwt.t
+  type t
+
+  val add_transaction_to_blockchain: t -> [> `Error | `Ok] Lwt.t
+  val get_all_transactions: unit -> [> `Error | `Ok of t list] Lwt.t
+  val get_transactions: int -> [> `Error | `Ok of t list] Lwt.t
 end
 
-module Make(Config: I_Config)(LogCoder: I_LogStringCoder): I_Blockchain with type t = LogCoder.t = struct 
+module Make(Config: I_Config): I_Blockchain with type t = Config.t = struct 
   ...
 end
 	\end{lstlisting}
 	\end{minipage}\\
 	\\
-	The above code is the technical specification that I used to define my project. 
-	\texttt{add\_transaction\_to\_blockchain} will add a user defined type to the blockchain and then return a polymorphic variant type containing information about whether the operation was successful. 
-	\texttt{I\_LogStringCoder} is a module that can be used to allow arbitrary data types to be added to the blockchain, so long as a function is provided to encode them as a string.
-	Finally, \texttt{Make} is a functor which will accept a module for coding the strings, and a module for any other configuration details and will return a Blockchain module.
+	The above code is the technical specification that I used to define my project, and the functions complete the following operations:
+	\begin{itemize}
+		\item \texttt{I\_LogStringCoder} is a module that allows the user to specify arbitrary types to be stored on the blockchain, so long as they can be encoded to (and decoded from) a string.
+		\item \texttt{I\_Config} contains information which is required to run the Blockchain.
+			In particular, should the \texttt{validator} option contain the value \texttt{Some(f)}, then \texttt{f} will be a function that accepts a history of committed transactions, and validates whether a further transaction is valid. 
+		\item \texttt{Make} is a functor which accepts a configuration module and will return a Blockchain module.
+		\item \texttt{add\_transaction\_to\_blockchain} adds a user defined type to the blockchain and then return a polymorphic variant type containing information about whether the operation was successful. 
+			This will return an error in the case that the transaction is not validated.
+	\end{itemize} 
 
 	\subsection*{Consensus}
 	Building consensus into the blockchain module was a key part of the project. 

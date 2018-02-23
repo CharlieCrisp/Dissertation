@@ -43,8 +43,6 @@
 	
 	\begin{document}
 	
-	\bibliographystyle{plain}
-	
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% Title
@@ -448,25 +446,43 @@ end
 
 		\subsection*{Existing Algorithms}
 			\subsubsection*{Proof of Work}
-			%TODO: This is good for solving double spending
-			%TODO: How does it work in Bitcoin
-			%TODO: Use a diagram, mention nonces, yada yada yada
-			Proof of Work is a deceptively simple consensus mechanism, used by most cryptocurrencies to avoid the double spending problem.
+			%TODO: Use a diagram,
+			Proof of Work (PoW) is a deceptively simple consensus mechanism, used by most cryptocurrencies to avoid the double spending problem.
 			Transactions are contained within blocks which can be broadcast out to the network of participating nodes. 
 			Whenever a block is received by a participating node, the node checks that the block contains a proof of computational work done. 
 			This proof usually takes the form of a random sequence of data (this is known as a nonce) appended to the end of the block, causing the block's hash to be prefixed with a set number of 0s.
-			This acts as a proof of computation work, because the data appended to the end of a block can only be found by a brute force method called mining, but can also be verified easily by simply computing the block's hash.\\
+			This acts as a proof of computational work, because the data appended to the end of a block can only be found by a brute force method called mining, but can also be verified easily by simply computing the block's hash.\\
 			
 			Why is this useful? 
 			Well, this allows us to make guarantees on the validity of the blockchain based on the simple assumption that more that 50\% of the workforce is genuine.
 			If we assume that the longest chain of blocks is the correct one, then in order to create a sequence of biased transactions, we would have to create a chain longer than the correct one. 
 			This would require an equal number of 'Proof of Work's, which, due to the random nature of block mining, would require more than 50\% of the workforce.
 			Whilst it may be possible to maintain an equally sized chain with less that 50\% of the workforce for a short period of time, the chances of this decrease rapidly as time passes.
-			All in all this means that the longer a block has been in the chain, the more likely it is that the block is valid. 
+			All in all this means that the longer a block has been in the chain, the more likely it is that the block is valid.\\
+
+			Whilst this forms a very effective mechanism for achieving consensus, there are also some considerable downsides to using a PoW approach to consensus. 
+			Firstly, there is a huge amount of computational work wasted in the process of mining. 
+			The effect of this is energy consumption \cite{BitcoinEnergy} and wastage to a level which can cause serious environmental harm.
+			PoW also does not generalise well outside of the scope of cryptocurrencies.
+			It assumes no trust in any participants which may not be a suitable model for an application. 
+			Additionally, it also assumes that miners can be rewarded, usually with cryptocurrency, but this incentive is ad hoc and may not exist in other applications. 
 
 			\subsubsection*{Proof of Stake}
-			%TODO: Flesh this out with small amount of detail
-			%TODO: Not good for this projects as you need the concept of Stake
+			The Proof of Stake (PoS) algorithm is used by some cryptocurrencies and works by randomly allowing participants to create (or 'forge') a single block.
+			However, the probability that a participant is chosen to 'forge' a block, is weighted by its stake, such that participants with higher stakes in the blockchain are more likely to be chosen to forge a block.\\
+
+			So, why is PoS desirable? 
+			By far the most convincing reason for using PoS over PoW, is that there is no need to waste lots of energy in the process of mining. 
+			This hugely reduces the environmental impacts of scaling a PoS network.
+			Using PoS also allows trust to be distributed according to an arbitrary heuristic which can be desirable property in some applications.\\
+
+			One of the flaws of PoS is that it does not have such a strong deterrent against attacks.
+			With PoW, attacks require huge amounts of computational power and it is likely that to create an attack, you would have to spend more on hardware than you would gain. 
+			PoS doesn't have this same built in mechanism, and so there have been many suggested schemes for increasing the safety of PoS networks.
+			For example, it is possible that participants should need to pay some form of deposit before forging blocks, which can be slashed if they break any rules. 
+			PoS also suffers from the same problem as PoW in that it does not generalise well. 
+			It is another example of a consensus mechanism designed for networks with a strong notion of Stake and with minimal trust in any individual participant.
+
 			\subsubsection*{Paxos}
 			%TODO: Finish
 			\subsubsection*{Raft}

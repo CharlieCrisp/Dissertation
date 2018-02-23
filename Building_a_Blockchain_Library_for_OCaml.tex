@@ -485,17 +485,34 @@ end
 
 			\subsubsection*{Paxos}
 			%TODO: Finish
+			Paxos is a family of consensus protocols which can be used to guarantee consistency in distributed systems. 
+			It was first proposed in a paper by Leslie Lamport in 1998 \cite{Paxos}, although the paper was first submitted in 1990.
+			Named after a fictitious civilisation living on the island of Paxos, the algorithm puts forward a way for any number of nodes to propose and agree on a value.
+			Participating nodes belong to various roles, one of which is known as a 'Proposer' or Leader.\\
+
+			The main part of the algorithm is split into two sections, propose and accept.
+			In the first stage, a Proposer decides that it wants to propose a value and then broadcasts out a 'Prepare' message to a quorum of 'Acceptors'.
+			Acceptors will then decide if they want to make a 'Promise' which is a commitment to accepting that proposal in the future. 
+			If a quorum of promises is received by the Proposer, then it will assign a value to its proposal and will again send an 'Accept Request' out to a quorum of Acceptors.
+			Finally, if enough 'Accept' messages are received then the Proposer can be certain that the value has been agreed upon by consensus.\\
+
+			This algorithm has been proved to be consistent but it also has a lot of complexity and a lot of different variants. 
+			The combination of different roles and states makes it easy to implement incorrectly.
+			It is also important to consider that Paxos describes a 'family' of algorithms, with some parts left deliberately unspecified, and choosing how to implement these is not a trivial decision.
+			The final issue with Paxos is that it cannot guarantee progress.
+			Whilst it enforces conditions which make it unlikely that progress will not be made, it is still theoretically possible for the mechanism to stall indefinitely.
+
 			\subsubsection*{Raft}
 			%TODO: Finish description of Raft and it's concept of terms.
-		\subsection*{A New Approach}
+		\subsection{A New Approach}
 		%TODO: Overview of my approach to consensus
-			\subsection*{Pros and Cons of a Leader Based Approach}
+			\subsubsection*{Pros and Cons of a Leader Based Approach}
 			%TODO: Why is this beneficial? It loosens the trust that comes with a leader based approach.
 			%TODO: Might also increase overhead?
 			%TODO: Can we do it in a low cost way?
-			\subsection*{Writing to the blockchain}
+			\subsubsection*{Writing to the blockchain}
 			%TODO: Describe how a participant writes into a mempool that the leader then copies. Participants can then pull from it. 
-			\subsection*{How to deal with failure}
+			\subsubsection*{How to deal with failure}
 			%TODO: If it's a participant then fine. Even if leader changes, that will still be part of the old leaders blockchain.
 			%TODO: If it's a leader, then other participants start a leader election.
 

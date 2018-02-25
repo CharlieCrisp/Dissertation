@@ -9,12 +9,15 @@
 	\usepackage{listings}
 	\usepackage{upquote}
 	\usepackage{nameref}
+	\usepackage{tikz}
 	\usepackage{color}
 	\usepackage[framemethod=tikz]{mdframed}
 	\usepackage{courier}
 
 	\definecolor{OliveGreen}{cmyk}{0.64,0,0.95,0.40}
 	\definecolor{lightlightgray}{gray}{0.9}
+
+	\usetikzlibrary{positioning}
 
 	\lstset{
 	language=[Objective]Caml,
@@ -141,9 +144,38 @@
 
 	\section{The History of the Blockchain}
 	The blockchain, in its simplest form, is a series of blocks of data, where each block contains the cryptographic hash of the previous block in the chain. 
-	Figure \ref{fig:mainblockchain} is a graphical representation of a typical blockchain data structure.
+	Figure \ref{fig:mainblockchain} is a graphical representation of a typical blockchain data structure.\\
+
 	\begin{figure}
-		\includegraphics[width=\linewidth]{figs/blockchain}
+		\begin{center}
+			\begin{tikzpicture}[
+				gennode/.style={rectangle, draw=black!60, fill=cyan!100, very thick, minimum size=5mm},
+				mainnode/.style={rectangle, draw=black!60, fill=black!100, very thick, minimum size=5mm},
+				subnode/.style={rectangle, draw=black!60, fill=purple!100, very thick, minimum size=5mm},
+			]
+			\node[gennode] (genesisblock) {};
+			\node[mainnode] (block1) [right=of genesisblock] {};
+			\node[mainnode] (block2) [right=of block1] {};
+			\node[mainnode] (block3) [right=of block2] {};
+			\node[mainnode] (block4) [right=of block3] {};
+			\node[mainnode] (block5) [right=of block4] {};
+			\node[subnode] (sub1) [below=of block2] {};
+			\node[subnode] (sub2) [below=of block3] {};
+			\node[subnode] (sub3) [above=of block3] {};
+			\node[subnode] (sub4) [above=of block4] {};
+			\begin{scope}[very thick, -stealth]
+			\draw[->] (genesisblock.east) -- (block1.west);
+			\draw[->] (block1.east) -- (block2.west);
+			\draw[->] (block2.east) -- (block3.west);
+			\draw[->] (block3.east) -- (block4.west);
+			\draw[->] (block4.east) -- (block5.west);
+			\draw[->] (sub3.east) -- (sub4.west);
+			\draw[->] (block1.south east) -- (sub1.north west);
+			\draw[->] (sub1.east) -- (sub2.west);
+			\draw[->] (block2.north east) -- (sub3.south west); 
+			\end{scope}
+			\end{tikzpicture}
+			\end{center}
 		\caption{A typical blockchain structure}
 		\label{fig:mainblockchain}
 	\end{figure}
@@ -484,7 +516,6 @@ end
 			It is another example of a consensus mechanism designed for networks with a strong notion of Stake and with minimal trust in any individual participant.
 
 			\subsubsection*{Paxos}
-			%TODO: Finish
 			Paxos is a family of consensus protocols which can be used to guarantee consistency in distributed systems. 
 			It was first proposed in a paper by Leslie Lamport in 1998 \cite{Paxos}, although the paper was first submitted in 1990.
 			Named after a fictitious civilisation living on the island of Paxos, the algorithm puts forward a way for any number of nodes to propose and agree on a value.
@@ -504,6 +535,7 @@ end
 
 			\subsubsection*{Raft}
 			%TODO: Finish description of Raft and it's concept of terms.
+			
 		\subsection{A New Approach}
 		%TODO: Overview of my approach to consensus
 			\subsubsection*{Pros and Cons of a Leader Based Approach}

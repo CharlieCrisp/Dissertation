@@ -569,7 +569,8 @@ end
 			The leader is chosen statically in order to reduce the complexity of implementation, and it also has a statically defined list of \texttt{remotes} which specifies the location of all participants.
 			The leader is a node which will never actually request transactions to be added to the blockchain, its role is simply to read requests from the mempools of participants, validate them, and then add them to the blockchain.
 			This blockchain can be read by any participant, and is treated as the empirical source of which transactions have been committed and in which order. 
-			That is, any two nodes that read a copy of the blockchain, will always agree on content and ordering of log items in the blockchain, up until the end of the shortest copy (or both copies).
+			That is, any two nodes that read a copy of the blockchain, will always agree on content and ordering of log items in the blockchain, up until the end of the shortest copy (or both copies).\\
+
 			\begin{lstlisting}
 module type I_LeaderConfig = sig
   type t
@@ -584,13 +585,14 @@ module MakeLeader (Config: I_LeaderConfig) : I_Leader = struct
   ...
 end
 			\end{lstlisting}
+
 			The above code is the specification of the leader module, which differs slightly from the centralised specification presented in the \nameref{Requirements Analysis}.
 			In particular, the \texttt{init\_leader} function will perform an initialisation step, and then return a function which, when executed, will actually start the consensus process.
 
 			\subsubsection*{Participants}
 			Participants, in contrast to leaders, can request transactions to be added to the blockchain. 
 			This is done by writing a transaction to a local mempool, which is then read by the leader.
-			Validation can of this transaction can also happen at this stage, but as we'll see later, it cannot filter out all invalid transactions, and only exists to ease load on the leader.
+			Validation can of this transaction can also happen at this stage, but as we'll see later, it cannot filter out all invalid transactions, and only exists to ease load on the leader.\\
 
 			\begin{lstlisting}
 module type I_LogStringCoder = sig
@@ -614,12 +616,44 @@ module Make(Config: I_ParticipantConfig): I_Participant with type t = Config.t =
   ...
 end
 			\end{lstlisting}
+
 			The above specification shines a light on the role of participants and the functionality they provide.
 			The module includes the ability to define custom data types that can be stored on the blockchain, to define how to validate transactions, to read from the blockchain, and to attempt to write to the blockchain by writing to a mempool.
 
 			\subsubsection*{Retrieving local updates}
-			
-			%TODO: Describe how a participant writes into a mempool that the leader then copies. Participants can then pull from it. 
+			The mechanism used by the leader to read mempool updates is different for the situations when the participant is on the same machine, and when it is on a remote machine. 
+			Here I will detail the process of reading updates from a participant on the same machine as the leader.\\
+
+			\begin{figure}
+				\begin{center}
+					\begin{tikzpicture}[
+						known/.style={rectangle, draw=black!100, fill=green!80, very thick, minimum size=12mm},
+						mainnode/.style={rectangle, draw=black!100, fill=red!80, very thick, minimum size=12mm},
+						label/.style={rectangle, draw=black!100, fill=black!0, very thick, minimum size=5mm, text width=1.7cm},
+						invis/.style={rectangle, draw=black!100, fill=black!10, minimum size=12mm}
+					]
+					\node[invis] (invis) {\ldots};
+					\node[known] (block1) [right=of invis] {};
+					\node[known] (block2) [right=of block1] {};
+					\node[label] (label1) [above=of block2] {Cursor to latest known block};
+					\node[mainnode] (block3) [right=of block2] {};
+					\node[mainnode] (block4) [right=of block3] {};
+					\node[label] (label2) [above=of block4] {Cursor to latest committed block};
+					\begin{scope}[very thick, -stealth]
+					\draw[->] (invis.east) -- (block1.west);
+					\draw[->] (label1.south) -- (block2.north);
+					\draw[->] (block1.east) -- (block2.west);
+					\draw[->] (block2.east) -- (block3.west);
+					\draw[->] (block3.east) -- (block4.west);
+					\draw[->] (label2.south) -- (block4.north);
+					\path[dotted, ->] (block4.north)+(-1.5mm,0) edge  [bend right=40]  ([xshift=1.5mm]block3.north);
+					\path[dotted, ->] (block3.north)+(-1.5mm,0) edge  [bend right=40]  ([xshift=1.5mm]block2.north);
+					\end{scope}
+					\end{tikzpicture}
+					\end{center}
+				\caption{A mempool on a local participant}
+				\label{fig:readlocalpartudpates}
+			\end{figure}
 
 	\chapter{Evaluation}
 	

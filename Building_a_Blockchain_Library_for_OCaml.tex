@@ -535,7 +535,24 @@ end
 
 			\subsubsection*{Raft}
 			%TODO: Finish description of Raft and it's concept of terms.
+			Raft is an algorithm that was designed to be equivalent and as efficient as Paxos, however, it also places a much greater emphasis on comprehensibility.
+			It uses the notion of a \textit{strong leader}, which is an elected server that has total control over which log entries are accepted.
+			There are two other types of server, a \textit{follower} and a \textit{candidate}. 
+			Followers are completely passive, and only respond to requests from leaders and candidates. 
+			A candidate is a server that has put itself forward for election.\\
+
+			So how does the algorithm operate? 
+			Time in Raft is split into \textit{terms} which are labelled by a monotomically increasing integer. 
+			Each term effectively signals a time period where a particular server is the leader. 
+			A term starts with a leadership election when a follower transitions into the candidate state, increments its term number and requests votes from other servers. 
+			It will wait for a majority of votes and then elect itself the leader, unless it times out or receives a message from another leader with a greater term number. 
+			Typically, these leader election processes are triggered when a follower doesn't receive a heartbeat message from the leader for longer than a given time.
+			In the pathological case, the vote can be split between leaders, triggering a new election which is also split and so on.
+			However, Raft uses randomised election timeouts to avoid this problem.
+			Additionally, Raft also prescribes some restrictions on the servers which can be elected leader so as to avoid newly elected leaders overwriting previously appended log items.\\
 			
+			Raft is an simple algorithm that is easy to understand, but it also guarantees the Log Matching Property that if two logs contain a log entry with the same index and term, then that entry, and all preceding entries will be identical.
+
 		\subsection{A New Approach}
 		%TODO: Overview of my approach to consensus
 			\subsubsection*{Pros and Cons of a Leader Based Approach}

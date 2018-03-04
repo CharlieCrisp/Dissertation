@@ -538,7 +538,7 @@ end
 
 			\subsubsection*{Raft}
 			%TODO: Finish description of Raft and it's concept of terms.
-			Raft is an algorithm that was designed to be equivalent and as efficient as Paxos, however, it also places a much greater emphasis on comprehensibility.
+			Raft \cite{Raft} is an algorithm that was designed to be equivalent and as efficient as Paxos, however, it also places a much greater emphasis on comprehensibility.
 			It uses the notion of a \textit{strong leader}, which is an elected server that has total control over which log entries are accepted.
 			There are two other types of server, a \textit{follower} and a \textit{candidate}. 
 			Followers are completely passive, and only respond to requests from leaders and candidates. 
@@ -572,7 +572,7 @@ end
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% the bibliography
-	\bibliographystyle{plain}
+	\bibliographystyle{acm}
 	\bibliography{refs}
 	\addcontentsline{toc}{chapter}{Bibliography}
 	

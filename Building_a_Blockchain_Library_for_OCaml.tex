@@ -464,9 +464,6 @@ end
 	The log allows for items to be appended to and read from a log.
 	In particular, the function \texttt{read} will read from the position of a cursor into the log, and will return a new cursor for the next unread log item, alongside the result.
 	This interface therefore provides all the functionality required to build a blockchain.
-	\section{Mempools}
-	When making a transaction using Bitcoin or some other cryptocurrencies, a request for this transaction is placed in what is known as a Mempool\footnote{Mempool is short for Memory Pool}.
-	This Mempool can be thought of as a waiting room for transactions. When miners are assembling and mining blocks, this is where they will pick the transactions from.
 	
 	\section{Consensus Algorithms}
 	Building consensus was by far the most important part of work completed for this project. 
@@ -497,7 +494,13 @@ end
 			The effect of this is energy consumption \cite{BitcoinEnergy} and wastage to a level which can cause serious environmental harm.
 			PoW also does not generalise well outside of the scope of cryptocurrencies.
 			It assumes no trust in any participants which may not be a suitable model for an application. 
-			Additionally, it also assumes that miners can be rewarded, usually with cryptocurrency, but this incentive is ad hoc and may not exist in other applications. 
+			Additionally, it also assumes that miners can be rewarded, usually with cryptocurrency, but this incentive is ad hoc and may not exist in other applications.
+			
+			\subsubsection*{Mempools}
+			Mempools are an important part of the design of Bitcoin, and whilst they are not inherently linked to the Proof of Work consensus algorithm, they are worth investigating. 
+			When a Bitcoin transaction is made, it is first written into what is known as a Mempool. 
+			This transaction can then be seen by participating miners, who can then choose to put this in the next block that they mine. 
+			This is significant, as it provides a 'waiting room' for any transactions that have not yet been validated.  
 
 			\subsubsection*{Proof of Stake}
 			The Proof of Stake (PoS) algorithm is used by some cryptocurrencies and works by randomly allowing participants to create (or 'forge') a single block.

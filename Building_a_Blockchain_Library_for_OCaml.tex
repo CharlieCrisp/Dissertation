@@ -336,7 +336,7 @@ val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 		The above type \texttt{'a Lwt.t} refers to a thread which will eventually terminate with a value of type 'a, and follows the well established Monad design pattern.
 		To elaborate on what these functions do, if we wish to obtain a thread which has already terminated with a value of type 'a, we can pass this value to \texttt{Lwt.return}, and it will happily oblige. If we wish to run a thread to completion and eventually return its value, then we can use \texttt{Lwt\_main.run}. Finally, if we wish to chain together two threads, we can use use \texttt{Lwt.bind} (or the infix notation \texttt{>>=}) to pass the result of the first thread onto a function which will return a second thread.
 
-	\section{Requirements Analysis}
+	\section{Requirements Analysis} \label{Requirements Analysis}
 	During the preparation stage of my project, I spent some time analysing the requirements that would be suitable for my projects. This proved a good way of guiding the progress of the project and making sure that I solved all the problems that I set out to. Here, I will set out the criteria that I decided upon before starting development on the project.
 	\subsection*{Data Structure}
 	A key component of this project was to build a blockchain data structure that would allow transactions to be added to a ledger. 
@@ -557,7 +557,13 @@ end
 			Raft is an simple algorithm that is easy to understand, but it also guarantees the Log Matching Property that if two logs contain a log entry with the same index and term, then that entry, and all preceding entries will be identical.
 
 		\subsection{A New Approach}
-		%TODO: Overview of my approach to consensus
+		I have build a consensus mechanism that uses a mempool and a simple leader based algorithm. 
+		Because I have implemented a centralised algorithm, my specification has differed slightly from that presented in the \nameref{Requirements Analysis} to take into account differing functional requirements for a leader and for a participant.
+		As I am assuming that all participating nodes can be trusted, it is possible to use a leader based approach without introducing security issues such as the ones tackled by the Proof of Work mechanism. 
+		This approach also reduces the potential complexity of implementing completely decentralised consensus.
+		My approach makes use of the mergeable log data structure provided by Ezirmin, and the synchronisation module that allows updates from a log to be pulled into another.
+		Finally, I have introduced the notion of validation which allows both participants and leader nodes to accept or reject transactions depending on arbitrary conditions.
+		
 			\subsubsection*{Pros and Cons of a Leader Based Approach}
 			%TODO: Why is this beneficial? It loosens the trust that comes with a leader based approach.
 			%TODO: Might also increase overhead?

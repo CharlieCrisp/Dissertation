@@ -567,7 +567,7 @@ end
 			\subsubsection*{Leaders}
 			My consensus mechanism uses the notion of a \textit{strong leader} similar to that used by the Raft protocol. 
 			The leader is chosen statically in order to reduce the complexity of implementation, and it also has a statically defined list of \texttt{remotes} which specifies the location of all participants.
-			The leader is a node which will never actually request transactions to be added to the blockchain, its role is simply to read requests from the mempools of participants, validate them, and then add them to the blockchain.
+			The leader is a node which will never actually request transactions to be added to the blockchain, its role is simply to periodically read requests from the mempools of participants, validate them, and then add them to the blockchain.
 			This blockchain can be read by any participant, and is treated as the empirical source of which transactions have been committed and in which order. 
 			That is, any two nodes that read a copy of the blockchain, will always agree on content and ordering of log items in the blockchain, up until the end of the shortest copy (or both copies).\\
 
@@ -622,7 +622,7 @@ end
 
 			\subsubsection*{Retrieving local updates}
 			The mechanism used by the leader to read mempool updates is different for the situations when the participant is on the same machine, and when it is on a remote machine. 
-			Here I will detail the process of reading updates from a participant on the same machine as the leader.\\
+			Here, I will detail the process of reading updates from a participant on the same machine as the leader.\\
 
 			\begin{figure}
 				\begin{center}
@@ -655,6 +655,12 @@ end
 				\label{fig:readlocalpartudpates}
 			\end{figure}
 
+			The leader will always maintain a cursor to the latest entry it has read from the participant mempool.
+			When it attempts to find new updates, it will get a new cursor to the latest element of the mempool.
+			The leader can then compare these two cursors, and if the \textit{latest known} cursor points to an entry with an earlier timestamp than the \textit{latest} cursor, then it will add the \textit{latest} item to an accumulator, and then repeat the process with a cursor pointing to the parent of the \textit{latest} node. 
+			Finally, when the cursors match, the items in the accumulator are returned as new updates which can be added to the leader mempool and the \textit{latest known} cursor is updated accordingly.
+			It is important to note that no validation is performed at this stage as no item has been added to the blockchain yet.
+			Figure \ref{fig:readlocalpartudpates} shows how unseen (red) blocks are read sequentially until the seen (green) blocks are reached.
 	\chapter{Evaluation}
 	
 	\chapter{Conclusion}

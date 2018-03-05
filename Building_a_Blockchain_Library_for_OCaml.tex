@@ -666,7 +666,18 @@ end
 	
 			\subsubsection*{Retrieving remote updates}
 			The previous section demonstrates how updates can be retrieved from a mempool on the same machine as the leader.
-			In this section, I will highlight how updates are retrieved from mempools on remote machines.
+			In this section, I will highlight how updates are retrieved from mempools on remote machines.\\
+			
+			Irmin provides a \texttt{Sync} module which allows for the histories of a local and a remote Store to be combined according to a custom merge function.
+			Ezirmin logs build on this functionality by providing a merge strategy which uses the log entry timestamps to order log entries in a merge.
+			Figure \ref{fig:readremotepartudpates} demonstrates how this merge works in a situation where a number of blocks have been added to a single remote participant mempool.
+			The first (and most na{\"i}ve) approach I took to pulling updates from a number of participants, was to sequentially merge updates from all the participants into the leaders mempool.
+			Participants also merge updates from the leader's mempool before adding to their own mempool to increase the shared history and decrease the work required for the leader to perform the custom merge.
+			After pulling all updates, the leader will traverse its own mempool, finding new updates until it reaches the \textit{latest known} cursor. 
+			Now, the updates can be validated and added to the blockchain, and the \textit{latest known} cursor updated to the latest message in the mempool.\\
+
+			However, there is an issue...
+
 
 			\begin{figure}
 				\centering
@@ -692,7 +703,6 @@ end
 					\end{scope}
 					\end{tikzpicture}
 				\caption{Before merge}
-				\label{fig:readremotepartudpates1}
 				\end{subfigure}
 				\begin{subfigure}[b]{0.45\textwidth}
 					\centering
@@ -722,10 +732,10 @@ end
 						\end{scope}
 						\end{tikzpicture}
 					\caption{After merge}
-					\label{fig:readremotepartudpates2}
 					\end{subfigure}
-					\caption{Merging mempool updates from remote participant (below) to leader (above)}
-			\end{figure}
+					\caption{Merging mempool updates from a single remote participant (below) to leader (above)}	
+					\label{fig:readremotepartudpates}
+				\end{figure}
 
 
 	\chapter{Evaluation}

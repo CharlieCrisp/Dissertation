@@ -13,6 +13,8 @@
 	\usepackage{color}
 	\usepackage[framemethod=tikz]{mdframed}
 	\usepackage{courier}
+	\usepackage{caption}
+	\usepackage{subcaption}
 
 	\definecolor{OliveGreen}{cmyk}{0.64,0,0.95,0.40}
 	\definecolor{lightlightgray}{gray}{0.9}
@@ -660,7 +662,72 @@ end
 			The leader can then compare these two cursors, and if the \textit{latest known} cursor points to an entry with an earlier timestamp than the \textit{latest} cursor, then it will add the \textit{latest} item to an accumulator, and then repeat the process with a cursor pointing to the parent of the \textit{latest} node. 
 			Finally, when the cursors match, the items in the accumulator are returned as new updates which can be added to the leader mempool and the \textit{latest known} cursor is updated accordingly.
 			It is important to note that no validation is performed at this stage as no item has been added to the blockchain yet.
-			Figure \ref{fig:readlocalpartudpates} shows how unseen (red) blocks are read sequentially until the seen (green) blocks are reached.
+			Figure \ref{fig:readlocalpartudpates} shows how unseen (red) blocks are read sequentially from a mempool until the seen (green) blocks are reached.
+	
+			\subsubsection*{Retrieving remote updates}
+			The previous section demonstrates how updates can be retrieved from a mempool on the same machine as the leader.
+			In this section, I will highlight how updates are retrieved from mempools on remote machines.
+
+			\begin{figure}
+				\centering
+				\begin{subfigure}[b]{0.45\textwidth}
+					\centering
+					\begin{tikzpicture}[
+						known/.style={rectangle, draw=black!100, fill=green!80, very thick, minimum size=7mm},
+						unknown/.style={rectangle, draw=black!100, fill=red!80, very thick, minimum size=7mm},
+						invis/.style={rectangle, draw=black!100, fill=black!10, minimum size=7mm},
+						label/.style={rectangle, minimum size = 7mm, text width=1.7cm}
+					]
+					\node[invis] (invis1) {\ldots};
+					\node[invis] (invis2) [above=of invis1] {\ldots};
+					\node[known] (n) [right=5mm of invis1] {};
+					\node[known] (m) [right=5mm of invis2] {};
+					\node[unknown] (n1) [right=5mm of n] {};
+					\node[unknown] (n2) [right=5mm of n1] {};
+					\begin{scope}[very thick, -stealth]
+					\draw[->] (invis1.east) -- (n.west);
+					\draw[->] (invis2.east) -- (m.west);
+					\draw[->] (n.east) -- (n1.west);
+					\draw[->] (n1.east) -- (n2.west);
+					\end{scope}
+					\end{tikzpicture}
+				\caption{Before merge}
+				\label{fig:readremotepartudpates1}
+				\end{subfigure}
+				\begin{subfigure}[b]{0.45\textwidth}
+					\centering
+						\begin{tikzpicture}[
+							known/.style={rectangle, draw=black!100, fill=green!80, very thick, minimum size=7mm},
+							unknown/.style={rectangle, draw=black!100, fill=red!80, very thick, minimum size=7mm},
+							invis/.style={rectangle, draw=black!100, fill=black!10, minimum size=7mm},
+							label/.style={rectangle, minimum size = 7mm, text width=1.7cm}
+						]
+						\node[invis] (invis1) {\ldots};
+						\node[invis] (invis2) [above=of invis1] {\ldots};
+						\node[known] (n) [right=5mm of invis1] {};
+						\node[known] (m) [right=5mm of invis2] {};
+						\node[known] (m1) [right=5mm of m] {};
+						\node[known] (m2) [right=5mm of m1] {};
+						\node[known] (n1) [right=5mm of n] {};
+						\node[known] (n2) [right=5mm of n1] {};
+						\begin{scope}[very thick, -stealth]
+						\draw[->] (invis1.east) -- (n.west); 
+						\draw[->] (m.east) -- (m1.west);
+						\draw[->] (m1.east) -- (m2.west);
+						\draw[dotted,->] (n1.north) -- (m1.south);
+						\draw[dotted,->] (n2.north) -- (m2.south);
+						\draw[->] (invis2.east) -- (m.west);
+						\draw[->] (n.east) -- (n1.west);
+						\draw[->] (n1.east) -- (n2.west);
+						\end{scope}
+						\end{tikzpicture}
+					\caption{After merge}
+					\label{fig:readremotepartudpates2}
+					\end{subfigure}
+					\caption{Merging mempool updates from remote participant (below) to leader (above)}
+			\end{figure}
+
+
 	\chapter{Evaluation}
 	
 	\chapter{Conclusion}

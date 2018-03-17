@@ -676,9 +676,6 @@ end
 			After pulling all updates, the leader will traverse its own mempool, finding new updates until it reaches the \textit{latest known} cursor. 
 			Now, the updates can be validated and added to the blockchain, and the \textit{latest known} cursor updated to the latest message in the mempool.\\
 
-			However, there is an issue...
-
-
 			\begin{figure}
 				\centering
 				\begin{subfigure}[b]{0.45\textwidth}
@@ -687,7 +684,7 @@ end
 						known/.style={rectangle, draw=black!100, fill=green!80, very thick, minimum size=7mm},
 						unknown/.style={rectangle, draw=black!100, fill=red!80, very thick, minimum size=7mm},
 						invis/.style={rectangle, draw=black!100, fill=black!10, minimum size=7mm},
-						label/.style={rectangle, minimum size = 7mm, text width=1.7cm}
+						label/.style={rectangle, text width=1.2cm}
 					]
 					\node[invis] (invis1) {\ldots};
 					\node[invis] (invis2) [above=of invis1] {\ldots};
@@ -695,6 +692,8 @@ end
 					\node[known] (m) [right=5mm of invis2] {};
 					\node[unknown] (n1) [right=5mm of n] {};
 					\node[unknown] (n2) [right=5mm of n1] {};
+					\node[label] (latest) [above=of m] {latest known block};
+					\draw[->] (latest.south) -- (m.north);
 					\begin{scope}[very thick, -stealth]
 					\draw[->] (invis1.east) -- (n.west);
 					\draw[->] (invis2.east) -- (m.west);
@@ -710,7 +709,7 @@ end
 							known/.style={rectangle, draw=black!100, fill=green!80, very thick, minimum size=7mm},
 							unknown/.style={rectangle, draw=black!100, fill=red!80, very thick, minimum size=7mm},
 							invis/.style={rectangle, draw=black!100, fill=black!10, minimum size=7mm},
-							label/.style={rectangle, minimum size = 7mm, text width=1.7cm}
+							label/.style={rectangle, text width=1.2cm}
 						]
 						\node[invis] (invis1) {\ldots};
 						\node[invis] (invis2) [above=of invis1] {\ldots};
@@ -720,6 +719,8 @@ end
 						\node[known] (m2) [right=5mm of m1] {};
 						\node[known] (n1) [right=5mm of n] {};
 						\node[known] (n2) [right=5mm of n1] {};
+						\node[label] (latest) [above=of m] {latest known block};
+						\draw[->] (latest.south) -- (m.north);
 						\begin{scope}[very thick, -stealth]
 						\draw[->] (invis1.east) -- (n.west); 
 						\draw[->] (m.east) -- (m1.west);
@@ -737,6 +738,67 @@ end
 					\label{fig:readremotepartudpates}
 				\end{figure}
 
+				However, this approach is fundamentally flawed and will cause many updates to be overlooked by the leader. 
+				The reason for this is that if there are multiple remote workers, then updates will be merged in a given order. 
+				In the case where there are just two workers, updates from the first worker will be merged before the second, however, in the time that the second merge takes place, the first worker may have added additional transactions.
+				These will be merged when the leader next polls for updates but may end up being merged to a position which is earlier in time than the latest known cursor. 
+				This means that they will not be seen by the leader and therefore they will not be added to the blockchain.\\
+
+				\begin{figure}
+					\centering
+					\begin{subfigure}[b]{0.45\textwidth}
+						\centering
+						\begin{tikzpicture}[
+							known/.style={circle, draw=black!100, very thick, minimum size=7mm},
+							invis/.style={circle, draw=black!100, minimum size=7mm},
+							label/.style={rectangle, text width=1.2cm}
+						]
+						\node[invis] (gentop) {\ldots};
+						\node[invis] (genmiddle) [below=of gentop] {\ldots};
+						\node[invis] (genbottom) [below=of genmiddle] {\ldots};
+						\node[known] (one) [right=5mm of gentop] {1};
+						\node[known] (onemerged) [right=10mm of genmiddle] {1};
+						\node[known] (two) [right=5mm of one] {2};
+						\node[known] (three) [right=30mm of genbottom] {3};
+						\node[known] (threemerged) [right=20mm of onemerged] {3};
+						\begin{scope}[very thick, -stealth]
+						\draw[->] (gentop.east) -- (one.west);
+						\draw[dotted, ->] (one.south) -- (onemerged.north) node[midway, left] {Merge};
+						\draw[dotted, ->] (three.north) -- (threemerged.south) node[midway, left] {Merge};
+						\draw[->] (onemerged.east) -- (threemerged.west);
+						\draw[->] (one.east) -- (two.west);
+						\draw[->] (genmiddle.east) -- (onemerged.west);
+						\draw[->] (genbottom.east) -- (three.west);
+						\end{scope}
+						\end{tikzpicture}
+					\caption{After first sync from leader. Node 2 has been missed.}
+					\end{subfigure}
+					\begin{subfigure}[b]{0.45\textwidth}
+						\centering
+						\begin{tikzpicture}[
+							known/.style={circle, draw=black!100, very thick, minimum size=7mm},
+							invis/.style={circle, draw=black!100, minimum size=7mm},
+							label/.style={rectangle, text width=1.2cm}
+						]
+						\node[invis] (gentop) {\ldots};
+						\node[invis] (genmiddle) [below=of gentop] {\ldots};
+						\node[invis] (genbottom) [below=of genmiddle] {\ldots};
+						\node[known] (one) [right=5mm of gentop] {};
+						\node[known] (onemerged) [right=7mm of genmiddle] {};
+						\node[known] (two) [right=5mm of one] {};
+						\node[known] (three) [right=10mm of genbottom] {};
+						\begin{scope}[very thick, -stealth]
+						\draw[->] (gentop.east) -- (one.west);
+						\draw[->] (one.east) -- (two.west);
+						\draw[->] (genmiddle.east) -- (onemerged.west);
+						\draw[->] (genbottom.east) -- (three.west);
+						\end{scope}
+						\end{tikzpicture}
+						\caption{After merge}
+						\end{subfigure}
+						\caption{After second round of leader synchronisation}	
+						\label{fig:readremotepartudpatesbroke}
+					\end{figure}
 
 	\chapter{Evaluation}
 	

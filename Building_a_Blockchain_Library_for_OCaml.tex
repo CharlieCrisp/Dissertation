@@ -629,31 +629,30 @@ end
 			\begin{figure}
 				\begin{center}
 					\begin{tikzpicture}[
-						known/.style={rectangle, draw=black!100, fill=green!80, very thick, minimum size=12mm},
-						mainnode/.style={rectangle, draw=black!100, fill=red!80, very thick, minimum size=12mm},
-						label/.style={rectangle, draw=black!100, fill=black!0, very thick, minimum size=5mm, text width=1.7cm},
-						invis/.style={rectangle, draw=black!100, fill=black!10, minimum size=12mm}
+						block/.style={circle, draw=black!100, very thick, minimum size=15mm},
+						invis/.style={circle, draw=black!100, minimum size=15mm},
+						label/.style={rectangle, text width=2cm, align=center}
 					]
-					\node[invis] (invis) {\ldots};
-					\node[known] (block1) [right=of invis] {};
-					\node[known] (block2) [right=of block1] {};
+					\node[invis] (invis) {\texttt{W}};
+					\node[block] (block1) [right=of invis] {};
+					\node[block] (block2) [right=of block1] {};
 					\node[label] (label1) [above=of block2] {Cursor to latest known block};
-					\node[mainnode] (block3) [right=of block2] {};
-					\node[mainnode] (block4) [right=of block3] {};
+					\node[block] (block3) [right=of block2] {};
+					\node[block] (block4) [right=of block3] {};
 					\node[label] (label2) [above=of block4] {Cursor to latest committed block};
+					\draw[->] (label2.south) -- (block4.north);
+					\draw[->] (label1.south) -- (block2.north);
 					\begin{scope}[very thick, -stealth]
 					\draw[->] (invis.east) -- (block1.west);
-					\draw[->] (label1.south) -- (block2.north);
 					\draw[->] (block1.east) -- (block2.west);
 					\draw[->] (block2.east) -- (block3.west);
 					\draw[->] (block3.east) -- (block4.west);
-					\draw[->] (label2.south) -- (block4.north);
 					\path[dotted, ->] (block4.north)+(-1.5mm,0) edge  [bend right=40]  ([xshift=1.5mm]block3.north);
 					\path[dotted, ->] (block3.north)+(-1.5mm,0) edge  [bend right=40]  ([xshift=1.5mm]block2.north);
 					\end{scope}
 					\end{tikzpicture}
 					\end{center}
-				\caption{A mempool on a local participant}
+				\caption{A mempool on a local participant. 'W' indicates the history of a 'Worker's' mempool.}
 				\label{fig:readlocalpartudpates}
 			\end{figure}
 
@@ -662,7 +661,7 @@ end
 			The leader can then compare these two cursors, and if the \textit{latest known} cursor points to an entry with an earlier timestamp than the \textit{latest} cursor, then it will add the \textit{latest} item to an accumulator, and then repeat the process with a cursor pointing to the parent of the \textit{latest} node. 
 			Finally, when the cursors match, the items in the accumulator are returned as new updates which can be added to the leader mempool and the \textit{latest known} cursor is updated accordingly.
 			It is important to note that no validation is performed at this stage as no item has been added to the blockchain yet.
-			Figure \ref{fig:readlocalpartudpates} shows how unseen (red) blocks are read sequentially from a mempool until the seen (green) blocks are reached.
+			Figure \ref{fig:readlocalpartudpates} shows how unseen blocks are read sequentially from a mempool until the seen blocks are reached.
 	
 			\subsubsection*{Retrieving remote updates}
 			The previous section demonstrates how updates can be retrieved from a mempool on the same machine as the leader.
@@ -681,17 +680,16 @@ end
 				\begin{subfigure}[b]{0.45\textwidth}
 					\centering
 					\begin{tikzpicture}[
-						known/.style={rectangle, draw=black!100, fill=green!80, very thick, minimum size=7mm},
-						unknown/.style={rectangle, draw=black!100, fill=red!80, very thick, minimum size=7mm},
-						invis/.style={rectangle, draw=black!100, fill=black!10, minimum size=7mm},
-						label/.style={rectangle, text width=1.2cm}
+						block/.style={circle, draw=black!100, very thick, minimum size=7mm},
+						invis/.style={circle, draw=black!100, minimum size=9mm},
+						label/.style={rectangle, text width=1.2cm, align=center}
 					]
-					\node[invis] (invis1) {\ldots};
-					\node[invis] (invis2) [above=of invis1] {\ldots};
-					\node[known] (n) [right=5mm of invis1] {};
-					\node[known] (m) [right=5mm of invis2] {};
-					\node[unknown] (n1) [right=5mm of n] {};
-					\node[unknown] (n2) [right=5mm of n1] {};
+					\node[invis] (invis1) {\texttt{L}};
+					\node[invis] (invis2) [above=of invis1] {\texttt{W}};
+					\node[block] (n) [right=5mm of invis1] {};
+					\node[block] (m) [right=5mm of invis2] {};
+					\node[block] (n1) [right=5mm of n] {};
+					\node[block] (n2) [right=5mm of n1] {};
 					\node[label] (latest) [above=of m] {latest known block};
 					\draw[->] (latest.south) -- (m.north);
 					\begin{scope}[very thick, -stealth]
@@ -706,21 +704,20 @@ end
 				\begin{subfigure}[b]{0.45\textwidth}
 					\centering
 						\begin{tikzpicture}[
-							known/.style={rectangle, draw=black!100, fill=green!80, very thick, minimum size=7mm},
-							unknown/.style={rectangle, draw=black!100, fill=red!80, very thick, minimum size=7mm},
-							invis/.style={rectangle, draw=black!100, fill=black!10, minimum size=7mm},
+							block/.style={circle, draw=black!100, very thick, minimum size=7mm},
+							invis/.style={circle, draw=black!100, minimum size=9mm},
 							label/.style={rectangle, text width=1.2cm}
 						]
-						\node[invis] (invis1) {\ldots};
-						\node[invis] (invis2) [above=of invis1] {\ldots};
-						\node[known] (n) [right=5mm of invis1] {};
-						\node[known] (m) [right=5mm of invis2] {};
-						\node[known] (m1) [right=5mm of m] {};
-						\node[known] (m2) [right=5mm of m1] {};
-						\node[known] (n1) [right=5mm of n] {};
-						\node[known] (n2) [right=5mm of n1] {};
-						\node[label] (latest) [above=of m] {latest known block};
-						\draw[->] (latest.south) -- (m.north);
+						\node[invis] (invis1) {\texttt{L}};
+						\node[invis] (invis2) [above=of invis1] {\texttt{W}};
+						\node[block] (n) [right=5mm of invis1] {};
+						\node[block] (m) [right=5mm of invis2] {};
+						\node[block] (m1) [right=5mm of m] {};
+						\node[block] (m2) [right=5mm of m1] {};
+						\node[block] (n1) [right=5mm of n] {};
+						\node[block] (n2) [right=5mm of n1] {};
+						\node[label] (latest) [above=of m2] {latest known block};
+						\draw[->] (latest.south) -- (m2.north);
 						\begin{scope}[very thick, -stealth]
 						\draw[->] (invis1.east) -- (n.west); 
 						\draw[->] (m.east) -- (m1.west);
@@ -734,33 +731,37 @@ end
 						\end{tikzpicture}
 					\caption{After merge}
 					\end{subfigure}
-					\caption{Merging mempool updates from a single remote participant (below) to leader (above)}	
+					\caption{Merging mempool updates from a single remote participant (below) to leader (above). 'W' and 'L' respectively signifying the histories of the 'Worker's' and 'Leader's' mempools.}	
 					\label{fig:readremotepartudpates}
 				\end{figure}
 
 				However, this approach is fundamentally flawed and will cause many updates to be overlooked by the leader. 
-				The reason for this is that if there are multiple remote workers, then updates will be merged in a given order. 
-				In the case where there are just two workers, updates from the first worker will be merged before the second, however, in the time that the second merge takes place, the first worker may have added additional transactions.
-				These will be merged when the leader next polls for updates but may end up being merged to a position which is earlier in time than the latest known cursor. 
-				This means that they will not be seen by the leader and therefore they will not be added to the blockchain.\\
+				The reason for this is that if there are multiple remote workers, then updates will be sequentially merged from these workers in a given order. 
+				For example, Figure \ref{fig:readremotepartudpatesbroke} demonstrates a situation where there are just two workers. 
+				In this case, updates from the first worker will be merged before the second, however, after the first merge has taken place, the first worker may have added additional transactions. 
+				If these transactions are timestamped before the latest transaction in the second worker's mempool, then when the leader next polls for updates, transactions may be merged to a position in the mempool before the latest known cursor. 
+				This means that they will not be seen by the leader and therefore they will not be added to the blockchain. 
+				I shall refer to these transactions as \textit{missed} transactions, and all others at \textit{tracked} transactions.\\
 
 				\begin{figure}
 					\centering
 					\begin{subfigure}[b]{0.45\textwidth}
 						\centering
 						\begin{tikzpicture}[
-							known/.style={circle, draw=black!100, very thick, minimum size=7mm},
-							invis/.style={circle, draw=black!100, minimum size=7mm},
-							label/.style={rectangle, text width=1.2cm}
+							block/.style={circle, draw=black!100, very thick, minimum size=7mm},
+							invis/.style={circle, draw=black!100, minimum size=9mm},
+							label/.style={rectangle, text width=1.2cm, align=center}
 						]
-						\node[invis] (gentop) {\ldots};
-						\node[invis] (genmiddle) [below=of gentop] {\ldots};
-						\node[invis] (genbottom) [below=of genmiddle] {\ldots};
-						\node[known] (one) [right=5mm of gentop] {1};
-						\node[known] (onemerged) [right=10mm of genmiddle] {1};
-						\node[known] (two) [right=5mm of one] {2};
-						\node[known] (three) [right=30mm of genbottom] {3};
-						\node[known] (threemerged) [right=20mm of onemerged] {3};
+						\node[invis] (gentop) {\texttt{W}};
+						\node[invis] (genmiddle) [below=of gentop] {\texttt{L}};
+						\node[invis] (genbottom) [below=of genmiddle] {\texttt{W}};
+						\node[block] (one) [right=5mm of gentop] {1};
+						\node[block] (onemerged) [right=10mm of genmiddle] {1};
+						\node[block] (two) [right=5mm of one] {2};
+						\node[block] (three) [right=30mm of genbottom] {3};
+						\node[block] (threemerged) [right=20mm of onemerged] {3};
+						\node[label] (latestknown) [above=of gentop] {Latest known transaction};
+						\path[->] (latestknown.south)+(-1.5mm,0) edge  [bend right=40]  (genmiddle.west);
 						\begin{scope}[very thick, -stealth]
 						\draw[->] (gentop.east) -- (one.west);
 						\draw[dotted, ->] (one.south) -- (onemerged.north) node[midway, left] {Merge};
@@ -771,34 +772,50 @@ end
 						\draw[->] (genbottom.east) -- (three.west);
 						\end{scope}
 						\end{tikzpicture}
-					\caption{After first sync from leader. Node 2 has been missed.}
+					\caption{After first sync from leader. Transactions 1 and 3 are merged after the latest known transaction and are therefore \textit{tracked}}
 					\end{subfigure}
 					\begin{subfigure}[b]{0.45\textwidth}
 						\centering
 						\begin{tikzpicture}[
-							known/.style={circle, draw=black!100, very thick, minimum size=7mm},
-							invis/.style={circle, draw=black!100, minimum size=7mm},
-							label/.style={rectangle, text width=1.2cm}
+							block/.style={circle, draw=black!100, very thick, minimum size=7mm},
+							invis/.style={circle, draw=black!100, minimum size=9mm},
+							label/.style={rectangle, text width=1.2cm, align=center}
 						]
-						\node[invis] (gentop) {\ldots};
-						\node[invis] (genmiddle) [below=of gentop] {\ldots};
-						\node[invis] (genbottom) [below=of genmiddle] {\ldots};
-						\node[known] (one) [right=5mm of gentop] {};
-						\node[known] (onemerged) [right=7mm of genmiddle] {};
-						\node[known] (two) [right=5mm of one] {};
-						\node[known] (three) [right=10mm of genbottom] {};
+						\node[invis] (gentop) {\texttt{W}};
+						\node[invis] (genmiddle) [below=of gentop] {\texttt{L}};
+						\node[invis] (genbottom) [below=of genmiddle] {\texttt{W}};
+						\node[block] (one) [right=5mm of gentop] {1};
+						\node[block] (onemerged) [right=10mm of genmiddle] {1};
+						\node[block] (two) [right=5mm of one] {2};
+						\node[block] (twomerged) [right=5mm of onemerged] {2};
+						\node[block] (three) [right=30mm of genbottom] {3};
+						\node[block] (threemerged) [right=20mm of onemerged] {3};
+						\node[label] (latestknown) [above=of threemerged] {Latest known transaction};
+						\draw[->] (latestknown.south) -- (threemerged.north);
 						\begin{scope}[very thick, -stealth]
 						\draw[->] (gentop.east) -- (one.west);
+						\draw[dotted, ->] (two.south) -- (twomerged.north) node[midway, left] {Merge};
+						\draw[->] (onemerged.east) -- (twomerged.west);
+						\draw[->] (twomerged.east) -- (threemerged.west);
 						\draw[->] (one.east) -- (two.west);
 						\draw[->] (genmiddle.east) -- (onemerged.west);
 						\draw[->] (genbottom.east) -- (three.west);
 						\end{scope}
 						\end{tikzpicture}
-						\caption{After merge}
+						\caption{After second round of leader synchronisation, transaction 2 is merged into the mempool before the latest known transaction and is therefore \textit{missed}}
 						\end{subfigure}
-						\caption{After second round of leader synchronisation}	
+						\caption{In this diagram, time flows from left to right. 
+						The sequential nature of mempool merges causes transaction 2 to be merged into the history of the mempool before the transaction pointed to by the latest known cursor. 
+						2 will therefore not be added to the blockchain.}	
 						\label{fig:readremotepartudpatesbroke}
 					\end{figure}
+
+					In order to mitigate this problem, I first examined the nature of these missed transactions and noted the following properties:
+					\begin{enumerate}
+						\item Missed transactions must be added during a merge. If they occured before the merge had begun, then they would have been tracked. Alternatively, missed transactions must occur after the latest known cursor from the previous merge. 
+						\item Missed transactions must be added at a point in time earlier than the transaction pointed to by the latest\_known cursor. If they occured at a later point in time, then they would be tracked by a future merge/poll.
+					\end{enumerate}
+					Figure \ref{fig:readremotepartudpatesbroke} demonstrates these properties 
 
 	\chapter{Evaluation}
 	

@@ -396,6 +396,10 @@ end
 	\end{itemize}
 
 	\chapter{Implementation} \label{Implementation}
+	Over the course of this project, I have successfully built a blockchain library which can perform custom transaction validation.
+	The library uses a leader based consensus protocol inspired by the Raft consensus protocol and the concept of mempools used by Bitcoin.
+	In this section, I will first detail how I built the blockchain data structure using the structures exposed by Irmin and Ezirmin, as well as the bugs that I encountered in these codebases.
+	I will also give an overview of the consensus algorithms I researched, and how they influenced the design of the final leader based consensus algorithm.
 	\section{The Blockchain Data Structure}
 	Irmin is a library for OCaml providing data store functionality using a Git backend.
 	Ezirmin is a wrapper around Irmin that provides a simple log data structure which I used to create a blockchain data structure.

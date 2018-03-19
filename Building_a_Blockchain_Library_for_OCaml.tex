@@ -135,36 +135,35 @@
 	\chapter{Introduction}
 	Blockchain technology has existed for a long time, but the definition of 'blockchain' has changed drastically since its conception.
 	Previously used just to describe a data structure, the term 'blockchain' is now widely used to also describe the accompanying consensus mechanisms.
-	This is mainly due to the increasing popularity of cryptocurrencies such as Bitcoin \cite{Bitcoin} which use the 'Proof of Work' algorithm to solve the double spending problem \cite{}.
-	However, whilst blockchain is undoubtedly the most important technology in the field of cryptocurrencies, where no single client can be trusted, it also has many uses outside this application.
-	It can be used in other situations where clients can be trusted, for instance, a hospital maintaining medical records, or a bank wishing to record transactions from many of its own distributed clients.\\
+	This is mainly due to the increasing popularity of cryptocurrencies such as Bitcoin \cite{Bitcoin} which use the 'Proof of Work' algorithm to solve the double spending problem.
+	Blockchain is undoubtedly the most important technology in the field of cryptocurrencies, where no single client can be trusted, however, it also has many use cases outside this sector.
+	For instance, it can be used in situations where clients \textit{can} be trusted like a hospital maintaining internal medical records, or a bank wishing to record transactions from many of its own distributed clients.\\
 	
-
 	I have implemented a blockchain library in OCaml which allows the easy creation of blockchain applications.
-	The blockchain is synchronised via a leader-based consensus mechanism with eventual consistency.
+	The blockchain is synchronised via a leader-based consensus mechanism with strict consistency.
+	Developers using this library are also able to define custom validation of transactions being added to the blockchain.
 	Because the application is written in OCaml, it can be compiled to bytecode, unikernels or even javascript and is therefore suitable for a wide range of destination applications and devices.
 
 	\section{The History of the Blockchain}
-	The blockchain, in its simplest form, is a series of blocks of data, where each block contains the cryptographic hash of the previous block in the chain. 
+	The blockchain, in its simplest form, is a series of blocks of data, where each block contains the hash of the content of the previous block. 
 	Figure \ref{fig:mainblockchain} is a graphical representation of a typical blockchain data structure.\\
 
 	\begin{figure}
 		\begin{center}
 			\begin{tikzpicture}[
-				gennode/.style={rectangle, draw=black!60, fill=cyan!100, very thick, minimum size=10mm},
-				mainnode/.style={rectangle, draw=black!60, fill=black!100, very thick, minimum size=10mm},
-				subnode/.style={rectangle, draw=black!60, fill=purple!100, very thick, minimum size=10mm},
+				block/.style={circle, draw=black!100, very thick, minimum size=1.5cm},
+				invis/.style={circle, draw=black!100, fill=black!10, minimum size=1.5cm}
 			]
-			\node[gennode] (genesisblock) {};
-			\node[mainnode] (block1) [right=of genesisblock] {};
-			\node[mainnode] (block2) [right=of block1] {};
-			\node[mainnode] (block3) [right=of block2] {};
-			\node[mainnode] (block4) [right=of block3] {};
-			\node[mainnode] (block5) [right=of block4] {};
-			\node[subnode] (sub1) [below=of block2] {};
-			\node[subnode] (sub2) [below=of block3] {};
-			\node[subnode] (sub3) [above=of block3] {};
-			\node[subnode] (sub4) [above=of block4] {};
+			\node[invis] (genesisblock) {};
+			\node[block] (block1) [right=of genesisblock] {};
+			\node[block] (block2) [right=of block1] {};
+			\node[block] (block3) [right=of block2] {};
+			\node[block] (block4) [right=of block3] {};
+			\node[block] (block5) [right=of block4] {};
+			\node[block] (sub1) [below=of block2] {};
+			\node[block] (sub2) [below=of block3] {};
+			\node[block] (sub3) [above=of block3] {};
+			\node[block] (sub4) [above=of block4] {};
 			\begin{scope}[very thick, -stealth]
 			\draw[->] (genesisblock.east) -- (block1.west);
 			\draw[->] (block1.east) -- (block2.west);
@@ -188,8 +187,7 @@
 
 	\section{Blockchain Today}
 	At the time of writing, cryptocurrencies are generating both a huge amount of excitement and cynicism in popular media. 
-	Cryptocurrencies aside from Bitcoin are paving the way to smarter uses of the blockchain.
-	For example, Ethereum \cite{Ethereum} introduces the concept of Smart Contracts which allow the execution of code on the blockchain.\\
+	Aside from Bitcoin, cryptocurrencies like Ethereum \cite{Ethereum} have introduced the concept of Smart Contracts which allow the execution of code on the blockchain.\\
 	
 	Whilst it is possible to think of applications for blockchain technology in almost every sector, the development of applications outside the scope of crytocurrencies has been limited. 
 	If one considers the example of OCaml, there are currently no libraries which allow a user to easily get started with building blockchain applications. \\
@@ -197,52 +195,52 @@
 	\section{Work Completed}
 	I have created a library which allows developers to create blockchain applications with the ease of importing a library.
 	The project was designed to exist outside the realm of cryptocurrencies and therefore assumes that all participating nodes are trustworthy.
-	Consensus is achieved by using a simple leader-based model where the leader node will periodically pull updates from all participating nodes and merge them into a central blockchain.
-	This can then be viewed by all participating nodes, with the guarantee of eventual consistency.
+	Consensus is achieved by using a simple leader-based mechanism where the leader node will periodically pull updates from all participating nodes and add them to a central blockchain.
+	This can then be viewed by all participating nodes, with the guarantee of strict consistency.
 	Setting up a network is as easy as specifying the location of the leader on all the participating nodes, and specifying the location of all participating nodes on the leader.\\
 	
 	I have evaluated the project by... FILL IN EVALUATION DETAILS
 
 	\chapter{Preparation}
-	Before starting work on the codebase for the project, I completed a lot of preparation in order to aid the development process later on.
-	I spent some time learning to use OCaml and all of the different language features it provides.
-	This was important because it allowed me to write idiomatic code which was not only powerful, but also easy to use by other developers.
+	Before starting work on the project code, I completed a lot of preparation in order to aid the development process.
+	I spent some time learning to use OCaml and familiarising myself with its features.
+	This was important because it allowed me to write idiomatic code which was not only powerful, but could also provide an intuitive API for other developers to use.
 	I also spent some time investigating a few key libraries, such as Irmin and Lwt.
 	Understanding these libraries, the data structures they provide, and the technologies they present, allowed me to focus on the technological challenges in the project and not waste time reinventing the wheel. 
 	Setting up a good development environment allowed me to run automated builds and, therefore, catch any errors in the code early.
+	This was particularly useful during the evaluation as it involved installing the project on many remote machines.
+	Being able to catch issues like dependency resolution or out of date build commands made the evalation process much easier.
 	Lastly, I spent some time developing a requirements analysis for the final product. 
 	This analysis helped drive the design and development of the blockchain library whilst not restricting the work that I was able to complete.
 
 	\section{Starting Point}
-		The project built upon functionality provided by Irmin [1] which is a distributed database system.  Irmin is fast, durable and has the branching capabilities which are required to build a blockchain.
-		The project also made use of Ezirmin \cite{Ezirmin} which provides a simplified API to Irmin.
+		The project built upon functionality provided by Irmin [1] which is a distributed database system.  Irmin is fast, durable and has all the necessary capabilities required to build a blockchain.
+		The project also made use of Ezirmin \cite{Ezirmin} which provides a simplified API to Irmin, and defines a log data structure which was used to build the blockchain and mempool structures for this project.
 
 	\section{Using OCaml}
 		At the start of the project, I had never used OCaml for any project of significance. 
 		Whilst the first year Foundations of Computer Science course had given me some background into functional programming, there were still many key OCaml features which I had to learn.
 		In the first few weeks of my project, I spent time studying the book Real World OCaml \cite{RealWorldOCaml} which proved a great introduction to many of OCaml's features.  
 
-		\subsection{Pattern Matching}
-		OCaml provides a very powerful syntax for matching patterns which allow you to write functions like the following\ldots 
+		\subsubsection*{Pattern Matching}
+		OCaml provides a very powerful syntax for matching patterns which allow you to write functions as shown by Listing \ref{lst:pattern_match}.
 		\begin{lstlisting}[caption={OCaml Pattern Matching}\label{lst:pattern_match}]
-type card = Card of string * int
-let pattern_matcher_1 input = match input with 
+let pattern_matcher_1 input = match input with
   | Card("spades", 1) -> Printf.printf "It's the ace of spades!"
   | _ -> Printf.printf "Unlucky"
-  
-let pattern_matcher_2 = function 
-  | Card(class, 1) -> Printf.printf "It's the ace of %s! class"
+let pattern_matcher_2 = function
+  | Card(suit, 1) -> Printf.printf "It's the ace of %s!" suit
   | _ -> Printf.printf "Unlucky"
 		\end{lstlisting}
-		In Listing \ref{lst:pattern_match}, we have a function that will print a special string if it is passed the Ace of Spades. 
+		Listing \ref{lst:pattern_match} shows a function that will print a special string if it is passed the Ace of Spades. 
 		Here, the pattern matching checks the that the tuple associated with the data type contains the string \texttt{spades} and the number 1.
-		The second example uses the anonymous \texttt{function} keyword and matches the first argument of the tuple to the variable \texttt{class}.
-		\subsection{Optionals}
+		The second example assigns the variable \texttt{pattern\_matcher\_2} to an anonymous \texttt{function} which matches the first argument of the tuple to the variable \texttt{suit}.
+		\subsubsection*{Optionals}
 		A built in data type that allows us to use the power of OCaml's pattern matching, is the \texttt{option}. 
 		By using the \texttt{Some(\ldots)} and \texttt{None} constructors, one can create something of the type \texttt{'a option}. 
 		This is comparable to the \texttt{null} type in languages such as Java, however as it is part of the type system, it forces the programmer to handle any cases where \texttt{null} could be returned.
 
-		\subsection{Error Handling}
+		\subsubsection*{Error Handling}
 		OCaml provides multiple different ways of dealing with errors and exceptions. 
 		A simple way of signifying an error in your return type, is to return an \texttt{option} which will be \texttt{None} if there is an error. 
 		Whilst this can be inflexible for larger solutions, it also provides a quick and simple way of signifying that something has gone wrong.\\
@@ -251,9 +249,9 @@ let pattern_matcher_2 = function
 		\begin{lstlisting}
 val bind: 'a option -> ('a -> 'b option) -> 'b option = <fun>
 		\end{lstlisting} 
-		As the type signature demonstrates, \texttt{bind} will take an \texttt{option} and apply a function to its contents if it exists, or return \texttt{None} otherwise.\\
+		As the type signature demonstrates, \texttt{bind} takes an \texttt{option} and applies a function to its contents if it exists, or returns \texttt{None} otherwise.\\
 		
-		OCaml provides a built in type \texttt{Result.t} which is effectively an extention of optional return types, where the programmer is able to define arbitrary data to accompany the error type. 
+		OCaml provides a built in type \texttt{Result.t} which is an extension of optional return types, where the programmer is able to define arbitrary data to accompany the error type. 
 		The following demonstrates a successful return type of \texttt{int} (with an unspecified \texttt{Error} type), and a \texttt{string} error type (with an unspecified \texttt{Ok} type).
 		\begin{lstlisting}
 # Ok 3;;
@@ -262,20 +260,21 @@ val bind: 'a option -> ('a -> 'b option) -> 'b option = <fun>
 - : (string, 'a) result = Error "Something went wrong";;
 		\end{lstlisting} 
 
-		\subsection{Polymorphic Variants}
+		\subsubsection*{Polymorphic Variants}
 		OCaml allows the programmer to define variant types such as the \texttt{Card} type that was defined earlier. This makes it very easy to make use of pattern matching with custom defined types.\\
 		
 		OCaml also introduces the notion of polymorphic variants which are more flexible and do not require an explicit type declaration.
-		\begin{lstlisting}
+		\begin{lstlisting}[caption={Polymorhpic Variants}\label{lst:poly}]
 # let card = `Card ("spades", 1);;
 - : val card : [> `Card of string * int ] = `Card ("spades", 1)
 		\end{lstlisting}
-		Here, we have used a backtick to define a polymorphic type, and OCaml has automatically inferred a type. 
-		The $>$ symbol acts as a lower limit on the tags that the variant \texttt{card} can take, i.e. it can have the tag \texttt{Card} or indeed other unspecified tags.
-		When dealing with variant types as parameters, we may see the $<$ symbol in the type signature to denote that the parameter can only belong to given set of tags. The absence of both of these symbols indicates that a variant has exactly the given type signature. 
+		Listing \ref{lst:poly} shows how a backtick can be used to define a polymorphic type, and OCaml has automatically inferred a type. 
+		The $>$ symbol acts as a lower limit on the tags that the variant \texttt{card} can take, i.e. it can have the tag \texttt{Card} or any other unspecified tag.
+		When dealing with variant types as \textit{parameters}, the $<$ symbol often appears in the type signature to show that the parameter can belong to only a subset of given set of tags. T
+		The absence of both of these symbols indicates that a variant can take any value from the given set of tags, rather than a superset or subset. 
 
-		\subsection{Modules and Functors}
-		Modules provide a good way of grouping together related code in OCaml.
+		\subsubsection*{Modules and Functors}
+		Modules provide a way of grouping together related code in OCaml.
 		They can be thought of as similar to traditional namespaces, although there a few key differences.
 		OCaml also lets you define module type signatures which modules have to conform to.
 		\begin{lstlisting}[caption={OCaml Modules and Functors}\label{lst:modfun}]
@@ -291,44 +290,39 @@ module IntegerMath : Math with type t = int = struct
   let subtract int1 int2 = int1 - int2
 end
 		\end{lstlisting}
-		Listing \ref{lst:modfun} is a simple example where we have defined a module signature \texttt{Math} for adding and subtracting a custom type.
+		Listing \ref{lst:modfun} is a simple example that defines a module signature \texttt{Math} for adding and subtracting a custom type.
 		The module \texttt{IntegerMath} is a module which adheres to this signature. 
-		The slightly odd looking \texttt{with type t = int} serves the purpose of letting the compiler know that the type t is externally visible.
-		Whilst in this example, we have used the trivial example of integer maths, it is easy to imagine this extending to, for example, matrices or sets where these functions are not built in.\\
+		The syntax \texttt{with type t = int} serves the purpose of letting the compiler know that the type t is externally visible.
+		Whilst this example uses the trivial example of integer maths, it is easy to imagine this extending to, for example, matrices or sets where these functions are not part of the language.\\
 
-		Modules are really useful for allowing the effective division of code into isolated units, however they are slightly inflexible. 
-		Maybe we want to extract lower level details of the code in a module?
-		In this case, we would have to create a whole new module for each possible implementation of this abstraction.
-		An example of this could be a database that could use an in-memory or on-disc format for storing data.
+		Modules are really useful for allowing the effective division of code into isolated units, but on their own, they are slightly inflexible. 
+		Maybe a developer would want to abstract some lower level details of code used by a module.
+		In this case, she would have to create a whole new module for each possible implementation of this abstraction.
+		An example of this could be a datastore that uses either an in-memory or on-disc format for storing data.
 		Functors allow us to create modules from other modules.
 		\begin{lstlisting}[caption={Ezirmin Log Module}\label{lst:logmod}]
 module Log(AO : Irmin.AO_MAKER)(V: Tc.S0) = struct
   ...
 end
 		\end{lstlisting}
-		Listing \ref{lst:logmod} is an example from the Ezirmin codebase (which we shall see later) where we define a functor which takes the module AO which is used for creating append only stores, and the module V which defines a data type.
-		The result of this is a functor which can be used to create a Log module with either an in-memory or on-disc backend.
-		\subsection{Development Environment}
+		Listing \ref{lst:logmod} is an example from the Ezirmin codebase and shows how to define a functor.
+		The parameter \texttt{AO} is a module used for creating append only stores, and the parameter module \texttt{V} defines a data type.
+		The result of this is a functor, \texttt{Log}, which can be used to create a Log module with either an in-memory or on-disc backend.
+		\subsubsection*{Development Environment}
 		When developing a large scale system with OCaml, there are a couple of build systems available to use. 
 		'jbuilder' \cite{jbuilder} is one of these systems which is becoming increasingly popular and is used daily by hundreds of developers.
 		jbuilder allows the developer to specify arbitrary directory structures containing executables, libraries and more.
-		I set up my project to build a blockchain library which included the interface for running both a Leader and Participant node. 
-		I also defined two executables for running both the Leader and Participants in an example case. 
-		I also used GNU Make \cite{GNUMake} to invoke jbuilder which allowed me to easily build and run any executables from the root of the directory.\\
+		I set up my project to compile a blockchain library which included the interface for running both a Leader and Participant node. 
+		I also defined multiple executables for running both the Leader and Participants in example and test cases. 
+		I used GNU Make \cite{GNUMake} to invoke jbuilder which allowed me to easily build and run any executables from the root of the directory.\\
 		
 		In order to ensure that the project would always build, I set up a continuous integration workflow using Travis-CI. 
-		This was particularly useful as it ensured that whenever I pushed any updates to my GitHub repository, Travis would attempt to build the system and would notify me whenever there were any errors during the build.
+		This ensured that whenever I pushed any updates to my GitHub repository, Travis would attempt to build the system and would notify me whenever there were any errors during the build.
+		This was particularly useful during the Evaluation stage when I was installing my project on mutliple remote machines for testing.
+		Over the development period, Travis flagged issues such as dependency resolution failures or out of date build scripts and I was able to fix these at the point when they first occured, rather than weeks later when they would have caused many issues during remote installation.
 
-	\section{Existing Libraries}
-		This project is built on top of Irmin and Ezirmin.
-		Irmin is a library that allow the creation of different types of data store, such as Read-Only, Append-Only and Read-Write.
-		Ezirmin provides a simplified API for interacting with Irmin as well as providing the implementation of a mergeable log.
-		Both Irmin and Ezirmin allow the use of different backends including an in-memory, and on-disc format. 
-		The on-disc format uses the git protocol to store data, although an in depth exploration of this is left to the \nameref{Implementation} section.
-		During the preparation stage of project, I spend some time familiarising myself with the API and codebases of these projects. 
-		Being able to create dummy applications, and get a deeper understanding of the lower-level code was extremely useful later on when I encountered a few bugs which I had to work around.\\
-
-		Another library which I spent some time familiarising myself with was Lwt \cite{Lwt}. 
+	\subsubsection*{Lwt}
+		A library which I spent some time familiarising myself with was Lwt \cite{Lwt}. 
 		Lwt provides a way of interacting with threads in OCaml, although in Lwt they are known as 'Promises'.
 		\begin{lstlisting}[caption={Lwt Promises}\label{lst:lwt}]
 val Lwt.return : 'a -> 'a Lwt.t 
@@ -336,13 +330,19 @@ val Lwt_main.run : 'a Lwt.t -> 'a
 val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 		\end{lstlisting}
 		Listing \ref{lst:lwt} shows the basic functions for creating, running and combining threads.
-		The above type \texttt{'a Lwt.t} refers to a thread which will eventually terminate with a value of type 'a, and follows the well established Monad design pattern.
-		To elaborate on what these functions do, if we wish to obtain a thread which has already terminated with a value of type 'a, we can pass this value to \texttt{Lwt.return}, and it will happily oblige. If we wish to run a thread to completion and eventually return its value, then we can use \texttt{Lwt\_main.run}. Finally, if we wish to chain together two threads, we can use use \texttt{Lwt.bind} (or the infix notation \texttt{>>=}) to pass the result of the first thread onto a function which will return a second thread.
+		The above type \texttt{'a Lwt.t} refers to a thread which will eventually terminate with a value of type \texttt{'a}, and follows the well established Monad design pattern.
+		\texttt{Lwt.return} is a function that takes a value and will create a promise that immediately returns with this value.
+		This is useful when inserting static or precomputed variables into Lwt pipelines.
+		\texttt{Lwt\_main.run} is the dual of \texttt{Lst.return} and will run a Lwt promise until completetion and then return its value.
+		This is useful when retrieving values from an Lwt pipeline.
+		Finally, \texttt{Lwt.bind} (or the infix notation \texttt{>>=}) will pass the result of a Lwt promise to a function returning another Lwt promise.
+		This is useful for chaining together Lwt promises in a pipeline.
 
 	\section{Requirements Analysis} \label{Requirements Analysis}
-	During the preparation stage of my project, I spent some time analysing the requirements that would be suitable for my projects. This proved a good way of guiding the progress of the project and making sure that I solved all the problems that I set out to. Here, I will set out the criteria that I decided upon before starting development on the project.
+	During the preparation stage of my project, I spent some time analysing the requirements that would be suitable for my project. This proved a good way of guiding the progress of the project and making sure that I solved all the problems that I set out to. Here, I will set out the criteria that I decided upon before starting development on the project.
 	\subsection{Data Structure}
-	A key component of this project was to build a blockchain data structure that would allow transactions to be added to a ledger. 
+	A key component of this project was to build a blockchain data structure that would allow for data to be added to a blockchain. 
+	This data will be referred to as either \texttt{blocks} or \texttt{transactions}. 
 	From a participating node, it should be possible to add a transaction, of a given type, between two identities. 
 	It should also be possible to view an ordered list of all transactions which currently exist in the blockchain.
 	\begin{minipage}{\linewidth}
@@ -365,7 +365,7 @@ module type I_Blockchain = sig
 
   val add_transaction_to_blockchain: t -> [> `Error | `Ok] Lwt.t
   val get_all_transactions: unit -> [> `Error | `Ok of t list] Lwt.t
-  val get_transactions: int -> [> `Error | `Ok of t list] Lwt.t
+  val get_transacrtions: int -> [> `Error | `Ok of t list] Lwt.t
 end
 
 module Make(Config: I_Config): I_Blockchain with type t = Config.t = struct 
@@ -380,7 +380,7 @@ end
 		\item \texttt{I\_Config} contains information which is required to run the Blockchain.
 			In particular, should the \texttt{validator} option contain the value \texttt{Some(f)}, then \texttt{f} will be a function that accepts a history of committed transactions, and validates whether a further transaction is valid. 
 		\item \texttt{Make} is a functor which accepts a configuration module and will return a Blockchain module.
-		\item \texttt{add\_transaction\_to\_blockchain} adds a user defined type to the blockchain and then return a polymorphic variant type containing information about whether the operation was successful. 
+		\item \texttt{add\_transaction\_to\_blockchain} adds a user defined type to the blockchain and then returns a polymorphic variant type containing information about whether the operation was successful. 
 			This will return an error in the case that the transaction is not validated.
 	\end{itemize} 
 
@@ -391,8 +391,8 @@ end
 	These goals were laid out in order to help drive the design and development of the consensus mechanism. 
 	I decided on the following requirements:
 	\begin{itemize}
-		\item The consensus mechanism must guarantee eventual consistency. Strict consistency, although beneficial in some scenarios, is not required as it could add large overhead costs and is not necessary for all applications of the blockchain.
-		\item The consensus mechanism must be scalable. Within the scope of this project, it should be possible for the blockchain to be shared by 4 or more nodes in a network. This should not hinder the performance of the system, and it should still be able to handle multiple successful transactions per second.
+		\item The consensus mechanism must guarantee strict consistency. Although strict consistency could add large overhead costs, it is necessary for some applications and so is an important part of the final project.
+		\item The consensus mechanism must be scalable. Within the scope of this project, it should be possible for the blockchain to be shared by 3 or more nodes in a network. This should not hinder the performance of the system, and it should still be able to handle multiple successful transactions per second.
 	\end{itemize}
 
 	\chapter{Implementation} \label{Implementation}

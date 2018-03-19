@@ -942,7 +942,7 @@ latest_known_cursor := get_new_latest_cursor;;
 			This approach will not only pick up all the previously missed transactions, but all the tracked ones too.
 			Figure \ref{fig:readremotepartudpatesfixed} demonstrates how this approach would solve the problem presented in Figure \ref{fig:readremotepartudpatesbroke}.\\
 
-			\begin{figure}
+		\begin{figure}
 			\centering
 			\begin{subfigure}[b]{0.45\textwidth}
 				\centering
@@ -1022,7 +1022,15 @@ latest_known_cursor := get_new_latest_cursor;;
 
 		This now begs the question 'How can the new approach, which uses out-of-date cursors, still be valid?'.
 		The answer to this is that, the new approach only uses the cursors to perform timestamp comparisons.
-		The result of these comparisons is the same whether a cursor to the items in the out-of-date mempool or a cursor to the items in the new mempool is used.
+		The result of these comparisons is the same whether a cursor to the items in the out-of-date mempool or a cursor to the items in the new mempool is used.\\
+
+		Now I have detailed all the work that I have completed to build the blockchain library.
+		Transactions are sourced from the mempool and added when it can be certain that there will be no missed transactions.
+		Transactions are added in order and never changed such that if a participant observes the state of the blockchain at any point, it will never observe a conflicting state in the future.
+		The algorithm used by this project assumes that clock timestamps are synchronised across all devices.
+		This may not be the case in an arbitrary situation, and consequently, in high load situations some transactions may not be recognised by the above algorithm. 
+		However, the system is not built for systems of such high load and I do not consider the missing of small numbers of transactions to be a large issue. 
+		In the worst case, an participant will be able to observe whether a transaction has not been added to the blockchain, and after a certain elapsed time period, can attempt again to add the transaction
 
 	\chapter{Evaluation}
 	

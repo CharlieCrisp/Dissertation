@@ -16,9 +16,9 @@
 	\usepackage{caption}
 	\usepackage{subcaption}
 
-	\definecolor{lightlightgray}{gray}{0.95}
-	\definecolor{lightgrey}{rgb}{0.9,0.9,0.9}
+	\definecolor{lightlightgray}{gray}{0.6}
 	\definecolor{darkgreen}{rgb}{0,0.6,0}
+	\definecolor{airforceblue}{rgb}{0.36, 0.54, 0.70}
 
 
 	\usetikzlibrary{positioning}
@@ -29,13 +29,10 @@
 	breaklines=true,
 	basicstyle=\normalsize\ttfamily,                 % Code font, Examples: \footnotesize, \ttfamily
 	keywordstyle=\color{darkgreen},
-	commentstyle=\color{red},             % Comments font
-	backgroundcolor=\color{lightlightgray}, % Choose background color
+	commentstyle=\color{airforceblue}             % Comments font
 	}
 
 	\surroundwithmdframed[
-	hidealllines=true,
-	backgroundcolor=lightlightgray,
 	innerleftmargin=8pt,
 	innertopmargin=0pt,
 	innerbottommargin=0pt]{lstlisting}
@@ -648,7 +645,7 @@ type log_item =
 			This blockchain can be read by any participant, and is treated as the empirical source of which transactions have been committed and in which order. 
 			That is, any two nodes that read a copy of the blockchain, will always agree on content and ordering of log items in the blockchain, up until the end of the shortest copy (or both copies).\\
 
-			\begin{lstlisting}
+			\begin{lstlisting}[caption={Leader Specification}\label{lst:leaderspec}]
 module type I_LeaderConfig = sig
   type t
   module LogCoder: Participant.I_LogStringCoder with type t = t    
@@ -663,7 +660,7 @@ module MakeLeader (Config: I_LeaderConfig) : I_Leader = struct
 end
 			\end{lstlisting}
 
-			The above code is the specification of the leader module, which differs slightly from the centralised specification presented in the \nameref{Requirements Analysis}.
+			Listing \ref{lst:leaderspec} is the specification of the leader module, which differs slightly from the centralised specification presented in the \nameref{Requirements Analysis}.
 			In particular, the \texttt{init\_leader} function will perform an initialisation step, and then return a function which, when executed, will actually start the consensus process.
 
 			\subsubsection*{Participants}
@@ -671,7 +668,7 @@ end
 			This is done by writing a transaction to a local mempool, which is then read by the leader.
 			Validation can of this transaction can also happen at this stage, but as we'll see later, it cannot filter out all invalid transactions, and only exists to ease load on the leader.\\
 
-			\begin{lstlisting}
+			\begin{lstlisting}[caption={Participant Specification}\label{lst:partspec}]
 module type I_LogStringCoder = sig
   type t
   val encode_string: t -> string
@@ -694,7 +691,7 @@ module Make(Config: I_ParticipantConfig): I_Participant with type t = Config.t =
 end
 			\end{lstlisting}
 
-			The above specification shines a light on the role of participants and the functionality they provide.
+			Listing \ref{lst:partspec} is a specification that shines a light on the role of participants and the functionality they provide.
 			The module includes the ability to define custom data types that can be stored on the blockchain, to define how to validate transactions, to read from the blockchain, and to attempt to write to the blockchain by writing to a mempool.
 
 			\subsubsection*{Retrieving local updates}
@@ -904,8 +901,9 @@ end
 previous_latest_known_cursor := latest_known_cursor;;
 latest_known_cursor := get_new_latest_cursor;;
 			\end{lstlisting}
+			
 			This approach will not only pick up all the previously missed transactions, but all the tracked ones too.
-			Figure \ref{fig:readremotepartudpatesfixed} demonstrates how this approach would solve the problem presented in figure \ref{fig:readremotepartudpatesbroke}.
+			Figure \ref{fig:readremotepartudpatesfixed} demonstrates how this approach would solve the problem presented in Figure \ref{fig:readremotepartudpatesbroke}.\\
 
 			\begin{figure}
 			\centering

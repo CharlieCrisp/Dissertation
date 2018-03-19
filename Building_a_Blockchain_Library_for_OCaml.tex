@@ -475,6 +475,7 @@ type log_item =
 	\subsubsection*{Merging Ezirmin Logs}
 	Aside from using an Ezirmin Log as the blockchain data structure for this project, I also use a \textit{mempool} log to retrieve updates/transactions from remote mempools. 
 	This retrieval process uses the \texttt{EzirminLog.Sync} module to merge new log items into the leader's mempool.
+	Under the hood, this module uses the git protocol to pull updates over an ssh connection.
 	In this section I will investigate the semantics of Ezirmin merges as it is critical to understanding how consensus is achieved in this project.\\
 	
 	Irmin allows for the developer to program custom merge strategies. 

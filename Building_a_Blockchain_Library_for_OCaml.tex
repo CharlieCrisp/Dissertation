@@ -889,11 +889,24 @@ end
 				\item Missed transactions must have been added at a point in time earlier than the transaction pointed to by the latest\_known cursor. 
 				If they occured at a later point in time, then they would be tracked by future leader polls.
 			\end{enumerate}
+
 			These lead very naturally onto a less na{\"i}ve algorithm for retrieving updates which only adds updates that have existed for more than one 'poll cycle'.
 			Instead of maintaining a single cursor to the latest-known item, another cursor is now maintained to the previous latest-known item. 
 			I will refer to these as the \texttt{latest\_known} and \texttt{previous\_latest\_known} items.
 			After merging the newest set of updates, a leader can be sure that no more missed transactions will be added before the \texttt{latest\_known} item, and after the \texttt{previous\_latest\_known} item. 
-			In this approach, every item from the \texttt{latest\_known} item (inclusive) to the \texttt{previous\_latest\_known} item (exclusive) will be added to the blockchain. 
+			\begin{lstlisting}[caption={Selecting new updates}\label{lst:newupdates}]
+let is_early_enough = is_earlier_or_equal scanning_cursor ~than:latest_known in
+let is_late_enough = is_later scanning_cursor ~than:previous_latest_known in
+match is_early_enough, is_late_enough with
+  | Some(false), Some(true) -> (*Item cannot be added to blockchain yet. Move scanning cursor back by one item and loop*)
+  | Some(true), Some(true) -> (*Item can be added to blockchain. Add item to accumulator, move cursor back by one item and loop*)
+  | _ ->(*Too far back in the mempool, so return item accumulator*)
+			\end{lstlisting}
+
+			Listing \ref{lst:newupdates} shows a snippet of code from within a recursive function to get updates from the mempool, which can be added to the blockchain.
+			This demonstrates a new approach which starts with a newly retrieved cursor, \texttt{scanning\_cursor}, to the latest mempool element and then scans back through the mempool, adding valid items to an accumulator and eventually returning.
+			On each loop, this algorithm will check if the item is valid, adding the item to the accumulator if this is the case, and then either return the accumulator or move the \texttt{scanning\_cursor} to the next item back in the mempool.
+			Every item from the \texttt{latest\_known} item (inclusive) to the \texttt{previous\_latest\_known} item (exclusive) will be added to the blockchain. 
 			Any of the further updates are not safe to add, and will be postponed until the next poll.
 			In the case that both cursors point to the same item (i.e. no new items were retrieved in the latest poll), no items are added as it is always assumed that the \texttt{latest\_known} item is added in the previous poll.
 			The cursors can now be updated as follows, where \texttt{get\_new\_latest\_cursor} will get a cursor to the latest item in the leader's mempool.
@@ -977,6 +990,15 @@ latest_known_cursor := get_new_latest_cursor;;
 			\caption{Using two cursors, any missed items can be caught and added to the blockchain. \texttt{PLKC} signifies the \textit{Previous Latest Known Cursor}.}	
 			\label{fig:readremotepartudpatesfixed}
 		\end{figure}
+
+		At a first glance, it may seem sensible to use the \texttt{latest\_known} cursor to get new updates from the mempool by just iterating back through the mempool from cursor.
+		The problem with this approach is that the cursor is an abstraction of a tag to a block in the Irmin Block Store.
+		This means that the history of the mempool according to that cursor is not changed by any subsequent merge operations.
+		Consequently, any \textit{missed} transactions will not be visible using this approach.\\
+
+		This now begs the question 'How can the new approach, which uses out-of-date cursors, still be valid?'.
+		The answer to this is that, the new approach only uses the cursors to perform timestamp comparisons.
+		The result of these comparisons is the same whether a cursor to the items in the out-of-date mempool or a cursor to the items in the new mempool is used.
 
 	\chapter{Evaluation}
 	

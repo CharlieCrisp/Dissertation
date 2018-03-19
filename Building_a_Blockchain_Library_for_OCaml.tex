@@ -1,4 +1,5 @@
 \documentclass[12pt,a4paper,twoside,openright]{report}
+	\usepackage[hyphens,spaces,obeyspaces]{url}
 	\usepackage[pdfborder={0 0 0}]{hyperref}    % turns references into hyperlinks
 	\usepackage[margin=25mm]{geometry}  % adjusts page layout
 	\usepackage{graphicx}  % allows inclusion of PDF, PNG and JPG images
@@ -545,14 +546,14 @@ type log_item =
 	Consequently, during the course of the project, I encountered a couple of bugs in the Ezirmin codebase which I had to debug and fix.
 	In this section I shall outline the two bugs that I encountered the changes I made to the Ezirmin codebase to fix them.\\
 	
-	The first bug occurs when updates are merged into a log over a network.\footnote{The pull request on gitHub for this issue can be found at https://github.com/kayceesrk/ezirmin/pull/7}
+	The first bug occurs when updates are merged into a log over a network.\footnote{The issue on GitHub can be found at \href{https://github.com/kayceesrk/ezirmin/pull/7}{https://github.com/kayceesrk/ezirmin/pull/7}}
 	Irmin uses Git as a backend and in order to merge updates over a network, the \texttt{git pull} command is used.
 	In Git, objects are stored as blobs on the leaves of a tree and \texttt{git pull} works by retrieving all blobs at the leaf nodes of the tree for a given branch.
 	However in Ezirmin, blobs can contain pointers to other blobs, which will not be retrieved by \texttt{git pull}.
 	The solution that I implemented to this problem is to use an internal branch which uses an Irmin Store to add all the blobs such that they can be tracked by Git.
 	Items are added to this Irmin Store on the internal banch every time they are added to the log, and consequently, this allows all log items to be fetched and merged by performing \texttt{git pull} on both the master and internal branch.\\
 
-	The second bug that I encountered derived from the merge behaviour of Ezirmin logs when there are more than two remote machines merging updates from each others' log.
+	The second bug that I encountered derived from the merge behaviour of Ezirmin logs when there are more than two remote machines merging updates from each others' log.\footnote{The issue on GitHub can be found at \href{https://github.com/kayceesrk/ezirmin/pull/8}{https://github.com/kayceesrk/ezirmin/pull/8}}
 	The issue is that when a \texttt{Merge} block is created, it may contain log items which are stored as \texttt{Value} blocks on other machines.
 	The result is that Irmin sees these blocks as different, and Ezirmin does not perform any checks to detect or remove any duplicate log items.
 	This behaviour resulted from complex sequences of merge operations and so was difficult to reproduce, but in the worst case caused the size of the blockchain to grow exponentially with the number of merge operations performed.

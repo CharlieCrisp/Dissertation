@@ -226,7 +226,7 @@
 
 		\subsection{Pattern Matching}
 		OCaml provides a very powerful syntax for matching patterns which allow you to write functions like the following\ldots 
-		\begin{lstlisting}
+		\begin{lstlisting}[caption={OCaml Pattern Matching}\label{lst:pattern_match}]
 type card = Card of string * int
 let pattern_matcher_1 input = match input with 
   | Card("spades", 1) -> Printf.printf "It's the ace of spades!"
@@ -236,7 +236,7 @@ let pattern_matcher_2 = function
   | Card(class, 1) -> Printf.printf "It's the ace of %s! class"
   | _ -> Printf.printf "Unlucky"
 		\end{lstlisting}
-		In the first example above, we have a function that will print a special string if it is passed the Ace of Spades. 
+		In Listing \ref{lst:pattern_match}, we have a function that will print a special string if it is passed the Ace of Spades. 
 		Here, the pattern matching checks the that the tuple associated with the data type contains the string \texttt{spades} and the number 1.
 		The second example uses the anonymous \texttt{function} keyword and matches the first argument of the tuple to the variable \texttt{class}.
 		\subsection{Optionals}
@@ -253,9 +253,10 @@ let pattern_matcher_2 = function
 		\begin{lstlisting}
 val bind: 'a option -> ('a -> 'b option) -> 'b option = <fun>
 		\end{lstlisting} 
-		As the above type signature demonstrates, \texttt{bind} will take an \texttt{option} and apply a function to its contents if it exists, or return \texttt{None} otherwise.\\
+		As the type signature demonstrates, \texttt{bind} will take an \texttt{option} and apply a function to its contents if it exists, or return \texttt{None} otherwise.\\
 		
-		OCaml provides a built in type \texttt{Result.t} which is effectively an extention of optional return types, where the programmer is able to define arbitrary data to accompany the error type. The following code demonstrates a successful return type of \texttt{int} (with an unspecified \texttt{Error} type), and a \texttt{string} error type (with an unspecified \texttt{Ok} type).
+		OCaml provides a built in type \texttt{Result.t} which is effectively an extention of optional return types, where the programmer is able to define arbitrary data to accompany the error type. 
+		The following demonstrates a successful return type of \texttt{int} (with an unspecified \texttt{Error} type), and a \texttt{string} error type (with an unspecified \texttt{Ok} type).
 		\begin{lstlisting}
 # Ok 3;;
 - : ('a, int) result = Ok 3
@@ -279,7 +280,7 @@ val bind: 'a option -> ('a -> 'b option) -> 'b option = <fun>
 		Modules provide a good way of grouping together related code in OCaml.
 		They can be thought of as similar to traditional namespaces, although there a few key differences.
 		OCaml also lets you define module type signatures which modules have to conform to.
-		\begin{lstlisting}
+		\begin{lstlisting}[caption={OCaml Modules and Functors}\label{lst:modfun}]
 module type Math = sig
   type t
   val add: t -> t -> t
@@ -292,7 +293,7 @@ module IntegerMath : Math with type t = int = struct
   let subtract int1 int2 = int1 - int2
 end
 		\end{lstlisting}
-		The above code is a simple example where we have defined a module signature \texttt{Math} for adding and subtracting a custom type.
+		Listing \ref{lst:modfun} is a simple example where we have defined a module signature \texttt{Math} for adding and subtracting a custom type.
 		The module \texttt{IntegerMath} is a module which adheres to this signature. 
 		The slightly odd looking \texttt{with type t = int} serves the purpose of letting the compiler know that the type t is externally visible.
 		Whilst in this example, we have used the trivial example of integer maths, it is easy to imagine this extending to, for example, matrices or sets where these functions are not built in.\\
@@ -302,12 +303,12 @@ end
 		In this case, we would have to create a whole new module for each possible implementation of this abstraction.
 		An example of this could be a database that could use an in-memory or on-disc format for storing data.
 		Functors allow us to create modules from other modules.
-		\begin{lstlisting}
+		\begin{lstlisting}[caption={Ezirmin Log Module}\label{lst:logmod}]
 module Log(AO : Irmin.AO_MAKER)(V: Tc.S0) = struct
   ...
 end
 		\end{lstlisting}
-		The above code is an example from the Ezirmin codebase (which we shall see later) where we define a functor which takes the module AO which is used for creating append only stores, and the module V which defines a data type.
+		Listing \ref{lst:logmod} is an example from the Ezirmin codebase (which we shall see later) where we define a functor which takes the module AO which is used for creating append only stores, and the module V which defines a data type.
 		The result of this is a functor which can be used to create a Log module with either an in-memory or on-disc backend.
 		\subsection{Development Environment}
 		When developing a large scale system with OCaml, there are a couple of build systems available to use. 
@@ -331,12 +332,12 @@ end
 
 		Another library which I spent some time familiarising myself with was Lwt \cite{Lwt}. 
 		Lwt provides a way of interacting with threads in OCaml, although in Lwt they are known as 'Promises'.
-		\begin{lstlisting}
+		\begin{lstlisting}[caption={Lwt Promises}\label{lst:lwt}]
 val Lwt.return : 'a -> 'a Lwt.t 
 val Lwt_main.run : 'a Lwt.t -> 'a
 val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 		\end{lstlisting}
-		The above code shows the basic functions for creating, running and combining threads.
+		Listing \ref{lst:lwt} shows the basic functions for creating, running and combining threads.
 		The above type \texttt{'a Lwt.t} refers to a thread which will eventually terminate with a value of type 'a, and follows the well established Monad design pattern.
 		To elaborate on what these functions do, if we wish to obtain a thread which has already terminated with a value of type 'a, we can pass this value to \texttt{Lwt.return}, and it will happily oblige. If we wish to run a thread to completion and eventually return its value, then we can use \texttt{Lwt\_main.run}. Finally, if we wish to chain together two threads, we can use use \texttt{Lwt.bind} (or the infix notation \texttt{>>=}) to pass the result of the first thread onto a function which will return a second thread.
 
@@ -347,7 +348,7 @@ val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 	From a participating node, it should be possible to add a transaction, of a given type, between two identities. 
 	It should also be possible to view an ordered list of all transactions which currently exist in the blockchain.
 	\begin{minipage}{\linewidth}
-	\begin{lstlisting}
+	\begin{lstlisting}[caption={Blockchain Specification}\label{lst:blockspec}]
 module type I_LogStringCoder = sig
   type t
   val encode_string: t -> string
@@ -375,7 +376,7 @@ end
 	\end{lstlisting}
 	\end{minipage}\\
 	\\
-	The above code is the technical specification that I used to define my project, and the functions complete the following operations:
+	Listing \ref{lst:blockspec} is the technical specification that I used to define my project, and the functions complete the following operations:
 	\begin{itemize}
 		\item \texttt{I\_LogStringCoder} is a module that allows the user to specify arbitrary types to be stored on the blockchain, so long as they can be encoded to (and decoded from) a string.
 		\item \texttt{I\_Config} contains information which is required to run the Blockchain.
@@ -437,7 +438,7 @@ end
 
 	\subsection{Ezirmin}
 	Ezirmin is a library that provides a simplified interface to the Irmin library. It is designed to provide a interface to Irmin without functors, but with some useful defaults. Importantly, it has a built in log data structure which uses Irmin's append-only store, saved on disk in the Git format.\\
-	\begin{lstlisting}
+	\begin{lstlisting}[caption={Ezirmin Log}\label{lst:ezirminlog}]
 module type FS_Log = sig
   type elt 
   type cursor 
@@ -448,13 +449,13 @@ module type FS_Log = sig
   ...
 end
 	\end{lstlisting}
-	The above code gives some of the interface for an Ezirmin log which uses a file system backend.
+	Listing \ref{lst:ezirminlog} gives some of the interface for an Ezirmin log which uses a file system backend.
 	The log allows for items to be appended to and read from a log.
 	In particular, the function \texttt{read} will read from the position of a cursor into the log, and will return a new cursor for the next unread log item, alongside the result.
 
 	\subsubsection*{Ezirmin Log as a Blockchain}
 	Ezirmin uses Irmin blocks as an underlying data structure, and therefore satisfies the first criteria for being considered a blockchain. 
-	In order to see that the second criteria, i.e. that blocks are ordered with each containing the hash of its parent, we must look at the implementation of log items.
+	In order to see that the second criteria, i.e. that blocks are ordered with each containing the hash of its parent, I looked at the implementation of log items.
 
 	\begin{lstlisting}[caption={Ezirmin Log Item}\label{lst:a_label}]
 type log_item =
@@ -463,7 +464,17 @@ type log_item =
   prev    : K.t option}
 	\end{lstlisting}
 
-	\ref{lst:a_label}
+	Listing \ref{lst:a_label} is taken from the Ezirmin Log implementation and shows how each log item, which is stored as a block, has a key value which points to the parent log item. 
+	This imposes an ordering of log items, and means that any changes to previous log items, which will create a new block with a new address, will not be seen as part of the log. 
+	As the following section details, merging logs causes new \texttt{Merge} blocks to be created with more than one log item.
+	Whilst this can change the semantics of the chain of pointers between the above log items, the blockchain data structure used in this project is never merged into, so only ever contains \texttt{Value} blocks containing singular log items.
+	Therefore it can be concluded that an Ezirmin Log satisfies both of my conditions to be considered a blockchain, with the definition of a 'Block' in this case being a timestamped Ezirmin log item.
+
+	\subsubsection*{Merging Ezirmin Logs}
+	Aside from using an Ezirmin Log as the blockchain data structure for this project, I also use a \textit{mempool} log to retrieve updates/transactions from remote mempools. 
+	This retrieval process uses the \texttt{EzirminLog.Sync} module to merge new log items into the leader's mempool.
+	In this section I will investigate the semantics of Ezirmin merges as it is critical to understanding how consensus is achieved in this project.\\
+	
 	Irmin allows for the developer to program custom merge strategies. 
 	Whenever a synchronisation happens over the network, Irmin will do one of two things:
 	\begin{enumerate}
@@ -473,7 +484,9 @@ type log_item =
 		This merge is defined by the developer.
 	\end{enumerate}
 	This merge behaviour is displayed in Figure \ref{fig:ezirminmerges} where a local log performs a merge from a remote log with a diverging history.
-	A custom block, \texttt{M1,2}, is created which contains both histories as defined by the custom merge function.
+	A custom block, \texttt{M1,2}, is created which contains both histories as defined by the custom merge function. 
+	Blocks \texttt{V1} and \texttt{V2} still exist in the block store, but the HEAD tag has been updated to point to \texttt{M1,2}. \\
+
 	Ezirmin logs make use of this functionality by storing log entries as either \texttt{Value}s or \texttt{Merge}s.
 	\texttt{Value}s contain single log entries whereas \texttt{Merge}s store a list of \texttt{Values} in the order that they were created. 
 	For an Ezirmin log, the custom merge takes all log entries from \texttt{Value}s and \texttt{Merge}s, orders them by their timestamps, and returns a \texttt{Merge} object with the resulting list of values. 

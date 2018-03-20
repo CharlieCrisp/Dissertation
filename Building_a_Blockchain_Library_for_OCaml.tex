@@ -89,8 +89,8 @@
 	
 	\section*{Original Aims of the Project}
 	
-	To build a library in OCaml, which can be used as a building block for Blockchain applications. 
-	The library should allow participating nodes to own a shared copy of a Blockchain data structure, agreed upon using consensus.
+	To build a library in OCaml, which can be used as a building block for blockchain applications. 
+	The library should allow participating nodes to own a shared copy of a blockchain data structure, agreed upon using consensus.
 	Nodes should also be able to commit transactions to the blockchain, which should then be visible to other participating nodes. 
 	
 	
@@ -209,7 +209,7 @@
 	Understanding these libraries, the data structures they provide, and the technologies they present, allowed me to focus on the technological challenges in the project and not waste time reinventing the wheel. 
 	Setting up a good development environment allowed me to run automated builds and, therefore, catch any errors in the code early.
 	This was particularly useful during the evaluation as it involved installing the project on many remote machines.
-	Being able to catch issues like dependency resolution or out of date build commands made the evalation process much easier.
+	Being able to catch issues like dependency resolution or out of date build commands made the evaluation process much easier.
 	Lastly, I spent some time developing a requirements analysis for the final product. 
 	This analysis helped drive the design and development of the blockchain library whilst not restricting the work that I was able to complete.
 
@@ -235,7 +235,7 @@ let pattern_matcher_2 = function
 		Listing \ref{lst:pattern_match} shows a function that will print a special string if it is passed the Ace of Spades. 
 		Here, the pattern matching checks the that the tuple associated with the data type contains the string \texttt{spades} and the number 1.
 		The second example assigns the variable \texttt{pattern\_matcher\_2} to an anonymous \texttt{function} which matches the first argument of the tuple to the variable \texttt{suit}.
-		\subsubsection*{Optionals}
+		\subsubsection*{Options}
 		A built in data type that allows us to use the power of OCaml's pattern matching, is the \texttt{option}. 
 		By using the \texttt{Some(\ldots)} and \texttt{None} constructors, one can create something of the type \texttt{'a option}. 
 		This is comparable to the \texttt{null} type in languages such as Java, however as it is part of the type system, it forces the programmer to handle any cases where \texttt{null} could be returned.
@@ -264,11 +264,11 @@ val bind: 'a option -> ('a -> 'b option) -> 'b option = <fun>
 		OCaml allows the programmer to define variant types such as the \texttt{Card} type that was defined earlier. This makes it very easy to make use of pattern matching with custom defined types.\\
 		
 		OCaml also introduces the notion of polymorphic variants which are more flexible and do not require an explicit type declaration.
-		\begin{lstlisting}[caption={Polymorhpic Variants}\label{lst:poly}]
+		\begin{lstlisting}[caption={Polymorphic Variants}\label{lst:poly}]
 # let card = `Card ("spades", 1);;
 - : val card : [> `Card of string * int ] = `Card ("spades", 1)
 		\end{lstlisting}
-		Listing \ref{lst:poly} shows how a backtick can be used to define a polymorphic type, and OCaml has automatically inferred a type. 
+		Listing \ref{lst:poly} shows how a back-tick can be used to define a polymorphic type, and OCaml has automatically inferred a type. 
 		The $>$ symbol acts as a lower limit on the tags that the variant \texttt{card} can take, i.e. it can have the tag \texttt{Card} or any other unspecified tag.
 		When dealing with variant types as \textit{parameters}, the $<$ symbol often appears in the type signature to show that the parameter can belong to only a subset of given set of tags. T
 		The absence of both of these symbols indicates that a variant can take any value from the given set of tags, rather than a superset or subset. 
@@ -318,8 +318,8 @@ end
 		
 		In order to ensure that the project would always build, I set up a continuous integration workflow using Travis-CI. 
 		This ensured that whenever I pushed any updates to my GitHub repository, Travis would attempt to build the system and would notify me whenever there were any errors during the build.
-		This was particularly useful during the Evaluation stage when I was installing my project on mutliple remote machines for testing.
-		Over the development period, Travis flagged issues such as dependency resolution failures or out of date build scripts and I was able to fix these at the point when they first occured, rather than weeks later when they would have caused many issues during remote installation.
+		This was particularly useful during the Evaluation stage when I was installing my project on multiple remote machines for testing.
+		Over the development period, Travis flagged issues such as dependency resolution failures or out of date build scripts and I was able to fix these at the point when they first occurred, rather than weeks later when they would have caused many issues during remote installation.
 
 	\subsubsection*{Lwt}
 		A library which I spent some time familiarising myself with was Lwt \cite{Lwt}. 
@@ -333,7 +333,7 @@ val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 		The above type \texttt{'a Lwt.t} refers to a thread which will eventually terminate with a value of type \texttt{'a}, and follows the well established Monad design pattern.
 		\texttt{Lwt.return} is a function that takes a value and will create a promise that immediately returns with this value.
 		This is useful when inserting static or precomputed variables into Lwt pipelines.
-		\texttt{Lwt\_main.run} is the dual of \texttt{Lst.return} and will run a Lwt promise until completetion and then return its value.
+		\texttt{Lwt\_main.run} is the dual of \texttt{Lst.return} and will run a Lwt promise until completion and then return its value.
 		This is useful when retrieving values from an Lwt pipeline.
 		Finally, \texttt{Lwt.bind} (or the infix notation \texttt{>>=}) will pass the result of a Lwt promise to a function returning another Lwt promise.
 		This is useful for chaining together Lwt promises in a pipeline.
@@ -365,7 +365,7 @@ module type I_Blockchain = sig
 
   val add_transaction_to_blockchain: t -> [> `Error | `Ok] Lwt.t
   val get_all_transactions: unit -> [> `Error | `Ok of t list] Lwt.t
-  val get_transacrtions: int -> [> `Error | `Ok of t list] Lwt.t
+  val get_transactions: int -> [> `Error | `Ok of t list] Lwt.t
 end
 
 module Make(Config: I_Config): I_Blockchain with type t = Config.t = struct 
@@ -377,9 +377,9 @@ end
 	Listing \ref{lst:blockspec} is the technical specification that I used to define my project, and the functions complete the following operations:
 	\begin{itemize}
 		\item \texttt{I\_LogStringCoder} is a module that allows the user to specify arbitrary types to be stored on the blockchain, so long as they can be encoded to (and decoded from) a string.
-		\item \texttt{I\_Config} contains information which is required to run the Blockchain.
+		\item \texttt{I\_Config} contains information which is required to run the blockchain.
 			In particular, should the \texttt{validator} option contain the value \texttt{Some(f)}, then \texttt{f} will be a function that accepts a history of committed transactions, and validates whether a further transaction is valid. 
-		\item \texttt{Make} is a functor which accepts a configuration module and will return a Blockchain module.
+		\item \texttt{Make} is a functor which accepts a configuration module and will return a blockchain module.
 		\item \texttt{add\_transaction\_to\_blockchain} adds a user defined type to the blockchain and then returns a polymorphic variant type containing information about whether the operation was successful. 
 			This will return an error in the case that the transaction is not validated.
 	\end{itemize} 
@@ -403,7 +403,7 @@ end
 	\section{The Blockchain Data Structure}
 	Irmin is a library for OCaml providing data store functionality using a Git backend.
 	Ezirmin is a wrapper around Irmin that provides a simple log data structure which I used to create a blockchain data structure.
-	In order to validate that these libraries fulfill the necessary criteria to be used as a blockchain, I took some time to investigate the semantic properties of the primitives they expose. 
+	In order to validate that these libraries fulfil the necessary criteria to be used as a blockchain, I took some time to investigate the semantic properties of the primitives they expose. 
 	Whilst there is no universally agreed-upon definition of a blockchain, I have used the following criteria to define the blockchain:
 	\begin{enumerate}
 		\item Data is stored in 'blocks'.
@@ -556,7 +556,7 @@ type log_item =
 	In Git, objects are stored as blobs on the leaves of a tree and \texttt{git pull} works by retrieving all blobs at the leaf nodes of the tree for a given branch.
 	However in Ezirmin, blobs can contain pointers to other blobs, which will not be retrieved by \texttt{git pull}.
 	The solution that I implemented to this problem is to use an internal branch which uses an Irmin Store to add all the blobs such that they can be tracked by Git.
-	Items are added to this Irmin Store on the internal banch every time they are added to the log, and consequently, this allows all log items to be fetched and merged by performing \texttt{git pull} on both the master and internal branch.\\
+	Items are added to this Irmin Store on the internal branch every time they are added to the log, and consequently, this allows all log items to be fetched and merged by performing \texttt{git pull} on both the master and internal branch.\\
 
 	The second bug that I encountered derived from the merge behaviour of Ezirmin logs when there are more than two remote machines merging updates from each others' log.\footnote{The issue on GitHub can be found at \href{https://github.com/kayceesrk/ezirmin/pull/8}{https://github.com/kayceesrk/ezirmin/pull/8}}
 	The issue is that when a \texttt{Merge} block is created, it may contain log items which are stored as \texttt{Value} blocks on other machines.
@@ -644,7 +644,7 @@ type log_item =
 			A candidate is a server that has put itself forward for election.\\
 
 			So how does the algorithm operate? 
-			Time in Raft is split into \textit{terms} which are labelled by a monotomically increasing integer. 
+			Time in Raft is split into \textit{terms} which are labelled by a monotonically increasing integer. 
 			Each term effectively signals a time period where a particular server is the leader. 
 			A term starts with a leadership election when a follower transitions into the candidate state, increments its term number and requests votes from other servers. 
 			It will wait for a majority of votes and then elect itself the leader, unless it times out or receives a message from another leader with a greater term number. 
@@ -909,10 +909,10 @@ end
 
 			In order to mitigate this problem, I first examined the nature of these \textit{missed} transactions and noted the following properties:
 			\begin{enumerate}
-				\item Missed transactions must have been added during a merge. If they occured before the merge had begun, then they would have been tracked. 
+				\item Missed transactions must have been added during a merge. If they occurred before the merge had begun, then they would have been tracked. 
 				Alternatively, missed transactions must occur after the latest known cursor from the previous merge. 
 				\item Missed transactions must have been added at a point in time earlier than the transaction pointed to by the latest\_known cursor. 
-				If they occured at a later point in time, then they would be tracked by future leader polls.
+				If they occurred at a later point in time, then they would be tracked by future leader polls.
 			\end{enumerate}
 
 			These lead very naturally onto a less na{\"i}ve algorithm for retrieving updates which only adds updates that have existed for more than one 'poll cycle'.

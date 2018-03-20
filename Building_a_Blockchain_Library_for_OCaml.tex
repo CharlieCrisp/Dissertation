@@ -22,7 +22,7 @@
 	\definecolor{airforceblue}{rgb}{0.36, 0.54, 0.70}
 
 
-	\usetikzlibrary{positioning}
+	\usetikzlibrary{positioning,fit,calc}
 
 	\lstset{
 	language=[Objective]Caml,
@@ -398,9 +398,34 @@ end
 	\chapter{Implementation} \label{Implementation}
 	Over the course of this project, I have successfully built a blockchain library which can perform custom transaction validation.
 	The library uses a leader based consensus protocol inspired by the Raft consensus protocol and the concept of mempools used by Bitcoin.
-	In this section, I will first detail how I built the blockchain data structure using the structures exposed by Irmin and Ezirmin, as well as the bugs that I encountered in these codebases.
+	In this chapter, I will first give a general overview of the system architecture.
+	I will then detail how I built the blockchain data structure using the structures exposed by Irmin and Ezirmin, as well as the bugs that I encountered in these codebases.
 	I will also give an overview of the consensus algorithms I researched, and how they influenced the design of the final leader based consensus algorithm.
-	\section{The Blockchain Data Structure}
+
+	\section{System Architecture}
+	The Architecture for the system I have built can be split up into two main categories: the system from the perspective of a `Leader' node and from a `Participant' or `Worker' node.
+	In this model, the Leader node has total responsibility for the state of the blockchain and for committing new transactions.
+	Participants exist to request transactions to be added to the blockchain and also to view the blockchain. 
+	Participants view the blockchain by pulling the latest copy   over a two-way ssh connection which is maintained with the Leader.
+	Participants request for transactions to be committed by writing to their local mempool. 
+	The Leader periodically polls the Participant mempools to find new transactions to add to the blockchain.
+	It is also possible for a Participant node to exist on the same physical machine as the Leader, in which case the leader sources updates directly from the mempool, rather than over an ssh connection. 
+	Figure \ref{fig:sysarch} shows how the architecture for this system is organised.\\
+	
+	In Section \ref{datastructure} I will detail how the blockchain data structure was built and why it satisfies the necessary conditions for being considered a blockchain.
+	I will also show how I build the mempool data structures and how updates from different mempools are merged over the network.
+	In Section \ref{consensus} I will move onto explaining the research I completed when designing the consensus mechanism for this project. 
+	I will present a naive approach to consensus and explain why this is flawed and will actually `miss' transactions.
+	I will then present an improved mechanism which is used in the project and guarantees that no transactions in participant mempools are missed.
+
+	\begin{figure}
+		\centering
+		\includegraphics[width=16cm]{figs/System_Architecture.png}
+		\label{fig:sysarch}
+		\caption{An overview of the leader based blockchain architecture}
+	\end{figure}
+
+	\section{The Blockchain Data Structure}\label{datastructure}
 	Irmin is a library for OCaml providing data store functionality using a Git backend.
 	Ezirmin is a wrapper around Irmin that provides a simple log data structure which I used to create a blockchain data structure.
 	In order to validate that these libraries fulfil the necessary criteria to be used as a blockchain, I took some time to investigate the semantic properties of the primitives they expose. 
@@ -565,7 +590,7 @@ type log_item =
 	In one case, a log with 40 unique log items grew to be greater than 120,000 log items in size due to duplicates.
 	I implemented a fix by removing duplicate log items when a merge operation takes place. 
 
-	\section{Consensus Algorithms}
+	\section{Consensus Algorithms}\label{consensus}
 	Building consensus was by far the most important part of work completed for this project. 
 	In order to guide the design of the consensus mechanism, I completed an extensive amount of research on existing algorithms
 	This section will briefly summarise this research and my conclusions about their suitability for the project. 
@@ -600,7 +625,7 @@ type log_item =
 			Mempools are an important part of the design of Bitcoin, and whilst they are not inherently linked to the Proof of Work consensus algorithm, they are worth investigating. 
 			When a Bitcoin transaction is made, it is first written into what is known as a Mempool. 
 			This transaction can then be seen by participating miners, who can then choose to put this in the next block that they mine. 
-			This is significant, as it provides a 'waiting room' for any transactions that have not yet been validated.  
+			This is significant, as it provides a `waiting room' for any transactions that have not yet been validated.  
 
 			\subsubsection*{Proof of Stake}
 			The Proof of Stake (PoS) algorithm is used by some cryptocurrencies and works by randomly allowing participants to create (or `forge') a single block.

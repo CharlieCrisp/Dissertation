@@ -125,7 +125,7 @@
 	
 	I would like to thank KC Sivaramakrishnan for being an extremely helpful supervisor throughout the duration of the dissertation, as well as over the past three years.\\
 	I would also like to thank Anil Madhavapeddy for allowing me to use his laptop for the duration of the dissertation, and being a very supportive DoS.\\
-	Finally I'd like to thank my friends and family for supporting me through my final year.
+	Finally I would like to thank my friends and family for supporting me through my final year.
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% now for the chapters
@@ -133,9 +133,9 @@
 	\pagestyle{headings}
 	
 	\chapter{Introduction}
-	Blockchain technology has existed for a long time, but the definition of 'blockchain' has changed drastically since its conception.
-	Previously used just to describe a data structure, the term 'blockchain' is now widely used to also describe the accompanying consensus mechanisms.
-	This is mainly due to the increasing popularity of cryptocurrencies such as Bitcoin \cite{Bitcoin} which use the 'Proof of Work' algorithm to solve the double spending problem.
+	Blockchain technology has existed for a long time, but the definition of `blockchain' has changed drastically since its conception.
+	Previously used just to describe a data structure, the term `blockchain' is now widely used to also describe the accompanying consensus mechanisms.
+	This is mainly due to the increasing popularity of cryptocurrencies such as Bitcoin \cite{Bitcoin} which use the `Proof of Work' algorithm to solve the double spending problem.
 	Blockchain is undoubtedly the most important technology in the field of cryptocurrencies, where no single client can be trusted, however, it also has many use cases outside this sector.
 	For instance, it can be used in situations where clients \textit{can} be trusted like a hospital maintaining internal medical records, or a bank wishing to record transactions from many of its own distributed clients.\\
 	
@@ -310,7 +310,7 @@ end
 		The result of this is a functor, \texttt{Log}, which can be used to create a Log module with either an in-memory or on-disc backend.
 		\subsubsection*{Development Environment}
 		When developing a large scale system with OCaml, there are a couple of build systems available to use. 
-		'jbuilder' \cite{jbuilder} is one of these systems which is becoming increasingly popular and is used daily by hundreds of developers.
+		`jbuilder' \cite{jbuilder} is one of these systems which is becoming increasingly popular and is used daily by hundreds of developers.
 		jbuilder allows the developer to specify arbitrary directory structures containing executables, libraries and more.
 		I set up my project to compile a blockchain library which included the interface for running both a Leader and Participant node. 
 		I also defined multiple executables for running both the Leader and Participants in example and test cases. 
@@ -323,7 +323,7 @@ end
 
 	\subsubsection*{Lwt}
 		A library which I spent some time familiarising myself with was Lwt \cite{Lwt}. 
-		Lwt provides a way of interacting with threads in OCaml, although in Lwt they are known as 'Promises'.
+		Lwt provides a way of interacting with threads in OCaml, although in Lwt they are known as `Promises'.
 		\begin{lstlisting}[caption={Lwt Promises}\label{lst:lwt}]
 val Lwt.return : 'a -> 'a Lwt.t 
 val Lwt_main.run : 'a Lwt.t -> 'a
@@ -406,7 +406,7 @@ end
 	In order to validate that these libraries fulfil the necessary criteria to be used as a blockchain, I took some time to investigate the semantic properties of the primitives they expose. 
 	Whilst there is no universally agreed-upon definition of a blockchain, I have used the following criteria to define the blockchain:
 	\begin{enumerate}
-		\item Data is stored in 'blocks'.
+		\item Data is stored in `blocks'.
 		\item Blocks are ordered in a tree structure where each block contains the hash its parent block.
 	\end{enumerate}
 	This definition makes no mention of consensus, and in this project I have made a clear separation between data structures and the consensus used to synchronise them.
@@ -470,7 +470,7 @@ type log_item =
 	This imposes an ordering of log items, and means that any changes to previous log items, which will create a new block with a new address, will not be seen as part of the log. 
 	As the following section details, merging logs causes new \texttt{Merge} blocks to be created with more than one log item.
 	Whilst this can change the semantics of the chain of pointers between the above log items, the blockchain data structure used in this project is never merged into, so only ever contains \texttt{Value} blocks containing singular log items.
-	Therefore it can be concluded that an Ezirmin Log satisfies both of my conditions to be considered a blockchain, with the definition of a 'Block' in this case being a timestamped Ezirmin log item.
+	Therefore it can be concluded that an Ezirmin Log satisfies both of my conditions to be considered a blockchain, with the definition of a `Block' in this case being a timestamped Ezirmin log item.
 
 	\subsubsection*{Merging Ezirmin Logs}
 	Aside from using an Ezirmin Log as the blockchain data structure for this project, I also use a \textit{mempool} log to retrieve updates/transactions from remote mempools. 
@@ -585,7 +585,7 @@ type log_item =
 			Why is this useful? 
 			Well, this allows us to make guarantees on the validity of the blockchain based on the simple assumption that more that 50\% of the workforce is genuine.
 			If we assume that the longest chain of blocks is the correct one, then in order to create a sequence of biased transactions, we would have to create a chain longer than the correct one. 
-			This would require an equal number of 'Proof of Work's, which, due to the random nature of block mining, would require more than 50\% of the workforce.
+			This would require an equal number of `Proof of Work's, which, due to the random nature of block mining, would require more than 50\% of the workforce.
 			Whilst it may be possible to maintain an equally sized chain with less that 50\% of the workforce for a short period of time, the chances of this decrease rapidly as time passes.
 			All in all this means that the longer a block has been in the chain, the more likely it is that the block is valid.\\
 
@@ -603,8 +603,8 @@ type log_item =
 			This is significant, as it provides a 'waiting room' for any transactions that have not yet been validated.  
 
 			\subsubsection*{Proof of Stake}
-			The Proof of Stake (PoS) algorithm is used by some cryptocurrencies and works by randomly allowing participants to create (or 'forge') a single block.
-			However, the probability that a participant is chosen to 'forge' a block, is weighted by its stake, such that participants with higher stakes in the blockchain are more likely to be chosen to forge a block.\\
+			The Proof of Stake (PoS) algorithm is used by some cryptocurrencies and works by randomly allowing participants to create (or `forge') a single block.
+			However, the probability that a participant is chosen to `forge' a block, is weighted by its stake, such that participants with higher stakes in the blockchain are more likely to be chosen to forge a block.\\
 
 			So, why is PoS desirable? 
 			By far the most convincing reason for using PoS over PoW, is that there is no need to waste lots of energy in the process of mining. 
@@ -613,7 +613,7 @@ type log_item =
 
 			One of the flaws of PoS is that it does not have such a strong deterrent against attacks.
 			With PoW, attacks require huge amounts of computational power and it is likely that to create an attack, you would have to spend more on hardware than you would gain. 
-			PoS doesn't have this same built in mechanism, and so there have been many suggested schemes for increasing the safety of PoS networks.
+			PoS does not have this same built in mechanism, and so there have been many suggested schemes for increasing the safety of PoS networks.
 			For example, it is possible that participants should need to pay some form of deposit before forging blocks, which can be slashed if they break any rules. 
 			PoS also suffers from the same problem as PoW in that it does not generalise well. 
 			It is another example of a consensus mechanism designed for networks with a strong notion of Stake and with minimal trust in any individual participant.
@@ -622,17 +622,17 @@ type log_item =
 			Paxos is a family of consensus protocols which can be used to guarantee consistency in distributed systems. 
 			It was first proposed in a paper by Leslie Lamport in 1998 \cite{Paxos}, although the paper was first submitted in 1990.
 			Named after a fictitious civilisation living on the island of Paxos, the algorithm puts forward a way for any number of nodes to propose and agree on a value.
-			Participating nodes belong to various roles, one of which is known as a 'Proposer' or Leader.\\
+			Participating nodes belong to various roles, one of which is known as a `Proposer' or Leader.\\
 
 			The main part of the algorithm is split into two sections, propose and accept.
-			In the first stage, a Proposer decides that it wants to propose a value and then broadcasts out a 'Prepare' message to a quorum of 'Acceptors'.
-			Acceptors will then decide if they want to make a 'Promise' which is a commitment to accepting that proposal in the future. 
-			If a quorum of promises is received by the Proposer, then it will assign a value to its proposal and will again send an 'Accept Request' out to a quorum of Acceptors.
-			Finally, if enough 'Accept' messages are received then the Proposer can be certain that the value has been agreed upon by consensus.\\
+			In the first stage, a Proposer decides that it wants to propose a value and then broadcasts out a `Prepare' message to a quorum of `Acceptors'.
+			Acceptors will then decide if they want to make a `Promise' which is a commitment to accepting that proposal in the future. 
+			If a quorum of promises is received by the Proposer, then it will assign a value to its proposal and will again send an `Accept Request' out to a quorum of Acceptors.
+			Finally, if enough `Accept' messages are received then the Proposer can be certain that the value has been agreed upon by consensus.\\
 
 			This algorithm has been proved to be consistent but it also has a lot of complexity and a lot of different variants. 
 			The combination of different roles and states makes it easy to implement incorrectly.
-			It is also important to consider that Paxos describes a 'family' of algorithms, with some parts left deliberately unspecified, and choosing how to implement these is not a trivial decision.
+			It is also important to consider that Paxos describes a `family' of algorithms, with some parts left deliberately unspecified, and choosing how to implement these is not a trivial decision.
 			The final issue with Paxos is that it cannot guarantee progress.
 			Whilst it enforces conditions which make it unlikely that progress will not be made, it is still theoretically possible for the mechanism to stall indefinitely.
 
@@ -648,7 +648,7 @@ type log_item =
 			Each term effectively signals a time period where a particular server is the leader. 
 			A term starts with a leadership election when a follower transitions into the candidate state, increments its term number and requests votes from other servers. 
 			It will wait for a majority of votes and then elect itself the leader, unless it times out or receives a message from another leader with a greater term number. 
-			Typically, these leader election processes are triggered when a follower doesn't receive a heartbeat message from the leader for longer than a given time.
+			Typically, these leader election processes are triggered when a follower does not receive a heartbeat message from the leader for longer than a given time.
 			In the pathological case, the vote can be split between leaders, triggering a new election which is also split and so on.
 			However, Raft uses randomised election timeouts to avoid this problem.
 			Additionally, Raft also prescribes some restrictions on the servers which can be elected leader so as to avoid newly elected leaders overwriting previously appended log items.\\
@@ -691,7 +691,7 @@ end
 			\subsubsection*{Participants}
 			Participants, in contrast to leaders, can request transactions to be added to the blockchain. 
 			This is done by writing a transaction to a local mempool, which is then read by the leader.
-			Validation can of this transaction can also happen at this stage, but as we'll see later, it cannot filter out all invalid transactions, and only exists to ease load on the leader.\\
+			Validation can of this transaction can also happen at this stage, but it cannot filter out all invalid transactions, and only exists to ease load on the leader.\\
 
 			\begin{lstlisting}[caption={Participant Specification}\label{lst:partspec}]
 module type I_LogStringCoder = sig
@@ -915,7 +915,7 @@ end
 				If they occurred at a later point in time, then they would be tracked by future leader polls.
 			\end{enumerate}
 
-			These lead very naturally onto a less na{\"i}ve algorithm for retrieving updates which only adds updates that have existed for more than one 'poll cycle'.
+			These lead very naturally onto a less na{\"i}ve algorithm for retrieving updates which only adds updates that have existed for more than one `poll cycle'.
 			Instead of maintaining a single cursor to the latest-known item, another cursor is now maintained to the previous latest-known item. 
 			I will refer to these as the \texttt{latest\_known} and \texttt{previous\_latest\_known} items.
 			After merging the newest set of updates, a leader can be sure that no more missed transactions will be added before the \texttt{latest\_known} item, and after the \texttt{previous\_latest\_known} item. 
@@ -1021,7 +1021,7 @@ latest_known_cursor := get_new_latest_cursor;;
 		This means that the history of the mempool according to that cursor is not changed by any subsequent merge operations.
 		Consequently, any \textit{missed} transactions will not be visible using this approach.\\
 
-		This now begs the question 'How can the new approach, which uses out-of-date cursors, still be valid?'.
+		This now begs the question ``How can the new approach, which uses out-of-date cursors, still be valid?''.
 		The answer to this is that, the new approach only uses the cursors to perform timestamp comparisons.
 		The result of these comparisons is the same whether a cursor to the items in the out-of-date mempool or a cursor to the items in the new mempool is used.\\
 

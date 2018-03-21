@@ -407,20 +407,20 @@ end
 	I will then present an improved mechanism which is used in the project and guarantees that no transactions in participant mempools are missed.
 
 	\section{System Architecture}\label{sec:sysarch}
-	The Architecture for the system I have built can be split up into two main categories: the system from the perspective of a `Leader' node and from a `Participant' or `Worker' node.
-	In this model, the Leader node has total responsibility for the state of the blockchain and for committing new transactions.
+	The Architecture for this project can be viewed from two main perspectives: that of the `Leader' node and those of `Participant' or `Worker' nodes.
+	The Leader node has total responsibility for the state of the blockchain and for committing new transactions.
 	Participants exist to request transactions to be added to the blockchain and also to view the blockchain. 
-	Participants view the blockchain by pulling the latest copy   over a two-way ssh connection which is maintained with the Leader.
+	Participants view the blockchain by retrieving the latest copy over an SSH connection with the Leader.
 	Participants request for transactions to be committed by writing to their local mempool. 
-	The Leader periodically polls the Participant mempools to find new transactions to add to the blockchain.
+	The Leader periodically polls the Participant mempools, again over an SSH connection, to find new transactions to add to the blockchain.
 	It is also possible for a Participant node to exist on the same physical machine as the Leader, in which case the leader sources updates directly from the mempool, rather than over an ssh connection. 
 	Figure \ref{fig:sysarch} shows how the architecture for this system is organised.\\	
 
 	\begin{figure}
 		\centering
 		\includegraphics[width=16cm]{figs/System_Architecture.png}
-		\label{fig:sysarch}
 		\caption{An overview of the leader based blockchain architecture}
+		\label{fig:sysarch}
 	\end{figure}
 
 	\section{The Blockchain Data Structure}\label{sec:datastructure}

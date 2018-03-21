@@ -413,6 +413,7 @@ end
 	Participants view the blockchain by retrieving the latest copy over an SSH connection with the Leader.
 	Participants request for transactions to be committed by writing to their local mempool. 
 	The Leader periodically polls the Participant mempools, again over an SSH connection, to find new transactions to add to the blockchain.
+	When a poll finds new transactions, it will either commit them all, or in the case that a validator function is supplied, it will retrieve all current items in the blockchain and use these to filter out invalid transactions before committing.
 	It is also possible for a Participant node to exist on the same physical machine as the Leader, in which case the leader sources updates directly from the mempool, rather than over an ssh connection. 
 	Figure \ref{fig:sysarch} shows how the architecture for this system is organised.\\	
 
@@ -597,108 +598,108 @@ type log_item =
 	Building consensus was by far the most important part of work completed for this project. 
 	In order to guide the design of the consensus mechanism, I completed an extensive amount of research on existing algorithms
 	This section will briefly summarise this research and my conclusions about their suitability for the project. 
-	The resulting design for consensus is a leader based approach, where participant nodes can commit transactions to a mempool.
-	This mempool is then polled for updates by the leader, and these updates are then validated and committed to the main blockchain.
-	This blockchain can be read by all participants, and provides a definitive source of ordered, committed transactions.
+	The resulting design for consensus is a leader based approach, where Participants can commit transactions to a mempool.
+	The Leader polls these mempools for updates, which are validated and then committed to the blockchain.
+	This blockchain can be read by all Participants, and provides a definitive source of ordered, committed transactions.
 
-		\subsection{Building Consensus}
-			\subsubsection*{Proof of Work}
-			%TODO: Use a diagram,
-			Proof of Work (PoW) is a deceptively simple consensus mechanism, used by most cryptocurrencies to avoid the double spending problem.
-			Transactions are contained within blocks which can be broadcast out to the network of participating nodes. 
-			Whenever a block is received by a participating node, the node checks that the block contains a proof of computational work done. 
-			This proof usually takes the form of a random sequence of data (this is known as a nonce) appended to the end of the block, causing the block's hash to be prefixed with a set number of 0s.
-			This acts as a proof of computational work, because the data appended to the end of a block can only be found by a brute force method called mining, but can also be verified easily by simply computing the block's hash.\\
-			
-			Why is this useful? 
-			Well, this allows us to make guarantees on the validity of the blockchain based on the simple assumption that more that 50\% of the workforce is genuine.
-			If we assume that the longest chain of blocks is the correct one, then in order to create a sequence of biased transactions, we would have to create a chain longer than the correct one. 
-			This would require an equal number of `Proof of Work's, which, due to the random nature of block mining, would require more than 50\% of the workforce.
-			Whilst it may be possible to maintain an equally sized chain with less that 50\% of the workforce for a short period of time, the chances of this decrease rapidly as time passes.
-			All in all this means that the longer a block has been in the chain, the more likely it is that the block is valid.\\
+	\subsection{Building Consensus}
+	\subsubsection*{Proof of Work}
+	%TODO: Use a diagram,
+	Proof of Work (PoW) is a deceptively simple consensus mechanism, used by most cryptocurrencies to avoid the double spending problem.
+	Transactions are contained within blocks which can be broadcast out to the network of participating nodes. 
+	Whenever a block is received by a participating node, the node checks that the block contains a proof of computational work done. 
+	This proof usually takes the form of a random sequence of data (this is known as a nonce) appended to the end of the block, causing the block's hash to be prefixed with a set number of 0s.
+	This acts as a proof of computational work, because the data appended to the end of a block can only be found by a brute force method called mining, but can also be verified easily by simply computing the block's hash.\\
+	
+	Why is this useful? 
+	Well, this makes a guarantee on the validity of the blockchain based on the simple assumption that more that 50\% of the workforce is genuine.
+	That is, ifm we assume that the longest chain of blocks is the correct one, then in order to create a sequence of biased transactions, we would have to create a chain longer than the correct one. 
+	This would require an equal number of `Proof of Work's, which, due to the random nature of block mining, would require more than 50\% of the workforce.
+	Whilst it may be possible to maintain an equally sized chain with less that 50\% of the workforce for a short period of time, the chances of this decrease rapidly as time passes.
+	All in all this means that the longer a block has been in the chain, the more likely it is that the block is valid.\\
 
-			Whilst this forms a very effective mechanism for achieving consensus, there are also some considerable downsides to using a PoW approach to consensus. 
-			Firstly, there is a huge amount of computational work wasted in the process of mining. 
-			The effect of this is energy consumption \cite{BitcoinEnergy} and wastage to a level which can cause serious environmental harm.
-			PoW also does not generalise well outside of the scope of cryptocurrencies.
-			It assumes no trust in any participants which may not be a suitable model for an application. 
-			Additionally, it also assumes that miners can be rewarded, usually with cryptocurrency, but this incentive is ad hoc and may not exist in other applications.
-			
-			\subsubsection*{Mempools}
-			Mempools are an important part of the design of Bitcoin, and whilst they are not inherently linked to the Proof of Work consensus algorithm, they are worth investigating. 
-			When a Bitcoin transaction is made, it is first written into what is known as a Mempool. 
-			This transaction can then be seen by participating miners, who can then choose to put this in the next block that they mine. 
-			This is significant, as it provides a `waiting room' for any transactions that have not yet been validated.  
+	Whilst this forms a very effective mechanism for achieving consensus, there are also some considerable downsides to using a PoW approach to consensus. 
+	Firstly, there is a huge amount of computational work wasted in the process of mining. 
+	The effect of this is energy consumption \cite{BitcoinEnergy} and wastage to a level which can cause serious environmental harm.
+	PoW also does not generalise well outside of the scope of cryptocurrencies.
+	It assumes no trust in any participants which may not be a suitable model for an application. 
+	Additionally, it also assumes that miners can be rewarded, usually with cryptocurrency, but this incentive is ad hoc and may not exist in other applications.
+	
+	\subsubsection*{Mempools}
+	Mempools are an important part of the design of Bitcoin, and whilst they are not inherently linked to the Proof of Work consensus algorithm, they are worth investigating. 
+	When a Bitcoin transaction is made, it is first written into what is known as a Mempool. 
+	This transaction can then be seen by participating miners, who can then choose to put this in the next block that they mine. 
+	This is significant, as it provides a `waiting room' for any transactions that have not yet been validated.  
 
-			\subsubsection*{Proof of Stake}
-			The Proof of Stake (PoS) algorithm is used by some cryptocurrencies and works by randomly allowing participants to create (or `forge') a single block.
-			However, the probability that a participant is chosen to `forge' a block, is weighted by its stake, such that participants with higher stakes in the blockchain are more likely to be chosen to forge a block.\\
+	\subsubsection*{Proof of Stake}
+	The Proof of Stake (PoS) algorithm is used by some cryptocurrencies and works by randomly allowing participants to create (or `forge') a single block.
+	However, the probability that a participant is chosen to `forge' a block, is weighted by its stake, such that participants with higher stakes in the blockchain are more likely to be chosen to forge a block.\\
 
-			So, why is PoS desirable? 
-			By far the most convincing reason for using PoS over PoW, is that there is no need to waste lots of energy in the process of mining. 
-			This hugely reduces the environmental impacts of scaling a PoS network.
-			Using PoS also allows trust to be distributed according to an arbitrary heuristic which can be desirable property in some applications.\\
+	So, why is PoS desirable? 
+	By far the most convincing reason for using PoS over PoW, is that there is no need to waste lots of energy in the process of mining. 
+	This hugely reduces the environmental impacts of scaling a PoS network.
+	Using PoS also allows trust to be distributed according to an arbitrary heuristic which can be desirable property in some applications.\\
 
-			One of the flaws of PoS is that it does not have such a strong deterrent against attacks.
-			With PoW, attacks require huge amounts of computational power and it is likely that to create an attack, you would have to spend more on hardware than you would gain. 
-			PoS does not have this same built in mechanism, and so there have been many suggested schemes for increasing the safety of PoS networks.
-			For example, it is possible that participants should need to pay some form of deposit before forging blocks, which can be slashed if they break any rules. 
-			PoS also suffers from the same problem as PoW in that it does not generalise well. 
-			It is another example of a consensus mechanism designed for networks with a strong notion of Stake and with minimal trust in any individual participant.
+	One of the flaws of PoS is that it does not have such a strong deterrent against attacks.
+	With PoW, attacks require huge amounts of computational power and it is likely that to create an attack, you would have to spend more on hardware than you would gain. 
+	PoS does not have this same built in mechanism, and so there have been many suggested schemes for increasing the safety of PoS networks.
+	For example, it is possible that participants should need to pay some form of deposit before forging blocks, which can be slashed if they break any rules. 
+	PoS also suffers from the same problem as PoW in that it does not generalise well. 
+	It is another example of a consensus mechanism designed for networks with a strong notion of Stake and with minimal trust in any individual participant.
 
-			\subsubsection*{Paxos}
-			Paxos is a family of consensus protocols which can be used to guarantee consistency in distributed systems. 
-			It was first proposed in a paper by Leslie Lamport in 1998 \cite{Paxos}, although the paper was first submitted in 1990.
-			Named after a fictitious civilisation living on the island of Paxos, the algorithm puts forward a way for any number of nodes to propose and agree on a value.
-			Participating nodes belong to various roles, one of which is known as a `Proposer' or Leader.\\
+	\subsubsection*{Paxos}
+	Paxos is a family of consensus protocols which can be used to guarantee consistency in distributed systems. 
+	It was first proposed in a paper by Leslie Lamport in 1998 \cite{Paxos}, although the paper was first submitted in 1990.
+	Named after a fictitious civilisation living on the island of Paxos, the algorithm puts forward a way for any number of nodes to propose and agree on a value.
+	Participating nodes belong to various roles, one of which is known as a `Proposer' or Leader.\\
 
-			The main part of the algorithm is split into two sections, propose and accept.
-			In the first stage, a Proposer decides that it wants to propose a value and then broadcasts out a `Prepare' message to a quorum of `Acceptors'.
-			Acceptors will then decide if they want to make a `Promise' which is a commitment to accepting that proposal in the future. 
-			If a quorum of promises is received by the Proposer, then it will assign a value to its proposal and will again send an `Accept Request' out to a quorum of Acceptors.
-			Finally, if enough `Accept' messages are received then the Proposer can be certain that the value has been agreed upon by consensus.\\
+	The main part of the algorithm is split into two sections, propose and accept.
+	In the first stage, a Proposer decides that it wants to propose a value and then broadcasts out a `Prepare' message to a quorum of `Acceptors'.
+	Acceptors will then decide if they want to make a `Promise' which is a commitment to accepting that proposal in the future. 
+	If a quorum of promises is received by the Proposer, then it will assign a value to its proposal and will again send an `Accept Request' out to a quorum of Acceptors.
+	Finally, if enough `Accept' messages are received then the Proposer can be certain that the value has been agreed upon by consensus.\\
 
-			This algorithm has been proved to be consistent but it also has a lot of complexity and a lot of different variants. 
-			The combination of different roles and states makes it easy to implement incorrectly.
-			It is also important to consider that Paxos describes a `family' of algorithms, with some parts left deliberately unspecified, and choosing how to implement these is not a trivial decision.
-			The final issue with Paxos is that it cannot guarantee progress.
-			Whilst it enforces conditions which make it unlikely that progress will not be made, it is still theoretically possible for the mechanism to stall indefinitely.
+	This algorithm has been proved to be consistent but it also has a lot of complexity and a lot of different variants. 
+	The combination of different roles and states makes it easy to implement incorrectly.
+	It is also important to consider that Paxos describes a `family' of algorithms, with some parts left deliberately unspecified, and choosing how to implement these is not a trivial decision.
+	The final issue with Paxos is that it cannot guarantee progress.
+	Whilst it enforces conditions which make it unlikely that progress will not be made, it is still theoretically possible for the mechanism to stall indefinitely.
 
-			\subsubsection*{Raft}
-			Raft \cite{Raft} is an algorithm that was designed to be equivalent and as efficient as Paxos, however, it also places a much greater emphasis on comprehensibility.
-			It uses the notion of a \textit{strong leader}, which is an elected server that has total control over which log entries are accepted.
-			There are two other types of server, a \textit{follower} and a \textit{candidate}. 
-			Followers are completely passive, and only respond to requests from leaders and candidates. 
-			A candidate is a server that has put itself forward for election.\\
+	\subsubsection*{Raft}
+	Raft \cite{Raft} is an algorithm that was designed to be equivalent and as efficient as Paxos, however, it also places a much greater emphasis on comprehensibility.
+	It uses the notion of a \textit{strong leader}, which is an elected server that has total control over which log entries are accepted.
+	There are two other types of server, a \textit{follower} and a \textit{candidate}. 
+	Followers are completely passive, and only respond to requests from leaders and candidates. 
+	A candidate is a server that has put itself forward for election.\\
 
-			So how does the algorithm operate? 
-			Time in Raft is split into \textit{terms} which are labelled by a monotonically increasing integer. 
-			Each term effectively signals a time period where a particular server is the leader. 
-			A term starts with a leadership election when a follower transitions into the candidate state, increments its term number and requests votes from other servers. 
-			It will wait for a majority of votes and then elect itself the leader, unless it times out or receives a message from another leader with a greater term number. 
-			Typically, these leader election processes are triggered when a follower does not receive a heartbeat message from the leader for longer than a given time.
-			In the pathological case, the vote can be split between leaders, triggering a new election which is also split and so on.
-			However, Raft uses randomised election timeouts to avoid this problem.
-			Additionally, Raft also prescribes some restrictions on the servers which can be elected leader so as to avoid newly elected leaders overwriting previously appended log items.\\
-			
-			Raft is an simple algorithm that is easy to understand, but it also guarantees the Log Matching Property that if two logs contain a log entry with the same index and term, then that entry, and all preceding entries will be identical.
+	So how does the algorithm operate? 
+	Time in Raft is split into \textit{terms} which are labelled by a monotonically increasing integer. 
+	Each term effectively signals a time period where a particular server is the leader. 
+	A term starts with a leadership election when a follower transitions into the candidate state, increments its term number and requests votes from other servers. 
+	It will wait for a majority of votes and then elect itself the leader, unless it times out or receives a message from another leader with a greater term number. 
+	Typically, these leader election processes are triggered when a follower does not receive a heartbeat message from the leader for longer than a given time.
+	In the pathological case, the vote can be split between leaders, triggering a new election which is also split and so on.
+	However, Raft uses randomised election timeouts to avoid this problem.
+	Additionally, Raft also prescribes some restrictions on the servers which can be elected leader so as to avoid newly elected leaders overwriting previously appended log items.\\
+	
+	Raft is an simple algorithm that is easy to understand, but it also guarantees the Log Matching Property that if two logs contain a log entry with the same index and term, then that entry, and all preceding entries will be identical.
 
-		\subsection{A New Approach}
-		I have build a consensus mechanism that uses a mempool and a simple leader based algorithm. 
-		Because I have implemented a centralised algorithm, my specification has differed slightly from that presented in the \nameref{Requirements Analysis} to take into account differing functional requirements for a leader and for a participant.
-		As I am assuming that all participating nodes can be trusted, it is possible to use a leader based approach without introducing security issues such as the ones tackled by the Proof of Work mechanism. 
-		This approach also reduces the potential complexity of implementing completely decentralised consensus.
-		My approach makes use of the mergeable log data structure provided by Ezirmin, and the synchronisation module that allows updates from a log to be pulled into another.
-		Finally, I have introduced the notion of validation which allows both participants and leader nodes to accept or reject transactions depending on arbitrary conditions.
-		
-			\subsubsection*{Leaders}
-			My consensus mechanism uses the notion of a \textit{strong leader} similar to that used by the Raft protocol. 
-			The leader is chosen statically in order to reduce the complexity of implementation, and it also has a statically defined list of \texttt{remotes} which specifies the location of all participants.
-			The leader is a node which will never actually request transactions to be added to the blockchain, its role is simply to periodically read requests from the mempools of participants, validate them, and then add them to the blockchain.
-			This blockchain can be read by any participant, and is treated as the empirical source of which transactions have been committed and in which order. 
-			That is, any two nodes that read a copy of the blockchain, will always agree on content and ordering of log items in the blockchain, up until the end of the shortest copy (or both copies).\\
+	\subsection{A New Approach}
+	I have build a consensus mechanism that uses a mempool and a simple leader based algorithm. 
+	Because I have implemented a centralised algorithm, my specification has differed slightly from that presented in the \nameref{Requirements Analysis} to take into account differing functional requirements for a leader and for a participant.
+	As I am assuming that all participating nodes can be trusted, it is possible to use a leader based approach without introducing security issues such as the ones tackled by the Proof of Work mechanism. 
+	This approach also reduces the potential complexity of implementing completely decentralised consensus.
+	My approach makes use of the mergeable log data structure provided by Ezirmin, and the synchronisation module that allows updates from a log to be pulled into another.
+	Finally, I have introduced the notion of validation which allows both participants and leader nodes to accept or reject transactions depending on arbitrary conditions.
+	
+	\subsubsection*{Leaders}
+	My consensus mechanism uses the notion of a \textit{strong leader} similar to that used by the Raft protocol. 
+	The leader is chosen statically in order to reduce the complexity of implementation, and it also has a statically defined list of \texttt{remotes} which specifies the location of all participants.
+	The leader is a node which will never actually request transactions to be added to the blockchain, its role is simply to periodically read requests from the mempools of participants, validate them, and then add them to the blockchain.
+	This blockchain can be read by any participant, and is treated as the empirical source of which transactions have been committed and in which order. 
+	That is, any two nodes that read a copy of the blockchain, will always agree on content and ordering of log items in the blockchain, up until the end of the shortest copy (or both copies).\\
 
-			\begin{lstlisting}[caption={Leader Specification}\label{lst:leaderspec}]
+	\begin{lstlisting}[caption={Leader Specification}\label{lst:leaderspec}]
 module type I_LeaderConfig = sig
   type t
   module LogCoder: Participant.I_LogStringCoder with type t = t    
@@ -711,17 +712,17 @@ end
 module MakeLeader (Config: I_LeaderConfig) : I_Leader = struct
   ...
 end
-			\end{lstlisting}
+	\end{lstlisting}
 
-			Listing \ref{lst:leaderspec} is the specification of the leader module, which differs slightly from the centralised specification presented in the \nameref{Requirements Analysis}.
-			In particular, the \texttt{init\_leader} function will perform an initialisation step, and then return a function which, when executed, will actually start the consensus process.
+	Listing \ref{lst:leaderspec} is the specification of the leader module, which differs slightly from the centralised specification presented in the \nameref{Requirements Analysis}.
+	In particular, the \texttt{init\_leader} function will perform an initialisation step, and then return a function which, when executed, will actually start the consensus process.
 
-			\subsubsection*{Participants}
-			Participants, in contrast to leaders, can request transactions to be added to the blockchain. 
-			This is done by writing a transaction to a local mempool, which is then read by the leader.
-			Validation can of this transaction can also happen at this stage, but it cannot filter out all invalid transactions, and only exists to ease load on the leader.\\
+	\subsubsection*{Participants}
+	Participants, in contrast to leaders, can request transactions to be added to the blockchain. 
+	This is done by writing a transaction to a local mempool, which is then read by the leader.
+	Validation can of this transaction can also happen at this stage, but it cannot filter out all invalid transactions, and only exists to ease load on the leader.\\
 
-			\begin{lstlisting}[caption={Participant Specification}\label{lst:partspec}]
+	\begin{lstlisting}[caption={Participant Specification}\label{lst:partspec}]
 module type I_LogStringCoder = sig
   type t
   val encode_string: t -> string
@@ -742,324 +743,327 @@ end
 module Make(Config: I_ParticipantConfig): I_Participant with type t = Config.t = struct
   ...
 end
-			\end{lstlisting}
+	\end{lstlisting}
 
-			Listing \ref{lst:partspec} is a specification that shines a light on the role of participants and the functionality they provide.
-			The module includes the ability to define custom data types that can be stored on the blockchain, to define how to validate transactions, to read from the blockchain, and to attempt to write to the blockchain by writing to a mempool.
+	Listing \ref{lst:partspec} is a specification that shines a light on the role of participants and the functionality they provide.
+	The module includes the ability to define custom data types that can be stored on the blockchain, to define how to validate transactions, to read from the blockchain, and to attempt to write to the blockchain by writing to a mempool.
 
-			\subsubsection*{Retrieving local updates}
-			The mechanism used by the leader to read mempool updates is different for the situations when the participant is on the same machine, and when it is on a remote machine. 
-			Here, I will detail the process of reading updates from a participant on the same machine as the leader.\\
+	\subsubsection*{Retrieving local updates}
+	The mechanism used by the leader to read mempool updates is different for the situations when the participant is on the same machine, and when it is on a remote machine. 
+	Here, I will detail the process of reading updates from a participant on the same machine as the leader.\\
 
-			\begin{figure}
-				\begin{center}
-					\begin{tikzpicture}[
-						block/.style={circle, draw=black!100, very thick, minimum size=15mm},
-						invis/.style={circle, draw=black!100, minimum size=15mm},
-						label/.style={rectangle, text width=2cm, align=center}
-					]
-					\node[invis] (invis) {\texttt{W}};
-					\node[block] (block1) [right=of invis] {};
-					\node[block] (block2) [right=of block1] {};
-					\node[label] (label1) [above=of block2] {\texttt{LKC}};
-					\node[block] (block3) [right=of block2, dashed] {};
-					\node[block] (block4) [right=of block3, dashed] {};
-					\node[label] (label2) [above=of block4] {\texttt{LC}};
-					\draw[->] (label2.south) -- (block4.north);
-					\draw[->] (label1.south) -- (block2.north);
-					\begin{scope}[very thick, -stealth]
-					\draw[<-] (invis.east) -- (block1.west);
-					\draw[<-] (block1.east) -- (block2.west);
-					\draw[<-] (block2.east) -- (block3.west);
-					\draw[<-] (block3.east) -- (block4.west);
-					\path[dotted, ->] (block4.north)+(-1.5mm,0) edge  [bend right=40]  ([xshift=1.5mm]block3.north);
-					\path[dotted, ->] (block3.north)+(-1.5mm,0) edge  [bend right=40]  ([xshift=1.5mm]block2.north);
-					\end{scope}
-					\end{tikzpicture}
-					\end{center}
-				\caption{A mempool on a local participant. \texttt{W} indicates the history of a \textit{Worker's} mempool. Blocks with dashed outlines represent transactions that have not yet been added to the blockchain. \texttt{LKC} and \texttt{LC} are the \textit{Latest Known Cursor} and the \textit{Latest Cursor} respectively.}
-				\label{fig:readlocalpartudpates}
-			\end{figure}
+	\begin{figure}
+		\begin{center}
+			\begin{tikzpicture}[
+				block/.style={circle, draw=black!100, very thick, minimum size=15mm},
+				invis/.style={circle, draw=black!100, minimum size=15mm},
+				label/.style={rectangle, text width=2cm, align=center}
+			]
+			\node[invis] (invis) {\texttt{W}};
+			\node[block] (block1) [right=of invis] {};
+			\node[block] (block2) [right=of block1] {};
+			\node[label] (label1) [above=of block2] {\texttt{LKC}};
+			\node[block] (block3) [right=of block2, dashed] {};
+			\node[block] (block4) [right=of block3, dashed] {};
+			\node[label] (label2) [above=of block4] {\texttt{LC}};
+			\draw[->] (label2.south) -- (block4.north);
+			\draw[->] (label1.south) -- (block2.north);
+			\begin{scope}[very thick, -stealth]
+			\draw[<-] (invis.east) -- (block1.west);
+			\draw[<-] (block1.east) -- (block2.west);
+			\draw[<-] (block2.east) -- (block3.west);
+			\draw[<-] (block3.east) -- (block4.west);
+			\path[dotted, ->] (block4.north)+(-1.5mm,0) edge  [bend right=40]  ([xshift=1.5mm]block3.north);
+			\path[dotted, ->] (block3.north)+(-1.5mm,0) edge  [bend right=40]  ([xshift=1.5mm]block2.north);
+			\end{scope}
+			\end{tikzpicture}
+			\end{center}
+		\caption{A mempool on a local participant. \texttt{W} indicates the history of a \textit{Worker's} mempool. Blocks with dashed outlines represent transactions that have not yet been added to the blockchain. \texttt{LKC} and \texttt{LC} are the \textit{Latest Known Cursor} and the \textit{Latest Cursor} respectively.}
+		\label{fig:readlocalpartudpates}
+	\end{figure}
 
-			The leader will always maintain a cursor to the latest entry it has read from the participant mempool.
-			When it attempts to find new updates, it will get a new cursor to the latest element of the mempool.
-			The leader can then compare these two cursors, and if the \textit{latest known} cursor points to an entry with an earlier timestamp than the \textit{latest} cursor, then it will add the \textit{latest} item to an accumulator, and then repeat the process with a cursor pointing to the parent of the \textit{latest} node. 
-			Finally, when the cursors match, the items in the accumulator are returned as new updates which can be added to the leader mempool and the \textit{latest known} cursor is updated accordingly.
-			It is important to note that no validation is performed at this stage as no item has been added to the blockchain yet.
-			Figure \ref{fig:readlocalpartudpates} shows how unseen blocks are read sequentially from a mempool until the seen blocks are reached.
+	The leader will always maintain a cursor to the latest entry it has read from the participant mempool.
+	When it attempts to find new updates, it will get a new cursor to the latest element of the mempool.
+	The leader can then compare these two cursors, and if the \textit{latest known} cursor points to an entry with an earlier timestamp than the \textit{latest} cursor, then it will add the \textit{latest} item to an accumulator, and then repeat the process with a cursor pointing to the parent of the \textit{latest} node. 
+	Finally, when the cursors match, the items in the accumulator are returned as new updates which can be added to the leader mempool and the \textit{latest known} cursor is updated accordingly.
+	It is important to note that no validation is performed at this stage as no item has been added to the blockchain yet.
+	Figure \ref{fig:readlocalpartudpates} shows how unseen blocks are read sequentially from a mempool until the seen blocks are reached.
+
+	\subsubsection*{Retrieving remote updates}
+	The previous section demonstrates how updates can be retrieved from a mempool on the same machine as the leader.
+	In this section, I will highlight how updates are retrieved from mempools on remote machines.\\
 	
-			\subsubsection*{Retrieving remote updates}
-			The previous section demonstrates how updates can be retrieved from a mempool on the same machine as the leader.
-			In this section, I will highlight how updates are retrieved from mempools on remote machines.\\
-			
-			Irmin provides a \texttt{Sync} module which allows for the histories of a local and a remote Store to be combined according to a custom merge function.
-			Ezirmin logs build on this functionality by providing a merge strategy which uses the log entry timestamps to order log entries in a merge.
-			Figure \ref{fig:readremotepartudpates} demonstrates how this merge works in a situation where a number of blocks have been added to a single remote participant mempool.
-			The first (and most na{\"i}ve) approach I took to pulling updates from a number of participants, was to sequentially merge updates from all the participants into the leaders mempool.
-			Participants also merge updates from the leader's mempool before adding to their own mempool to increase the shared history and decrease the work required for the leader to perform the merge.
-			After pulling all updates, the leader will traverse its own mempool, finding new updates until it reaches the \textit{latest known} cursor. 
-			Now, the updates can be validated and added to the blockchain, and the \textit{latest known} cursor updated to the latest message in the mempool.\\
+	Irmin provides a \texttt{Sync} module which allows for the histories of a local and a remote Store to be combined according to a custom merge function.
+	Ezirmin logs build on this functionality by providing a merge strategy which uses the log entry timestamps to order log entries in a merge.
+	Figure \ref{fig:readremotepartudpates} demonstrates how this merge works in a situation where a number of blocks have been added to a single remote participant mempool.
+	The first (and most na{\"i}ve) approach I took to pulling updates from a number of participants, was to sequentially merge updates from all the participants into the leaders mempool.
+	Participants also merge updates from the leader's mempool before adding to their own mempool to increase the shared history and decrease the work required for the leader to perform the merge.
+	After pulling all updates, the leader will traverse its own mempool, finding new updates until it reaches the \textit{latest known} cursor. 
+	Now, the updates can be validated and added to the blockchain, and the \textit{latest known} cursor updated to the latest message in the mempool.\\
 
-			\begin{figure}
-				\centering
-				\begin{subfigure}[b]{0.45\textwidth}
-					\centering
-					\begin{tikzpicture}[
-						block/.style={circle, draw=black!100, very thick, minimum size=7mm},
-						invis/.style={circle, draw=black!100, minimum size=9mm},
-						label/.style={rectangle, text width=1.2cm, align=center}
-					]
-					\node[invis] (invis1) {\texttt{L}};
-					\node[invis] (invis2) [above=of invis1] {\texttt{W}};
-					\node[block] (n) [right=5mm of invis1] {};
-					\node[block] (m) [right=5mm of invis2] {};
-					\node[block] (n1) [right=5mm of n] {};
-					\node[block] (n2) [right=5mm of n1] {};
-					\node[label] (latest) [above=of m] {\texttt{LKC}};
-					\draw[->] (latest.south) -- (m.north);
-					\begin{scope}[very thick, -stealth]
-					\draw[<-] (invis1.east) -- (n.west);
-					\draw[<-] (invis2.east) -- (m.west);
-					\draw[<-] (n.east) -- (n1.west);
-					\draw[<-] (n1.east) -- (n2.west);
-					\end{scope}
-					\end{tikzpicture}
-				\caption{Before merge}
-				\end{subfigure}
-				\begin{subfigure}[b]{0.45\textwidth}
-					\centering
-					\begin{tikzpicture}[
-						block/.style={circle, draw=black!100, very thick, minimum size=7mm},
-						invis/.style={circle, draw=black!100, minimum size=9mm},
-						label/.style={rectangle, align=center, text width=1.2cm}
-					]
-					\node[invis] (invis1) {\texttt{L}};
-					\node[invis] (invis2) [above=of invis1] {\texttt{W}};
-					\node[block] (n) [right=5mm of invis1] {};
-					\node[block] (m) [right=5mm of invis2] {};
-					\node[block] (m1) [right=5mm of m] {};
-					\node[block] (m2) [right=5mm of m1] {};
-					\node[block] (n1) [right=5mm of n] {};
-					\node[block] (n2) [right=5mm of n1] {};
-					\node[label] (latest) [above=of m2] {\texttt{LKC}};
-					\draw[->] (latest.south) -- (m2.north);
-					\begin{scope}[very thick, -stealth]
-					\draw[<-] (invis1.east) -- (n.west); 
-					\draw[<-] (m.east) -- (m1.west);
-					\draw[<-] (m1.east) -- (m2.west);
-					\draw[dotted,->] (n1.north) -- (m1.south);
-					\draw[dotted,->] (n2.north) -- (m2.south);
-					\draw[<-] (invis2.east) -- (m.west);
-					\draw[<-] (n.east) -- (n1.west);
-					\draw[<-] (n1.east) -- (n2.west);
-					\end{scope}
-					\end{tikzpicture}
-				\caption{After merge}
-				\end{subfigure}
-				\caption{Merging mempool updates and adding to the blockchain from a single remote participant (below) to leader (above). \texttt{W} and \texttt{L} respectively signify the histories of the \textit{Worker's} and \textit{Leader's} mempools.}	
-				\label{fig:readremotepartudpates}
-			\end{figure}
+	\begin{figure}
+		\centering
+		\begin{subfigure}[b]{0.45\textwidth}
+			\centering
+			\begin{tikzpicture}[
+				block/.style={circle, draw=black!100, very thick, minimum size=7mm},
+				invis/.style={circle, draw=black!100, minimum size=9mm},
+				label/.style={rectangle, text width=1.2cm, align=center}
+			]
+			\node[invis] (invis1) {\texttt{L}};
+			\node[invis] (invis2) [above=of invis1] {\texttt{W}};
+			\node[block] (n) [right=5mm of invis1] {};
+			\node[block] (m) [right=5mm of invis2] {};
+			\node[block] (n1) [right=5mm of n] {};
+			\node[block] (n2) [right=5mm of n1] {};
+			\node[label] (latest) [above=of m] {\texttt{LKC}};
+			\draw[->] (latest.south) -- (m.north);
+			\begin{scope}[very thick, -stealth]
+			\draw[<-] (invis1.east) -- (n.west);
+			\draw[<-] (invis2.east) -- (m.west);
+			\draw[<-] (n.east) -- (n1.west);
+			\draw[<-] (n1.east) -- (n2.west);
+			\end{scope}
+			\end{tikzpicture}
+		\caption{Before merge}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.45\textwidth}
+			\centering
+			\begin{tikzpicture}[
+				block/.style={circle, draw=black!100, very thick, minimum size=7mm},
+				invis/.style={circle, draw=black!100, minimum size=9mm},
+				label/.style={rectangle, align=center, text width=1.2cm}
+			]
+			\node[invis] (invis1) {\texttt{L}};
+			\node[invis] (invis2) [above=of invis1] {\texttt{W}};
+			\node[block] (n) [right=5mm of invis1] {};
+			\node[block] (m) [right=5mm of invis2] {};
+			\node[block] (m1) [right=5mm of m] {};
+			\node[block] (m2) [right=5mm of m1] {};
+			\node[block] (n1) [right=5mm of n] {};
+			\node[block] (n2) [right=5mm of n1] {};
+			\node[label] (latest) [above=of m2] {\texttt{LKC}};
+			\draw[->] (latest.south) -- (m2.north);
+			\begin{scope}[very thick, -stealth]
+			\draw[<-] (invis1.east) -- (n.west); 
+			\draw[<-] (m.east) -- (m1.west);
+			\draw[<-] (m1.east) -- (m2.west);
+			\draw[dotted,->] (n1.north) -- (m1.south);
+			\draw[dotted,->] (n2.north) -- (m2.south);
+			\draw[<-] (invis2.east) -- (m.west);
+			\draw[<-] (n.east) -- (n1.west);
+			\draw[<-] (n1.east) -- (n2.west);
+			\end{scope}
+			\end{tikzpicture}
+		\caption{After merge}
+		\end{subfigure}
+		\caption{Merging mempool updates and adding to the blockchain from a single remote participant (below) to leader (above). \texttt{W} and \texttt{L} respectively signify the histories of the \textit{Worker's} and \textit{Leader's} mempools.}	
+		\label{fig:readremotepartudpates}
+	\end{figure}
 
-			However, this approach is fundamentally flawed and causes many updates to be overlooked by the leader. 
-			This is because of the delays that occur when mempool updates are retrieved over the network from multiple workers.
-			For example, Figure \ref{fig:readremotepartudpatesbroke} demonstrates a situation where there are just two workers. 
-			In this case, updates from the first worker will be merged before the second, however, after the first merge has taken place, the first worker may have added additional transactions. 
-			If these transactions are timestamped before the latest transaction in the second worker's mempool, then when the leader next polls for updates, transactions may be merged to a position in the mempool before the latest known cursor. 
-			This means that they will not be seen by the leader and therefore they will not be added to the blockchain. 
-			I shall refer to these transactions as \textit{missed} transactions, and all others at \textit{tracked} transactions.\\
+	However, this approach is fundamentally flawed and causes many updates to be overlooked by the leader. 
+	This is because of the delays that occur when mempool updates are retrieved over the network from multiple workers.
+	For example, Figure \ref{fig:readremotepartudpatesbroke} demonstrates a situation where there are just two workers. 
+	In this case, updates from the first worker will be merged before the second, however, after the first merge has taken place, the first worker may have added additional transactions. 
+	If these transactions are timestamped before the latest transaction in the second worker's mempool, then when the leader next polls for updates, transactions may be merged to a position in the mempool before the latest known cursor. 
+	This means that they will not be seen by the leader and therefore they will not be added to the blockchain. 
+	I shall refer to these transactions as \textit{missed} transactions, and all others at \textit{tracked} transactions.\\
 
-			\begin{figure}
-				\centering
-				\begin{subfigure}[b]{0.45\textwidth}
-					\centering
-					\begin{tikzpicture}[
-						block/.style={circle, draw=black!100, very thick, minimum size=7mm},
-						invis/.style={circle, draw=black!100, minimum size=9mm},
-						label/.style={rectangle, text width=1.2cm, align=center}
-					]
-					\node[invis] (gentop) {\texttt{W}};
-					\node[invis] (genmiddle) [below=of gentop] {\texttt{L}};
-					\node[invis] (genbottom) [below=of genmiddle] {\texttt{W}};
-					\node[block] (one) [right=5mm of gentop] {1};
-					\node[block] (onemerged) [right=10mm of genmiddle, dashed] {1};
-					\node[block] (two) [right=5mm of one] {2};
-					\node[block] (three) [right=30mm of genbottom] {3};
-					\node[block] (threemerged) [right=20mm of onemerged, dashed] {3};
-					\node[label] (latestknown) [above=of gentop] {\texttt{LKC}};
-					\path[->] (latestknown.south)+(-1.5mm,0) edge  [bend right=40]  (genmiddle.west);
-					\begin{scope}[very thick, -stealth]
-					\draw[<-] (gentop.east) -- (one.west);
-					\draw[dotted, ->] (one.south) -- (onemerged.north) node[midway, left] {Merge};
-					\draw[dotted, ->] (three.north) -- (threemerged.south) node[midway, left] {Merge};
-					\draw[<-] (onemerged.east) -- (threemerged.west);
-					\draw[<-] (one.east) -- (two.west);
-					\draw[<-] (genmiddle.east) -- (onemerged.west);
-					\draw[<-] (genbottom.east) -- (three.west);
-					\end{scope}
-					\end{tikzpicture}
-				\caption{After first sync from leader. Transactions 1 and 3 are merged after the latest known transaction and are therefore \textit{tracked}}
-				\end{subfigure}
-				\begin{subfigure}[b]{0.45\textwidth}
-					\centering
-					\begin{tikzpicture}[
-						block/.style={circle, draw=black!100, very thick, minimum size=7mm},
-						invis/.style={circle, draw=black!100, minimum size=9mm},
-						label/.style={rectangle, text width=1.2cm, align=center}
-					]
-					\node[invis] (gentop) {\texttt{W}};
-					\node[invis] (genmiddle) [below=of gentop] {\texttt{L}};
-					\node[invis] (genbottom) [below=of genmiddle] {\texttt{W}};
-					\node[block] (one) [right=5mm of gentop] {1};
-					\node[block] (onemerged) [right=10mm of genmiddle] {1};
-					\node[block] (two) [right=5mm of one] {2};
-					\node[block] (twomerged) [right=5mm of onemerged, dashed] {2};
-					\node[block] (three) [right=30mm of genbottom] {3};
-					\node[block] (threemerged) [right=20mm of onemerged] {3};
-					\node[label] (latestknown) [above=of threemerged] {\texttt{LKC}};
-					\draw[->] (latestknown.south) -- (threemerged.north);
-					\begin{scope}[very thick, -stealth]
-					\draw[<-] (gentop.east) -- (one.west);
-					\draw[dotted, ->] (two.south) -- (twomerged.north) node[midway, left] {Merge};
-					\draw[<-] (onemerged.east) -- (twomerged.west);
-					\draw[<-] (twomerged.east) -- (threemerged.west);
-					\draw[<-] (one.east) -- (two.west);
-					\draw[<-] (genmiddle.east) -- (onemerged.west);
-					\draw[<-] (genbottom.east) -- (three.west);
-					\end{scope}
-					\end{tikzpicture}
-					\caption{After second round of leader synchronisation, transaction 2 is merged into the mempool before the latest known transaction and is therefore \textit{missed}}
-				\end{subfigure}
-				\caption{In this diagram, time flows from left to right. 
-				The sequential nature of mempool merges causes transaction 2 to be merged into the history of the mempool before the transaction pointed to by the latest known cursor. 
-				2 will therefore not be added to the blockchain.}	
-				\label{fig:readremotepartudpatesbroke}
-			\end{figure}
+	\begin{figure}
+		\centering
+		\begin{subfigure}[b]{0.45\textwidth}
+			\centering
+			\begin{tikzpicture}[
+				block/.style={circle, draw=black!100, very thick, minimum size=7mm},
+				invis/.style={circle, draw=black!100, minimum size=9mm},
+				label/.style={rectangle, text width=1.2cm, align=center}
+			]
+			\node[invis] (gentop) {\texttt{W}};
+			\node[invis] (genmiddle) [below=of gentop] {\texttt{L}};
+			\node[invis] (genbottom) [below=of genmiddle] {\texttt{W}};
+			\node[block] (one) [right=5mm of gentop] {1};
+			\node[block] (onemerged) [right=10mm of genmiddle, dashed] {1};
+			\node[block] (two) [right=5mm of one] {2};
+			\node[block] (three) [right=30mm of genbottom] {3};
+			\node[block] (threemerged) [right=20mm of onemerged, dashed] {3};
+			\node[label] (latestknown) [above=of gentop] {\texttt{LKC}};
+			\path[->] (latestknown.south)+(-1.5mm,0) edge  [bend right=40]  (genmiddle.west);
+			\begin{scope}[very thick, -stealth]
+			\draw[<-] (gentop.east) -- (one.west);
+			\draw[dotted, ->] (one.south) -- (onemerged.north) node[midway, left] {Merge};
+			\draw[dotted, ->] (three.north) -- (threemerged.south) node[midway, left] {Merge};
+			\draw[<-] (onemerged.east) -- (threemerged.west);
+			\draw[<-] (one.east) -- (two.west);
+			\draw[<-] (genmiddle.east) -- (onemerged.west);
+			\draw[<-] (genbottom.east) -- (three.west);
+			\end{scope}
+			\end{tikzpicture}
+		\caption{After first sync from leader. Transactions 1 and 3 are merged after the latest known transaction and are therefore \textit{tracked}}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.45\textwidth}
+			\centering
+			\begin{tikzpicture}[
+				block/.style={circle, draw=black!100, very thick, minimum size=7mm},
+				invis/.style={circle, draw=black!100, minimum size=9mm},
+				label/.style={rectangle, text width=1.2cm, align=center}
+			]
+			\node[invis] (gentop) {\texttt{W}};
+			\node[invis] (genmiddle) [below=of gentop] {\texttt{L}};
+			\node[invis] (genbottom) [below=of genmiddle] {\texttt{W}};
+			\node[block] (one) [right=5mm of gentop] {1};
+			\node[block] (onemerged) [right=10mm of genmiddle] {1};
+			\node[block] (two) [right=5mm of one] {2};
+			\node[block] (twomerged) [right=5mm of onemerged, dashed] {2};
+			\node[block] (three) [right=30mm of genbottom] {3};
+			\node[block] (threemerged) [right=20mm of onemerged] {3};
+			\node[label] (latestknown) [above=of threemerged] {\texttt{LKC}};
+			\draw[->] (latestknown.south) -- (threemerged.north);
+			\begin{scope}[very thick, -stealth]
+			\draw[<-] (gentop.east) -- (one.west);
+			\draw[dotted, ->] (two.south) -- (twomerged.north) node[midway, left] {Merge};
+			\draw[<-] (onemerged.east) -- (twomerged.west);
+			\draw[<-] (twomerged.east) -- (threemerged.west);
+			\draw[<-] (one.east) -- (two.west);
+			\draw[<-] (genmiddle.east) -- (onemerged.west);
+			\draw[<-] (genbottom.east) -- (three.west);
+			\end{scope}
+			\end{tikzpicture}
+			\caption{After second round of leader synchronisation, transaction 2 is merged into the mempool before the latest known transaction and is therefore \textit{missed}}
+		\end{subfigure}
+		\caption{In this diagram, time flows from left to right. 
+		The sequential nature of mempool merges causes transaction 2 to be merged into the history of the mempool before the transaction pointed to by the latest known cursor. 
+		2 will therefore not be added to the blockchain.}	
+		\label{fig:readremotepartudpatesbroke}
+	\end{figure}
 
-			In order to mitigate this problem, I first examined the nature of these \textit{missed} transactions and noted the following properties:
-			\begin{enumerate}
-				\item Missed transactions must have been added during a merge. If they occurred before the merge had begun, then they would have been tracked. 
-				Alternatively, missed transactions must occur after the latest known cursor from the previous merge. 
-				\item Missed transactions must have been added at a point in time earlier than the transaction pointed to by the latest\_known cursor. 
-				If they occurred at a later point in time, then they would be tracked by future leader polls.
-			\end{enumerate}
+	In order to mitigate this problem, I first examined the nature of these \textit{missed} transactions and noted the following properties:
+	\begin{enumerate}
+		\item Missed transactions must have been added during a merge. If they occurred before the merge had begun, then they would have been tracked. 
+		Alternatively, missed transactions must occur after the latest known cursor from the previous merge. 
+		\item Missed transactions must have been added at a point in time earlier than the transaction pointed to by the latest\_known cursor. 
+		If they occurred at a later point in time, then they would be tracked by future leader polls.
+	\end{enumerate}
 
-			These lead very naturally onto a less na{\"i}ve algorithm for retrieving updates which only adds updates that have existed for more than one `poll cycle'.
-			Instead of maintaining a single cursor to the latest-known item, another cursor is now maintained to the previous latest-known item. 
-			I will refer to these as the \texttt{latest\_known} and \texttt{previous\_latest\_known} items.
-			After merging the newest set of updates, a leader can be sure that no more missed transactions will be added before the \texttt{latest\_known} item, and after the \texttt{previous\_latest\_known} item. 
-			\begin{lstlisting}[caption={Selecting new updates}\label{lst:newupdates}]
+	These lead very naturally onto a less na{\"i}ve algorithm for retrieving updates which only adds updates that have existed for more than one `poll cycle'.
+	Instead of maintaining a single cursor to the latest-known item, another cursor is now maintained to the previous latest-known item. 
+	I will refer to these as the \texttt{latest\_known} and \texttt{previous\_latest\_known} items.
+	After merging the newest set of updates, a leader can be sure that no more missed transactions will be added before the \texttt{latest\_known} item, and after the \texttt{previous\_latest\_known} item.
+	\begin{minipage}{\textwidth}
+	\begin{lstlisting}[caption={Selecting new updates}\label{lst:newupdates}]
 let is_early_enough = is_earlier_or_equal scanning_cursor ~than:latest_known in
 let is_late_enough = is_later scanning_cursor ~than:previous_latest_known in
 match is_early_enough, is_late_enough with
   | Some(false), Some(true) -> (*Item cannot be added to blockchain yet. Move scanning cursor back by one item and loop*)
   | Some(true), Some(true) -> (*Item can be added to blockchain. Add item to accumulator, move cursor back by one item and loop*)
   | _ ->(*Too far back in the mempool, so return item accumulator*)
-			\end{lstlisting}
+	\end{lstlisting}
+	\end{minipage}
+	\\
 
-			Listing \ref{lst:newupdates} shows a snippet of code from within a recursive function to get updates from the mempool, which can be added to the blockchain.
-			This demonstrates a new approach which starts with a newly retrieved cursor, \texttt{scanning\_cursor}, to the latest mempool element and then scans back through the mempool, adding valid items to an accumulator and eventually returning.
-			On each loop, this algorithm will check if the item is valid, adding the item to the accumulator if this is the case, and then either return the accumulator or move the \texttt{scanning\_cursor} to the next item back in the mempool.
-			Every item from the \texttt{latest\_known} item (inclusive) to the \texttt{previous\_latest\_known} item (exclusive) will be added to the blockchain. 
-			Any of the further updates are not safe to add, and will be postponed until the next poll.
-			In the case that both cursors point to the same item (i.e. no new items were retrieved in the latest poll), no items are added as it is always assumed that the \texttt{latest\_known} item is added in the previous poll.
-			The cursors can now be updated as follows, where \texttt{get\_new\_latest\_cursor} will get a cursor to the latest item in the leader's mempool.
-			\begin{lstlisting}
+	Listing \ref{lst:newupdates} shows a snippet of code from within a recursive function to get updates from the mempool, which can be added to the blockchain.
+	This demonstrates a new approach which starts with a newly retrieved cursor, \texttt{scanning\_cursor}, to the latest mempool element and then scans back through the mempool, adding valid items to an accumulator and eventually returning.
+	On each loop, this algorithm will check if the item is valid, adding the item to the accumulator if this is the case, and then either return the accumulator or move the \texttt{scanning\_cursor} to the next item back in the mempool.
+	Every item from the \texttt{latest\_known} item (inclusive) to the \texttt{previous\_latest\_known} item (exclusive) will be added to the blockchain. 
+	Any of the further updates are not safe to add, and will be postponed until the next poll.
+	In the case that both cursors point to the same item (i.e. no new items were retrieved in the latest poll), no items are added as it is always assumed that the \texttt{latest\_known} item is added in the previous poll.
+	The cursors can now be updated as follows, where \texttt{get\_new\_latest\_cursor} will get a cursor to the latest item in the leader's mempool.
+	\begin{lstlisting}
 previous_latest_known_cursor := latest_known_cursor;;
 latest_known_cursor := get_new_latest_cursor;;
-			\end{lstlisting}
-			
-			This approach will not only pick up all the previously missed transactions, but all the tracked ones too.
-			Figure \ref{fig:readremotepartudpatesfixed} demonstrates how this approach would solve the problem presented in Figure \ref{fig:readremotepartudpatesbroke}.\\
+	\end{lstlisting}
+	
+	This approach will not only pick up all the previously missed transactions, but all the tracked ones too.
+	Figure \ref{fig:readremotepartudpatesfixed} demonstrates how this approach would solve the problem presented in Figure \ref{fig:readremotepartudpatesbroke}.\\
 
-		\begin{figure}
+	\begin{figure}
+		\centering
+		\begin{subfigure}[b]{0.45\textwidth}
 			\centering
-			\begin{subfigure}[b]{0.45\textwidth}
-				\centering
-				\begin{tikzpicture}[
-					block/.style={circle, draw=black!100, very thick, minimum size=7mm},
-					invis/.style={circle, draw=black!100, minimum size=9mm},
-					label/.style={rectangle, text width=1.2cm, align=center}
-				]
-				\node[invis] (genmiddle) {\texttt{L}};
-				\node[block] (onemerged) [right=10mm of genmiddle, dashed] {1};
-				\node[block] (threemerged) [right=of onemerged, dashed] {3};
-				\node[label] (prevlatestknown) [above=of genmiddle] {\texttt{PLKC}};
-				\node[label] (latestknown) [right=4mm of prevlatestknown] {\texttt{LKC}};
-				\draw[->] (latestknown.south) -- (genmiddle.north east);
-				\draw[->] (prevlatestknown.south) -- (genmiddle.north);
-				\begin{scope}[very thick, -stealth]
-				\draw[<-] (onemerged.east) -- (threemerged.west);
-				\draw[<-] (genmiddle.east) -- (onemerged.west);
-				\end{scope}
-				\end{tikzpicture}
-			\caption{After first merge, items 1 and 3 have been merged but not added to the blockchain.}
-			\end{subfigure}
-			\begin{subfigure}[b]{0.45\textwidth}
-				\centering
-				\begin{tikzpicture}[
-					block/.style={circle, draw=black!100, very thick, minimum size=7mm},
-					invis/.style={circle, draw=black!100, minimum size=9mm},
-					label/.style={rectangle, text width=1.2cm, align=center}
-				]
-				\node[invis] (genmiddle) {\texttt{L}};
-				\node[block] (onemerged) [right= of genmiddle, dashed] {1};
-				\node[block] (twomerged) [right= of onemerged, dashed] {2};
-				\node[block] (threemerged) [right= of twomerged, dashed] {3};
-				\node[label] (prevlatestknown) [above=of genmiddle] {\texttt{PLKC}};
-				\node[label] (latestknown) [above=of threemerged] {\texttt{LKC}};
-				\draw[->] (prevlatestknown.south) -- (genmiddle.north);
-				\draw[->] (latestknown.south) -- (threemerged.north);
-				\begin{scope}[very thick, -stealth]
-				\draw[<-] (onemerged.east) -- (twomerged.west);
-				\draw[<-] (twomerged.east) -- (threemerged.west);
-				\draw[<-] (genmiddle.east) -- (onemerged.west);
-				\end{scope}
-				\end{tikzpicture}
-				\caption{After second merge, item 2 is now part of the mempool history, and items 1, 2, and 3 can be added to the blockchain.}
-			\end{subfigure}
-			\begin{subfigure}[b]{0.45\textwidth}
-				\centering
-				\begin{tikzpicture}[
-					block/.style={circle, draw=black!100, very thick, minimum size=7mm},
-					invis/.style={circle, draw=black!100, minimum size=9mm},
-					label/.style={rectangle, text width=1.2cm, align=center}
-				]
-				\node[invis] (genmiddle) {\texttt{L}};
-				\node[block] (onemerged) [right= of genmiddle] {1};
-				\node[block] (twomerged) [right= of onemerged] {2};
-				\node[block] (threemerged) [right= of twomerged] {3};
-				\node[label] (latestknown) [above=of threemerged] {\texttt{LKC}};
-				\node[label] (prevlatestknown) [left=of latestknown] {\texttt{PLKC}};
-				\draw[->] (prevlatestknown.south) -- (threemerged.north west);
-				\draw[->] (latestknown.south) -- (threemerged.north);
-				\begin{scope}[very thick, -stealth]
-				\draw[<-] (onemerged.east) -- (twomerged.west);
-				\draw[<-] (twomerged.east) -- (threemerged.west);
-				\draw[<-] (genmiddle.east) -- (onemerged.west);
-				\end{scope}
-				\end{tikzpicture}
-				\caption{After second merge, items 1, 2 and 3 have been added to the blockchain.}
-			\end{subfigure}
-			\caption{Using two cursors, any missed items can be caught and added to the blockchain. \texttt{PLKC} signifies the \textit{Previous Latest Known Cursor}.}	
-			\label{fig:readremotepartudpatesfixed}
-		\end{figure}
+			\begin{tikzpicture}[
+				block/.style={circle, draw=black!100, very thick, minimum size=7mm},
+				invis/.style={circle, draw=black!100, minimum size=9mm},
+				label/.style={rectangle, text width=1.2cm, align=center}
+			]
+			\node[invis] (genmiddle) {\texttt{L}};
+			\node[block] (onemerged) [right=10mm of genmiddle, dashed] {1};
+			\node[block] (threemerged) [right=of onemerged, dashed] {3};
+			\node[label] (prevlatestknown) [above=of genmiddle] {\texttt{PLKC}};
+			\node[label] (latestknown) [right=4mm of prevlatestknown] {\texttt{LKC}};
+			\draw[->] (latestknown.south) -- (genmiddle.north east);
+			\draw[->] (prevlatestknown.south) -- (genmiddle.north);
+			\begin{scope}[very thick, -stealth]
+			\draw[<-] (onemerged.east) -- (threemerged.west);
+			\draw[<-] (genmiddle.east) -- (onemerged.west);
+			\end{scope}
+			\end{tikzpicture}
+		\caption{After first merge, items 1 and 3 have been merged but not added to the blockchain.}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.45\textwidth}
+			\centering
+			\begin{tikzpicture}[
+				block/.style={circle, draw=black!100, very thick, minimum size=7mm},
+				invis/.style={circle, draw=black!100, minimum size=9mm},
+				label/.style={rectangle, text width=1.2cm, align=center}
+			]
+			\node[invis] (genmiddle) {\texttt{L}};
+			\node[block] (onemerged) [right= of genmiddle, dashed] {1};
+			\node[block] (twomerged) [right= of onemerged, dashed] {2};
+			\node[block] (threemerged) [right= of twomerged, dashed] {3};
+			\node[label] (prevlatestknown) [above=of genmiddle] {\texttt{PLKC}};
+			\node[label] (latestknown) [above=of threemerged] {\texttt{LKC}};
+			\draw[->] (prevlatestknown.south) -- (genmiddle.north);
+			\draw[->] (latestknown.south) -- (threemerged.north);
+			\begin{scope}[very thick, -stealth]
+			\draw[<-] (onemerged.east) -- (twomerged.west);
+			\draw[<-] (twomerged.east) -- (threemerged.west);
+			\draw[<-] (genmiddle.east) -- (onemerged.west);
+			\end{scope}
+			\end{tikzpicture}
+			\caption{After second merge, item 2 is now part of the mempool history, and items 1, 2, and 3 can be added to the blockchain.}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.45\textwidth}
+			\centering
+			\begin{tikzpicture}[
+				block/.style={circle, draw=black!100, very thick, minimum size=7mm},
+				invis/.style={circle, draw=black!100, minimum size=9mm},
+				label/.style={rectangle, text width=1.2cm, align=center}
+			]
+			\node[invis] (genmiddle) {\texttt{L}};
+			\node[block] (onemerged) [right= of genmiddle] {1};
+			\node[block] (twomerged) [right= of onemerged] {2};
+			\node[block] (threemerged) [right= of twomerged] {3};
+			\node[label] (latestknown) [above=of threemerged] {\texttt{LKC}};
+			\node[label] (prevlatestknown) [left=of latestknown] {\texttt{PLKC}};
+			\draw[->] (prevlatestknown.south) -- (threemerged.north west);
+			\draw[->] (latestknown.south) -- (threemerged.north);
+			\begin{scope}[very thick, -stealth]
+			\draw[<-] (onemerged.east) -- (twomerged.west);
+			\draw[<-] (twomerged.east) -- (threemerged.west);
+			\draw[<-] (genmiddle.east) -- (onemerged.west);
+			\end{scope}
+			\end{tikzpicture}
+			\caption{After second merge, items 1, 2 and 3 have been added to the blockchain.}
+		\end{subfigure}
+		\caption{Using two cursors, any missed items can be caught and added to the blockchain. \texttt{PLKC} signifies the \textit{Previous Latest Known Cursor}.}	
+		\label{fig:readremotepartudpatesfixed}
+	\end{figure}
 
-		At a first glance, it may seem sensible to use the \texttt{latest\_known} cursor to get new updates from the mempool by just iterating back through the mempool from cursor.
-		The problem with this approach is that the cursor is an abstraction of a tag to a block in the Irmin Block Store.
-		This means that the history of the mempool according to that cursor is not changed by any subsequent merge operations.
-		Consequently, any \textit{missed} transactions will not be visible using this approach.\\
+	At a first glance, it may seem sensible to use the \texttt{latest\_known} cursor to get new updates from the mempool by just iterating back through the mempool from cursor.
+	The problem with this approach is that the cursor is an abstraction of a tag to a block in the Irmin Block Store.
+	This means that the history of the mempool according to that cursor is not changed by any subsequent merge operations.
+	Consequently, any \textit{missed} transactions will not be visible using this approach.\\
 
-		This now begs the question ``How can the new approach, which uses out-of-date cursors, still be valid?''.
-		The answer to this is that, the new approach only uses the cursors to perform timestamp comparisons.
-		The result of these comparisons is the same whether a cursor to the items in the out-of-date mempool or a cursor to the items in the new mempool is used.\\
+	This now begs the question ``How can the new approach, which uses out-of-date cursors, still be valid?''.
+	The answer to this is that, the new approach only uses the cursors to perform timestamp comparisons.
+	The result of these comparisons is the same whether a cursor to the items in the out-of-date mempool or a cursor to the items in the new mempool is used.\\
 
-		Now I have detailed all the work that I have completed to build the blockchain library.
-		Transactions are sourced from the mempool and added when it can be certain that there will be no missed transactions.
-		Transactions are added in order and never changed such that if a participant observes the state of the blockchain at any point, it will never observe a conflicting state in the future.
-		The algorithm used by this project assumes that clock timestamps are synchronised across all devices.
-		This may not be the case in an arbitrary situation, and consequently, in high load situations some transactions may not be recognised by the above algorithm. 
-		However, the system is not built for systems of such high load and I do not consider the missing of small numbers of transactions to be a large issue. 
-		In the worst case, an participant will be able to observe whether a transaction has not been added to the blockchain, and after a certain elapsed time period, can attempt again to add the transaction
+	Now I have detailed all the work that I have completed to build the blockchain library.
+	Transactions are sourced from the mempool and added when it can be certain that there will be no missed transactions.
+	Transactions are added in order and never changed such that if a participant observes the state of the blockchain at any point, it will never observe a conflicting state in the future.
+	The algorithm used by this project assumes that clock timestamps are synchronised across all devices.
+	This may not be the case in an arbitrary situation, and consequently, in high load situations some transactions may not be recognised by the above algorithm. 
+	However, the system is not built for systems of such high load and I do not consider the missing of small numbers of transactions to be a large issue. 
+	In the worst case, an participant will be able to observe whether a transaction has not been added to the blockchain, and after a certain elapsed time period, can attempt again to add the transaction
 
 	\chapter{Evaluation}
 	

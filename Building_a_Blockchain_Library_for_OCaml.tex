@@ -30,7 +30,7 @@
 	breaklines=true,
 	basicstyle=\normalsize\ttfamily,                 % Code font, Examples: \footnotesize, \ttfamily
 	keywordstyle=\color{darkgreen},
-	commentstyle=\color{airforceblue}             % Comments font
+	commentstyle=\color{airforceblue}
 	}
 
 	\surroundwithmdframed[
@@ -397,7 +397,7 @@ end
 
 	\chapter{Implementation} \label{Implementation}
 	Over the course of this project, I have successfully built a blockchain library which can perform custom transaction validation.
-	The library uses a leader based consensus protocol inspired by the Raft consensus protocol and the concept of mempools used by Bitcoin.
+	The library uses a leader based consensus protocol inspired by Raft also uses the concept of a `transaction waiting room', or \textit{mempool}, which is used by Bitcoin.
 	Section \ref{sec:sysarch} gives a general overview of the system architecture of this project.
 	Section \ref{sec:datastructure} describes the blockchain data structure that I have used, giving a justification of why it can be considered a blockchain.
 	This section also gives a description of the merge semantics of Ezirmin Logs, which are important to understand when describing the behaviour of the Leader mempool. 
@@ -432,37 +432,41 @@ end
 		\item Data is stored in `blocks'.
 		\item Blocks are ordered in a tree structure where each block contains the hash its parent block.
 	\end{enumerate}
-	This definition makes no mention of consensus, and in this project I have made a clear separation between data structures and the consensus used to synchronise them.
+	This definition deliberately makes no mention of consensus, and exists purely to justify the validity of the blockchain data structure.
 	\subsection{Irmin}
-		Irmin is a library for OCaml which provides Git-like, distributed, branchable storage \cite{Irmin}. 
-		Irmin exposes three main structures as shown in Figure \ref{fig:IrminBlockStore}: The Block Store, the Tag Store and the Irmin Store.
-		\begin{figure}
-			\begin{center}
-			\includegraphics[width=13cm]{figs/irmin-stores.png}
-			\caption{An Irmin Store composed of a mutable Tag Store and an immutable Block Store}
-			\label{fig:IrminBlockStore}
-			\end{center}
-		\end{figure}
-		For the reader familiar with Git, these can intuitively be though of as object/commits, branches and repositories respectively, however I will now explore each of these structures.
-		\subsubsection*{The Block Store}
-		The Irmin Block Store is a virtual heap of immutable blocks. 
-		Rather than being addressed by a physical address, these blocks are addressed by the hash of their content.
-		Because the block Store is content-addressable, once blocks are added, their content can never be updated.
-		Instead, updates to Irmin data structures will add new blocks which try to utilise as much shared history with the existing data in the store, in order to minimise storage space.
-		\subsubsection*{The Tag Store}
-		Any immutability in Irmin data structures derive from tags.
-		Tags provide a way of indexing into any block in the Block Store.
-		This concept is similar to that of branches or references in Git, which provide a way of indexing into a particular commit in the Git history.
-		Because blocks are immutable, any changes to an Irmin data structure can only be visible if a tag is updated. 
-		In particular, I will refer to the HEAD tag or pointer, which will index into the latest recognised block.
-		In the case of logs, this is the latest recognised log item.
-		\subsubsection*{Irmin Stores}
-		An Irmin Store is simply the combination of a Block Store and a Tag Store.
-		Considering the criteria set out earlier for a data structure to be considered a blockchain, Irmin Stores satisfy the first criteria, i.e. that data is stored in Blocks, but not the second criteria.
-		In order to satisfy these criteria, I looked to Ezirmin which provides a higher level log data structure.
+	Irmin is a library for OCaml which provides Git-like, distributed, branchable storage \cite{Irmin}. 
+	Irmin exposes three main structures as shown in Figure \ref{fig:IrminBlockStore}: The Block Store, the Tag Store and the Irmin Store.
+	\begin{figure}
+		\begin{center}
+		\includegraphics[width=13cm]{figs/irmin-stores.png}
+		\caption{An Irmin Store composed of a mutable Tag Store and an immutable Block Store}
+		\label{fig:IrminBlockStore}
+		\end{center}
+	\end{figure}
+	For the reader familiar with Git, these can intuitively be thought of as objects/commits, branches and repositories respectively.
+	\subsubsection*{The Block Store}
+	The Irmin Block Store is a heap of immutable blocks. 
+	Rather than being addressed by a physical address, these blocks are addressed by the hash of their content.
+	Because the Block Store is content-addressable, once blocks are added, their content can never be updated.
+	Instead, updates to Irmin data structures will add new blocks which try to utilise as much shared history with the existing data in the store, in order to minimise storage space.
+	\subsubsection*{The Tag Store}
+	Any immutability in Irmin data structures derive from \textit{tags}.
+	Tags provide a way of indexing into any block in the Block Store.
+	This concept is similar to that of branches or references in Git, which provide a way of indexing into a particular commit in the Git history.
+	Because blocks are immutable, any changes to an Irmin data structure can only be visible if a tag is updated. 
+	In particular, I will refer to the HEAD tag or pointer, which will index into the latest recognised log item.
+	When Irmin merges data structures, it creates new blocks and updates the relevant tags to point to these, however, the old blocks remain in the block store.
+	\subsubsection*{Irmin Stores}
+	An Irmin Store is simply the combination of a Block Store and a Tag Store.
+	Considering the criteria set out earlier for a data structure to be considered a blockchain, Irmin Stores satisfy the first criteria, i.e. that data is stored in Blocks.
+	Indeed, they also come close to satisfying the second criteria, as all blocks are indexed by the hash of their content. 
+	However, this is not quite enough, as blocks are not required to contain hashes of parents in a chain.
+	In order to satisfy these criteria, I looked to Ezirmin which provides a log data structure.
 
 	\subsection{Ezirmin}
-	Ezirmin is a library that provides a simplified interface to the Irmin library. It is designed to provide a interface to Irmin without functors, but with some useful defaults. Importantly, it has a built in log data structure which uses Irmin's append-only store, saved on disk in the Git format.\\
+	Ezirmin is a library that provides a simplified interface to the Irmin library. 
+	It is designed to provide a interface to Irmin without functors, but with some useful defaults. 
+	Importantly, it has a built in log data structure which uses Irmin's append-only store, saved on disk in the Git format.\\
 	\begin{lstlisting}[caption={Ezirmin Log}\label{lst:ezirminlog}]
 module type FS_Log = sig
   type elt 
@@ -475,12 +479,12 @@ module type FS_Log = sig
 end
 	\end{lstlisting}
 	Listing \ref{lst:ezirminlog} gives some of the interface for an Ezirmin log which uses a file system backend.
-	The log allows for items to be appended to and read from a log.
-	In particular, the function \texttt{read} will read from the position of a cursor into the log, and will return a new cursor for the next unread log item, alongside the result.
+	The log allows for items to be appended to and read from a log, and the concept of cursors here maps directly to the concept of Irmin tags.
+	In particular, the function \texttt{read} will read from the item indexed by a cursor, and will return a new cursor for the next unread log item, alongside the result of the read.
 
 	\subsubsection*{Ezirmin Log as a Blockchain}
-	Ezirmin uses Irmin blocks as an underlying data structure, and therefore satisfies the first criteria for being considered a blockchain. 
-	In order to see that the second criteria, i.e. that blocks are ordered with each containing the hash of its parent, I looked at the implementation of log items.
+	Ezirmin Logs use Irmin blocks to store log entries, and therefore satisfy the first criteria for being considered a blockchain. 
+	To verify that they also satisfy the second criteria, i.e. that blocks are ordered and contain the hash of their parent, I looked at the implementation of log items.
 
 	\begin{lstlisting}[caption={Ezirmin Log Item}\label{lst:a_label}]
 type log_item =
@@ -489,34 +493,32 @@ type log_item =
   prev    : K.t option}
 	\end{lstlisting}
 
-	Listing \ref{lst:a_label} is taken from the Ezirmin Log implementation and shows how each log item, which is stored as a block, has a key value which points to the parent log item. 
-	This imposes an ordering of log items, and means that any changes to previous log items, which will create a new block with a new address, will not be seen as part of the log. 
-	As the following section details, merging logs causes new \texttt{Merge} blocks to be created with more than one log item.
-	Whilst this can change the semantics of the chain of pointers between the above log items, the blockchain data structure used in this project is never merged into, so only ever contains \texttt{Value} blocks containing singular log items.
-	Therefore it can be concluded that an Ezirmin Log satisfies both of my conditions to be considered a blockchain, with the definition of a `Block' in this case being a timestamped Ezirmin log item.
+	Listing \ref{lst:a_label} is taken from the Ezirmin Log implementation and shows how each log item has a \texttt{prev} value which is a key pointing to its parent log item. 
+	This imposes an ordering of log items, and means that any changes to previous log items will not be observed, as they will simply create a new block with a new address. 
+	Merging Ezirmin Logs causes new \texttt{Merge} blocks (as opposed to \texttt{Value} blocks) to be created that collate multiple log entries from divergent log histories.
+	These entries are ordered by their timestamps and this means that after a merge, items may appear to have been inserted into the log history.
+	This is not desirable behaviour for a blockchain, so I have ensured that the blockchain data structure is never merged with other structures, only appended to. 
+	Consequently, each blockchain transaction will exist in its own \texttt{Value} block and will never removed or reordered in the blockchain.
+	Therefore it can be concluded that an Ezirmin Log satisfies both of my conditions to be considered a blockchain.
 
 	\subsubsection*{Merging Ezirmin Logs}
 	Aside from using an Ezirmin Log as the blockchain data structure for this project, I also use a \textit{mempool} log to retrieve updates/transactions from remote mempools. 
-	This retrieval process uses the \texttt{EzirminLog.Sync} module to merge new log items into the leader's mempool.
-	Under the hood, this module uses the git protocol to pull updates over an ssh connection.
-	In this section I will investigate the semantics of Ezirmin merges as it is critical to understanding how consensus is achieved in this project.\\
+	This retrieval process uses the \texttt{Ezirmin.Repo.Sync} module to merge new log items into the Leader's mempool.
+	Under the hood, this module uses the git protocol to pull updates over an SSH connection.
+	In this section I will investigate the semantics of Ezirmin merges as they are critical to understanding how consensus is achieved in this project.\\
 	
-	Irmin allows for the developer to program custom merge strategies. 
-	Whenever a synchronisation happens over the network, Irmin will do one of two things:
+	Irmin allows for the developer to specify custom merge strategies. 
+	Whenever a Irmin Store merges changes from a remote Store, Irmin will do one of two things:
 	\begin{enumerate}
-		\item If the newly discovered blocks do not have a divergent history to the current store, they will simply be added to the block store. 
+		\item If the newly discovered blocks do not have a divergent history to the current store, they will simply be added to the Block Store. 
 			In other words, if only new blocks have been added in the remote store, these will be added to the local store. 
 		\item If the remote and local stores have divergent histories, then a custom three way merge is made using the heads of each store and their latest common ancestor.
-		This merge is defined by the developer.
+			This merge is defined by the developer.
 	\end{enumerate}
-	This merge behaviour is displayed in Figure \ref{fig:ezirminmerges} where a local log performs a merge from a remote log with a diverging history.
-	A custom block, \texttt{M1,2}, is created which contains both histories as defined by the custom merge function. 
+	Figure \ref{fig:ezirminmerges} shows how a local Ezirmin Log performs a merge from a remote log with a diverging history.
+	Before the merge, the local store has a \texttt{Value} block, \texttt{V1}, but the remote store has a different \texttt{Value} block, \texttt{V2}.
+	After the local store has mergeed changes from the remote store, a new \texttt{Merge} block, \texttt{M1,2}, has been created which contains both histories as defined by the custom merge function. 
 	Blocks \texttt{V1} and \texttt{V2} still exist in the block store, but the HEAD tag has been updated to point to \texttt{M1,2}. \\
-
-	Ezirmin logs make use of this functionality by storing log entries as either \texttt{Value}s or \texttt{Merge}s.
-	\texttt{Value}s contain single log entries whereas \texttt{Merge}s store a list of \texttt{Values} in the order that they were created. 
-	For an Ezirmin log, the custom merge takes all log entries from \texttt{Value}s and \texttt{Merge}s, orders them by their timestamps, and returns a \texttt{Merge} object with the resulting list of values. 
-	This behaviour can be seen in Figure \ref{fig:ezirminmerges} by considering \texttt{Vn} to be a \texttt{Value} of the log entry \texttt{n} and \texttt{Mn,m} to be a \texttt{Merge} containing log entries \texttt{n} and \texttt{m}. 
 
 	\begin{figure}
 		\centering
@@ -571,22 +573,25 @@ type log_item =
 
 	\subsubsection*{Ezirmin Bugs}
 	Whilst Ezirmin provides a set of very desirable semantic properties, it is not a widely used library. 
-	Consequently, during the course of the project, I encountered a couple of bugs in the Ezirmin codebase which I had to debug and fix.
+	Consequently, during the course of the project, I encountered bugs in the Ezirmin codebase which I had to debug and fix.
 	In this section I shall outline the two bugs that I encountered the changes I made to the Ezirmin codebase to fix them.\\
 	
 	The first bug occurs when updates are merged into a log over a network.\footnote{The issue on GitHub can be found at \href{https://github.com/kayceesrk/ezirmin/pull/7}{https://github.com/kayceesrk/ezirmin/pull/7}}
 	Irmin uses Git as a backend and in order to merge updates over a network, the \texttt{git pull} command is used.
 	In Git, objects are stored as blobs on the leaves of a tree and \texttt{git pull} works by retrieving all blobs at the leaf nodes of the tree for a given branch.
-	However in Ezirmin, blobs can contain pointers to other blobs, which will not be retrieved by \texttt{git pull}.
-	The solution that I implemented to this problem is to use an internal branch which uses an Irmin Store to add all the blobs such that they can be tracked by Git.
-	Items are added to this Irmin Store on the internal branch every time they are added to the log, and consequently, this allows all log items to be fetched and merged by performing \texttt{git pull} on both the master and internal branch.\\
+	However in Ezirmin, blobs can contain pointers to other blobs, and \texttt{git pull} will not know to retrieve these blob too.
+	This will cause an error when Ezirmin tries to read these objects which do not actually exist locally. 
+	The solution that I implemented to this problem is to use an internal branch which uses an Irmin Store to explicitly track every blob in the log.
+	Items are added to this Irmin Store on the internal branch every time they are added to the log.
+	This operation inserts these blobs into the git tree such that if \texttt{git pull} is performed on the internal branch, all the blocks required by the master branch will be retrieved.\\
 
 	The second bug that I encountered derived from the merge behaviour of Ezirmin logs when there are more than two remote machines merging updates from each others' log.\footnote{The issue on GitHub can be found at \href{https://github.com/kayceesrk/ezirmin/pull/8}{https://github.com/kayceesrk/ezirmin/pull/8}}
-	The issue is that when a \texttt{Merge} block is created, it may contain log items which are stored as \texttt{Value} blocks on other machines.
-	The result is that Irmin sees these blocks as different, and Ezirmin does not perform any checks to detect or remove any duplicate log items.
+	The issue is that when a \texttt{Merge} block is created, it may contain log items which, on other machines, are stored as \texttt{Value} blocks or as different \texttt{Merge} blocks.
+	The result is that Irmin sees these blocks as different, and Ezirmin does not perform any checks to detect or remove duplicate log items occuring in different contexts.
 	This behaviour resulted from complex sequences of merge operations and so was difficult to reproduce, but in the worst case caused the size of the blockchain to grow exponentially with the number of merge operations performed.
 	In one case, a log with 40 unique log items grew to be greater than 120,000 log items in size due to duplicates.
 	I implemented a fix by removing duplicate log items when a merge operation takes place. 
+	Duplicates are found by comparing the log item timestamps, and whilst this does not guarantee their individuality, the timestamps have such significant precision to make this highly unlikely.
 
 	\section{Consensus Algorithms}\label{sec:consensus}
 	Building consensus was by far the most important part of work completed for this project. 

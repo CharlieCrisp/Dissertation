@@ -387,7 +387,7 @@ end
 	\end{itemize} 
 	This specification differs slightly from the final specification for Logan because it does not take into account the difference between Leader and Participant nodes.
 	The specification was deliberately designed without focus on consensus so that the focus was on the external functionality rather than the internal implementation. 
-	The final interface, while different, provides exactly this functionaliy.
+	The final interface, while different, provides exactly this functionality.
 
 	\subsection{Consensus}
 	Ensuring that Logan maintains consensus was a very crucial part of this project. 
@@ -1075,18 +1075,28 @@ latest_known_cursor := get_new_latest_cursor;;
 
 	\chapter{Evaluation}
 	%introduction to evaluation and metrics used
-	\section{Performance on a Single Machine}
+	\section{Performance on a Local Machine}
 	%TODO detail how performance varies on a single machine 
 	\subsection{Single Participant}
 	%What happens when there is one participant only?
-
+	\begin{figure}
+		\centering
+		\includegraphics[width=13cm]{figs/single_local_worker.png}
+		\caption{Logan Performance with a Single Local Participant}
+		\label{figs:singlocal}
+	\end{figure}
 	\subsection{Multiple Participants}
 	%What about with multiple particpants
 
-	\section{Performance on Multiple Machines}
+	\section{Performance on Remote Machines}
 	%How does performance vary when there are multiple machines
 	\subsection{Single Remote Participant}
-
+	\begin{figure}
+		\centering
+		\includegraphics[width=13cm]{figs/single_remote_worker.png}
+		\caption{Logan Performance with a Single Remote Participant}
+		\label{figs:singlocal}
+	\end{figure}
 	\subsection{Multiple Remote Participants}
 
 	\chapter{Conclusion}

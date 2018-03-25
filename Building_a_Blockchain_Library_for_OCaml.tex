@@ -1073,20 +1073,40 @@ latest_known_cursor := get_new_latest_cursor;;
 
 	\chapter{Evaluation}
 	%introduction to evaluation and metrics used
+
+	\subsection{Metrics Used}
+	In order to evaluate the performance of Logan, I have looked at two key metrics: latency and throughput.
+	In a blockchain system, it is important that the latency is as low as possible. 
+	Latency dictates how long a user must wait before they can be sure that their transaction has been added.
+	It is easy to see why this is important by thinking in terms of a cryptocurrency application.
+	In this context long latencies will cause users to become irritated and potentially stop using your currency.
+	Throughput is also a useful measure because it shows how well a system can cope with large loads.
+	Again in the context of a cryptocurrency, it is important that lots of users should be able to make transactions at the same time.
+	As with all distributed systems, these two metrics are inevitably linked, and higher system throughputs will lead to larger latencies. 
+	In the worst case, a large throughput will cause the system to become overloaded, latencies will rise and throughput will even descrease!
+	I have looked at how the throughput applied to the system affects the latency of Logan transactions, in order to try to determine the optimal use case conditions for a Logan system.\\
+
+	I have also looked at how the latency of adding transactions varies with the size of the blockchain at a constant throughput.
+	It is important that the system should be able to work well even when the size of the blockchain is large so that performance will not degrade over time.
+	
 	\section{Performance on a Local Machine}
 	%TODO detail how performance varies on a single machine 
 	\subsection{Single Participant}
 	%What happens when there is one participant only?
+	Figure \ref{fig:singlocal} shows that the latency is extremely low and varies little with increased throughput. 
+	There is a bottleneck in how fast the Participant can write transactions into the mempool and this means the system never becomes overloaded.
 	\begin{figure}
 		\centering
-		\includegraphics[width=\textwidth]{figs/single_local_worker.png}
+		\includegraphics[width=0.8\textwidth]{figs/single_local_worker.png}
 		\caption{Latency variation with throughput on a single local Participant}
-		\label{figs:singlocal}
+		\label{fig:singlocal}
 	\end{figure}
+	Figure \ref{fig:locallatency} shows that the latency stays constant with the number of items in the blockchain.
 	\begin{figure}
 		\centering
-		\includegraphics[width=\textwidth]{figs/latency_vs_size.png}
+		\includegraphics[width=0.8\textwidth]{figs/latency_vs_size.png}
 		\caption{Latency variation with blockchain size on a local Participant}
+		\label{fig:locallatency}
 	\end{figure}
 	\subsection{Multiple Participants}
 	%What about with multiple particpants
@@ -1096,7 +1116,7 @@ latest_known_cursor := get_new_latest_cursor;;
 	\subsection{Single Remote Participant}
 	\begin{figure}
 		\centering
-		\includegraphics[width=\textwidth]{figs/single_remote_worker.png}
+		\includegraphics[width=0.8\textwidth]{figs/single_remote_worker.png}
 		\caption{Logan performance with a single remote Participant}
 		\label{figs:singlocal}
 	\end{figure}

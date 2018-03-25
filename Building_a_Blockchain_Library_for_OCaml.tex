@@ -412,9 +412,9 @@ end
 	I will then present an improved mechanism, which Logan uses, that guarantees that no transactions in participant mempools are missed.
 
 	\section{System Architecture}\label{sec:sysarch}
-	The Logan's Architecture can be viewed from two main perspectives: that of the `Leader' node and those of `Participant' or `Worker' nodes.
-	The Leader node has total responsibility for the state of the blockchain and for committing new transactions.
-	Participants exist to request transactions to be added to the blockchain and also to view the blockchain. 
+	Logan goal is to allow multiple nodes in a distributed system to share a blockchain data structure.
+	Nodes in this system should be able to add transactions to the blockchain and read the entire history of previous transactions.
+	Logan aims to achieve this goal by using a Leader-based approach where a `Leader' node can accept transactions from `Participant' or `Worker' nodes and commit them to the blockchain for everyone to see.
 	Participants view the blockchain by retrieving the latest copy over an SSH connection with the Leader.
 	Participants request for transactions to be committed by writing to their local mempool. 
 	The Leader periodically polls the Participant mempools, again over an SSH connection, to find new transactions to add to the blockchain.

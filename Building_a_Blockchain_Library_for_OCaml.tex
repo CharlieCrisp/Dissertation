@@ -703,10 +703,10 @@ type log_item =
 	\subsection{A New Approach}
 	Logan uses a mempool and a simple leader based algorithm to maintain consensus, and in this section, I will describe this approach.
 	Because I have implemented a centralised algorithm, my specification has differed slightly from that presented in the \nameref{Requirements Analysis} to take into account differing functional requirements for a leader and for a participant.
-	As I am assuming that all participating nodes can be trusted, it is possible to use a leader based approach without introducing security issues such as the ones tackled by the Proof of Work mechanism. 
+	As I am assuming that all Participants can be trusted, it is possible to use a Leader based approach without introducing security issues such as the ones tackled by the Proof of Work mechanism. 
 	This approach also reduces the potential complexity an overheads of implementing completely decentralised consensus.
 	My approach makes use of the mergeable log data structure provided by Ezirmin, and the synchronisation module that allows updates from a log to be pulled into another.
-	Finally, I have introduced the notion of validation which allows both participants and leader nodes to accept or reject transactions depending on arbitrary conditions.
+	Finally, I have introduced the notion of validation which allows the Leader nodes to accept or reject transactions depending on arbitrary conditions defined by the developer.
 	
 	\subsubsection*{Leaders}
 	Logan uses the notion of a \textit{Strong Leader} similar to that used by the Raft protocol. 
@@ -762,60 +762,22 @@ end
 
 	Listing \ref{lst:partspec} is a specification that shines a light on the role of Participants and the functionality they provide.
 	The module includes the ability to define custom data types that can be stored on the blockchain, to read from the blockchain, and to attempt to write to the blockchain by writing to a mempool.
-
-	\subsubsection*{Retrieving local updates}
-	%TODO amend this section!!!
-	The mechanism used by the Leader to read mempool updates is different for the situations when the Participant is on the same machine, and when it is on a remote machine. 
-	Here, I will detail the process of reading updates from a participant on the same machine as the leader.\\
-
-	\begin{figure}
-		\begin{center}
-			\begin{tikzpicture}[
-				block/.style={circle, draw=black!100, very thick, minimum size=15mm},
-				invis/.style={circle, draw=black!100, minimum size=15mm},
-				label/.style={rectangle, text width=2cm, align=center}
-			]
-			\node[invis] (invis) {\texttt{W}};
-			\node[block] (block1) [right=of invis] {};
-			\node[block] (block2) [right=of block1] {};
-			\node[label] (label1) [above=of block2] {\texttt{LKC}};
-			\node[block] (block3) [right=of block2, dashed] {};
-			\node[block] (block4) [right=of block3, dashed] {};
-			\node[label] (label2) [above=of block4] {\texttt{LC}};
-			\draw[->] (label2.south) -- (block4.north);
-			\draw[->] (label1.south) -- (block2.north);
-			\begin{scope}[very thick, -stealth]
-			\draw[<-] (invis.east) -- (block1.west);
-			\draw[<-] (block1.east) -- (block2.west);
-			\draw[<-] (block2.east) -- (block3.west);
-			\draw[<-] (block3.east) -- (block4.west);
-			\path[dotted, ->] (block4.north)+(-1.5mm,0) edge  [bend right=40]  ([xshift=1.5mm]block3.north);
-			\path[dotted, ->] (block3.north)+(-1.5mm,0) edge  [bend right=40]  ([xshift=1.5mm]block2.north);
-			\end{scope}
-			\end{tikzpicture}
-			\end{center}
-		\caption{Typical Participant mempool}
-		\label{fig:readlocalpartudpates}
-	\end{figure}
-
-	The leader will always maintain a cursor to the latest entry it has read from the participant mempool.
-	When it attempts to find new updates, it will get a new cursor to the latest element of the mempool.
-	The leader can then compare these two cursors, and if the \textit{latest known} cursor points to an entry with an earlier timestamp than the \textit{latest} cursor, then it will add the \textit{latest} item to an accumulator, and then repeat the process with a cursor pointing to the parent of the \textit{latest} node. 
-	Finally, when the cursors match, the items in the accumulator are returned as new updates which can be added to the leader mempool and the \textit{latest known} cursor is updated accordingly.
-	It is important to note that no validation is performed at this stage as no item has been added to the blockchain yet.
-	Figure \ref{fig:readlocalpartudpates} shows how unseen blocks are read sequentially from a mempool until the seen blocks are reached.
-
-	\subsubsection*{Retrieving remote updates}
-	The previous section demonstrates how updates can be retrieved from a mempool on the same machine as the leader.
-	In this section, I will highlight how updates are retrieved from mempools on remote machines.\\
 	
-	Irmin provides a \texttt{Sync} module which allows for the histories of a local and a remote Store to be combined according to a custom merge function.
-	Ezirmin logs build on this functionality by providing a merge strategy which uses the log entry timestamps to order log entries in a merge.
-	Figure \ref{fig:readremotepartudpates} demonstrates how this merge works in a situation where a number of blocks have been added to a single remote participant mempool.
-	The first (and most na{\"i}ve) approach I took to pulling updates from a number of participants, was to sequentially merge updates from all the participants into the leaders mempool.
-	Participants also merge updates from the leader's mempool before adding to their own mempool to increase the shared history and decrease the work required for the leader to perform the merge.
-	After pulling all updates, the leader will traverse its own mempool, finding new updates until it reaches the \textit{latest known} cursor. 
-	Now, the updates can be validated and added to the blockchain, and the \textit{latest known} cursor updated to the latest message in the mempool.\\
+	\subsubsection*{Retrieving updates from mempools}
+	In order to see requested transactions, the Leader has to observe the mempools of the Participants. 
+	The Leader does this by pulling updates from Participant mempools and then adding them to the blockchain.
+	However, it is important to make sure that the Leader does not miss transactions or commit transactions out of order.
+	This is tricky because after pulling updates from many mempools, the local copies will reflect each mempool at a different moment in time.
+	In this section, I will give a na\"{i}ve method for retrieving updates and I will show how this method is flawed. 
+	This will then motivate the second part of this section where I will give a more complex approach that ensures all transactions are committed in order.
+	In both approaches, the leader will continuously poll mempools for updates and commit transactions that it believes to be valid. \\
+	
+	The first (and most na{\"i}ve) approach I took to pulling updates from a number of participants, was sequentially pull updates from all the participants into separate branches of the leaders mempool.
+	It is possible view newly retrieved updates for each mempool by maintaining a \textit{latest known} cursor that points to the latest transaction seen by the Leader in its last poll.
+	All the updates from all of the mempools can be viewed in order as defined by the timestamps of log items that Ezirmin provides. 
+	The diagrams in this section will treat the mempool as a merged log with transactions from all remote Participants because it makes the algorithm easier to explain and understand, without changing its semantics.
+	After pulling updates from all Participants, the Leader can now see a list of newly retrieved transactions which are ordered by a timestamp.
+	These updates can be validated and added to the blockchain, and the \textit{latest known} cursor updated to the latest message in each of the mempool.\\
 
 	\begin{figure}
 		\centering
@@ -880,10 +842,10 @@ end
 	However, this approach is fundamentally flawed and causes many updates to be overlooked by the leader. 
 	This is because of the delays that occur when mempool updates are retrieved over the network from multiple workers.
 	For example, Figure \ref{fig:readremotepartudpatesbroke} demonstrates a situation where there are just two workers. 
-	In this case, updates from the first worker will be merged before the second, however, after the first merge has taken place, the first worker may have added additional transactions. 
-	If these transactions are timestamped before the latest transaction in the second worker's mempool, then when the leader next polls for updates, transactions may be merged to a position in the mempool before the latest known cursor. 
-	This means that they will not be seen by the leader and therefore they will not be added to the blockchain. 
-	I shall refer to these transactions as \textit{missed} transactions, and all others at \textit{tracked} transactions.\\
+	In this case, updates from the first worker will be pulled before the second, however, after the first pull has taken place, the first worker may have added additional transactions. 
+	If these transactions are timestamped before the latest transaction in the second worker's mempool, then when the leader next polls for updates, transactions may be found which have a timestamp before the latest item committed to the blockchain.
+	These items should have been committed first as they have an earlier time stamp.
+	It is not clear whether or not these transactions should be committed so I shall refer to these transactions as \textit{missed} transactions, and all others at \textit{tracked} transactions.\\
 
 	\begin{figure}
 		\centering
@@ -952,9 +914,9 @@ end
 
 	In order to mitigate this problem, I first examined the nature of these \textit{missed} transactions and noted the following properties:
 	\begin{enumerate}
-		\item Missed transactions must have been added during a merge. If they occurred before the merge had begun, then they would have been tracked. 
-		Alternatively, missed transactions must occur after the latest known cursor from the previous merge. 
-		\item Missed transactions must have been added at a point in time earlier than the transaction pointed to by the latest\_known cursor. 
+		\item Missed transactions must have been added whilst the Leader is pulling updates. If they occurred before the pull had begun, then they would have been tracked. 
+		Alternatively, missed transactions must occur after the latest known cursor from the previous pull. 
+		\item Missed transactions must have been added at a point in time earlier than the latest transaction in the mempools.
 		If they occurred at a later point in time, then they would be tracked by future leader polls.
 	\end{enumerate}
 

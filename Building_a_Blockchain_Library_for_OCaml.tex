@@ -356,11 +356,17 @@ module type I_LogStringCoder = sig
   val decode_string: string -> t option
 end
 
+module type I_Validator = sig 
+  type t 
+  val init: t list -> unit Lwt.t 
+  val filter: t list -> t list Lwt.t
+end
+
 module type I_Config = sig
   type t
   module LogCoder: I_LogStringCoder with type t = t
-
-  val validator: (t list -> t -> bool) option
+	module Validator: I_Validator with type t = t
+	val remotes: string list
 end
 
 module type I_Blockchain = sig
@@ -380,8 +386,11 @@ end
 	Listing \ref{lst:blockspec} is the initial technical specification that I used to define Logan, and the functions complete the following operations:
 	\begin{itemize}
 		\item \texttt{I\_LogStringCoder} is a module that allows the user to specify arbitrary types to be stored on the blockchain, so long as they can be encoded to (and decoded from) a string.
-		\item \texttt{I\_Config} contains information which is required to run the blockchain.
-			In particular, should the \texttt{validator} option contain the value \texttt{Some(f)}, then \texttt{f} will be a function that accepts a history of committed transactions, and validates whether a further transaction is valid. 
+		\item \texttt{I\_Config} contains information which is required to run the blockchain, including \texttt{remotes} which is a list of other participating nodes.
+		\item \texttt{I\_Validator} is an interface which is defined by the library user. 
+			Validation is performed by initialising a \texttt{Validator} module with the transactions already committed to the blockchain.
+			From then on, \texttt{Validator.filter} will take a list of requested transactions and will return a subset of them which are the valid transactions.
+			The \texttt{Validator} can then assume that these transactions have been committed for future calls to \texttt{filter}.
 		\item \texttt{Make} is a functor which accepts a configuration module and will return a blockchain module.
 		\item \texttt{add\_transaction\_to\_blockchain} adds a user defined type to the blockchain and then returns a polymorphic variant type containing information about whether the operation was successful. 
 			This will return an error in the case that the transaction is not validated.
@@ -525,7 +534,7 @@ type log_item =
 	\end{enumerate}
 	Figure \ref{fig:ezirminmerges} shows how a local Ezirmin Log performs a merge from a remote log with a diverging history.
 	Before the merge, the local store has a \texttt{Value} block, \texttt{V1}, but the remote store has a different \texttt{Value} block, \texttt{V2}.
-	After the local store has mergeed changes from the remote store, a new \texttt{Merge} block, \texttt{M1,2}, has been created which contains both histories as defined by the custom merge function. 
+	After the local store has merged changes from the remote store, a new \texttt{Merge} block, \texttt{M1,2}, has been created which contains both histories as defined by the custom merge function. 
 	Blocks \texttt{V1} and \texttt{V2} still exist in the block store, but the HEAD tag has been updated to point to \texttt{M1,2}. \\
 
 	\begin{figure}
@@ -709,9 +718,9 @@ type log_item =
 	\begin{lstlisting}[caption={Leader Specification}\label{lst:leaderspec}]
 module type I_LeaderConfig = sig
   type t
-  module LogCoder: Participant.I_LogStringCoder with type t = t    
+	module LogCoder: Participant.I_LogStringCoder with type t = t   
+	module Validator: I_Validator with type t = t 
   val remotes: string list
-  val validator: (t list -> t list -> t list) option
 end
 module type I_Leader = sig
   val init_leader: unit -> (unit -> unit Lwt.t) Lwt.t
@@ -723,7 +732,6 @@ end
 
 	Listing \ref{lst:leaderspec} is the specification of the Leader module, which differs slightly from the specification presented in the \nameref{Requirements Analysis}.
 	In particular, the \texttt{init\_leader} function will perform an initialisation step, and then return a function which, when executed, will actually start the consensus process.
-	Also of interest is the supplied \texttt{validator} function which will take a list of all committed transactions, a list of requested transactions and will return a filtered list of all valid transactions to be added.
 
 	\subsubsection*{Participants}
 	Participants, in contrast to Leaders, can request transactions to be added to the blockchain. 
@@ -740,7 +748,6 @@ module type I_ParticipantConfig = sig
   type t
   module LogCoder: I_LogStringCoder with type t = t
   val leader_uri: string option
-  val validator: (t list -> t -> bool) option
 end
 module type I_Participant = sig
   type t
@@ -754,10 +761,10 @@ end
 	\end{lstlisting}
 
 	Listing \ref{lst:partspec} is a specification that shines a light on the role of Participants and the functionality they provide.
-	The module includes the ability to define custom data types that can be stored on the blockchain, to define how to validate transactions, to read from the blockchain, and to attempt to write to the blockchain by writing to a mempool.
+	The module includes the ability to define custom data types that can be stored on the blockchain, to read from the blockchain, and to attempt to write to the blockchain by writing to a mempool.
 
 	\subsubsection*{Retrieving local updates}
-	%TODO ammend this section!!!
+	%TODO amend this section!!!
 	The mechanism used by the Leader to read mempool updates is different for the situations when the Participant is on the same machine, and when it is on a remote machine. 
 	Here, I will detail the process of reading updates from a participant on the same machine as the leader.\\
 

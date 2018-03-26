@@ -347,6 +347,7 @@ val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 	The data in the blockchain will be referred to as either \texttt{blocks} or \texttt{transactions}. 
 	From a participating node, it should be possible to add a transaction, of arbitrary type. 
 	It should also be possible to view an ordered list of all transactions which currently exist in the blockchain.
+	The latency of adding transactions should not increase as the size of the blockchain increases because it is important the library will cope well with systems running for an indefinite period of time.
 	\begin{minipage}{\linewidth}
 	\begin{lstlisting}[caption={Blockchain Specification}\label{lst:blockspec}]
 module type I_LogStringCoder = sig
@@ -1074,7 +1075,7 @@ latest_known_cursor := get_new_latest_cursor;;
 	\chapter{Evaluation}
 	%introduction to evaluation and metrics used
 
-	\subsection{Metrics Used}
+	\subsection*{Metrics Used}
 	In order to evaluate the performance of Logan, I have looked at two key metrics: latency and throughput.
 	In a blockchain system, it is important that the latency is as low as possible. 
 	Latency dictates how long a user must wait before they can be sure that their transaction has been added.
@@ -1093,21 +1094,35 @@ latest_known_cursor := get_new_latest_cursor;;
 	%TODO detail how performance varies on a single machine 
 	\subsection{Single Participant}
 	%What happens when there is one participant only?
-	Figure \ref{fig:singlocal} shows that the latency is extremely low and varies little with increased throughput. 
-	There is a bottleneck in how fast the Participant can write transactions into the mempool and this means the system never becomes overloaded.
+	Figure \ref{fig:singlocal} shows how the latency of transactions varies with throughput for a Participant node on the same machine as the Leader node.
+	Latency stays at between 10-15ms up until the system reaches about 70 transactions per second.
+	The set of data points which lie significantly above the straight line are points where the system has become overloaded. 
+	The rate of transactions has become so high that latencies have increased and the throughput has actually decreased again. 
+	This is a really interesting result because it shows that Logan's logic functions well at throughputs of between 50 and 60 transactions per second, whilst maintaining low transaction latency.
+	These figures are much better than my success criteria which suggested the system should be able to cope with around 2-3 transactions per second.\\
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/single_local_worker.png}
 		\caption{Latency variation with throughput on a single local Participant}
 		\label{fig:singlocal}
 	\end{figure}
-	Figure \ref{fig:locallatency} shows that the latency stays constant with the number of items in the blockchain.
+
+	Figure \ref{fig:locallatency} shows how the latency of Logan transactions varies as the size of the blockchain increases. 
+	The Figure shows clearly that the latency of adding a transaction is constant in the size of the blockchain.
+	This is a very desirable trait as it means that Logan can be used for systems that run for indefinite periods of time, with arbitrary long blockchain histories.
+	In the requirements analysis, I set out the criteria that Logan should be able to add transactions at constant latency and this result shows that I have been successful in achieving this criteria.\\
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/latency_vs_size.png}
 		\caption{Latency variation with blockchain size on a local Participant}
 		\label{fig:locallatency}
 	\end{figure}
+
+	The graph also compares latencies when a simple, constant-time validator is used, which blindly accepts all transactions, and when no validation is performed. 
+	The result without validation was obtained by removing the validation code completely from the codebase and just accepting all transactions.
+	Intuitively, these two results should be the same because they perform the same logical task, and this graph confirms this intuition. 
+	From this, we can conclude that if a user provides a constant time algorithm for validating transactions, then the overall time for adding transactions will remain constant.
+	
 	\subsection{Multiple Participants}
 	%What about with multiple particpants
 

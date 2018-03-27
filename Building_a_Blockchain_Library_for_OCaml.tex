@@ -344,10 +344,11 @@ val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 	Here, I will set out the criteria that I decided upon before starting development on the project.
 	\subsection{Data Structure}
 	One of the most important requirements for Logan, is that it should be able to add items to and view items in a blockchain. 
-	The data in the blockchain will be referred to as either \texttt{blocks} or \texttt{transactions}. 
+	The data in the blockchain will be referred to as either \textit{blocks} or \textit{transactions}. 
 	From a participating node, it should be possible to add a transaction, of arbitrary type. 
 	It should also be possible to view an ordered list of all transactions which currently exist in the blockchain.
-	The latency of adding transactions should not increase as the size of the blockchain increases because it is important the library will cope well with systems running for an indefinite period of time.
+	The latency of adding transactions should not increase as the size of the blockchain increases because it is important the library will cope well with systems running for an indefinite period of time.\\
+
 	\begin{minipage}{\linewidth}
 	\begin{lstlisting}[caption={Blockchain Specification}\label{lst:blockspec}]
 module type I_LogStringCoder = sig
@@ -365,13 +366,12 @@ end
 module type I_Config = sig
   type t
   module LogCoder: I_LogStringCoder with type t = t
-	module Validator: I_Validator with type t = t
-	val remotes: string list
+  module Validator: I_Validator with type t = t
+  val remotes: string list
 end
 
 module type I_Blockchain = sig
   type t
-
   val add_transaction_to_blockchain: t -> [> `Error | `Ok] Lwt.t
   val get_all_transactions: unit -> [> `Error | `Ok of t list] Lwt.t
   val get_transactions: int -> [> `Error | `Ok of t list] Lwt.t
@@ -412,24 +412,23 @@ end
 
 	\chapter{Implementation} \label{Implementation}
 	Over the course of this project, I have successfully built Logan, a blockchain library which can perform custom transaction validation.
-	Logan uses a leader based consensus protocol inspired by Raft also uses the concept of a `transaction waiting room', or \textit{mempool}, which is used by Bitcoin.
+	Logan uses a Leader based consensus protocol inspired by Raft also uses the concept of a `transaction waiting room', or \textit{mempool}, which is used by Bitcoin.
 	Section \ref{sec:sysarch} gives a general overview of Logan's system architecture.
-	Section \ref{sec:datastructure} describes the blockchain data structure that I have used, giving a justification of why it can be considered a blockchain.
-	This section also gives a description of the merge semantics of Ezirmin Logs, which are important to understand when describing the behaviour of the Leader mempool. 
+	Section \ref{sec:datastructure} describes the blockchain data structure that I have used, and justifies why it can be considered a blockchain.
 	I will also describe two bugs that I encountered in these codebases and the fixes that I implemented for each.
 	Finally, Section \ref{sec:consensus} gives a description of the research I completed when designing Logan's consensus mechanism. 
-	I will first present a naive approach to consensus and explain why this is flawed and will actually `miss' transactions.
+	I will first present a naive approach to consensus and explain why this is flawed and will cause transactions to be committed out of order.
 	I will then present an improved mechanism, which Logan uses, that guarantees that no transactions in participant mempools are missed.
 
 	\section{System Architecture}\label{sec:sysarch}
-	Logan goal is to allow multiple nodes in a distributed system to share a blockchain data structure.
+	Logan's goal is to allow multiple nodes in a distributed system to share a blockchain data structure.
 	Nodes in this system should be able to add transactions to the blockchain and read the entire history of previous transactions.
-	Logan aims to achieve this goal by using a Leader-based approach where a `Leader' node can accept transactions from `Participant' or `Worker' nodes and commit them to the blockchain for everyone to see.
+	Logan aims to achieve this goal by using a Leader-based approach where a \textit{Leader} node can accept transactions from \textit{Participant} or \textit{Worker} nodes and commit them to the blockchain for everyone to see.
 	Participants view the blockchain by retrieving the latest copy over an SSH connection with the Leader.
 	Participants request for transactions to be committed by writing to their local mempool. 
 	The Leader periodically polls the Participant mempools, again over an SSH connection, to find new transactions to add to the blockchain.
-	When a poll finds new transactions, it will either commit them all, or in the case that a validator function is supplied, it will retrieve all current items in the blockchain and use these to filter out invalid transactions before committing.
-	It is also possible for a Participant node to exist on the same physical machine as the Leader, in which case the leader sources updates directly from the mempool, rather than over an ssh connection. 
+	When a poll finds new transactions, it will use the Validation module to filter for all the valid transactions which are then added to the blockchain.
+	It is also possible for a Participant node to exist on the same physical machine as the Leader, in which case the Leader sources updates directly from the mempool, rather than over an SSH connection. 
 	Figure \ref{fig:sysarch} shows how the architecture for this system is organised.\\	
 
 	\begin{figure}
@@ -482,7 +481,8 @@ end
 	\subsection{Ezirmin}
 	Ezirmin is a library that provides a simplified interface to the Irmin library. 
 	It is designed to provide a interface to Irmin without functors, but with some useful defaults. 
-	Importantly, it has a built in log data structure which uses Irmin's append-only store, saved on disk in the Git format.\\
+	Importantly, it has a built in log data structure which uses Irmin's append-only store, saved on disk in the Git format.
+
 	\begin{lstlisting}[caption={Ezirmin Log}\label{lst:ezirminlog}]
 module type FS_Log = sig
   type elt 
@@ -494,6 +494,7 @@ module type FS_Log = sig
   ...
 end
 	\end{lstlisting}
+
 	Listing \ref{lst:ezirminlog} gives some of the interface for an Ezirmin log which uses a file system backend.
 	The log allows for items to be appended to and read from a log, and the concept of cursors here maps directly to the concept of Irmin tags.
 	In particular, the function \texttt{read} will read from the item indexed by a cursor, and will return a new cursor for the next unread log item, alongside the result of the read.

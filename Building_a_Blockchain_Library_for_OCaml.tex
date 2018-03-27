@@ -936,7 +936,7 @@ end
 			\node[label] (latestknownthree) [below=of three] {\texttt{LKC}};
 			\draw[->] (latestknownone.south) -- (one.north);
 			\draw[->] (latestknownthree.north) -- (three.south);
-			\node[buffer] (bufferlabel) [below=2cm of genbottom] {Retrieved Buffer:};
+			\node[buffer] (bufferlabel) [right=2cm of threemerged] {Retrieved Buffer:};
 			\node[bufferitem] (item1) [right=1cm of bufferlabel] {1};
 			\node[bufferitem] (item2) [right=0mm of item1] {3};
 			\node[spacer] (space1) [below=5mm of item1] {.};
@@ -974,7 +974,7 @@ end
 			\node[block] (threemerged) [right=5mm of twomerged] {3};
 			\node[block] (fourmerged) [right=5mm of threemerged, dashed] {4};
 			\node[block] (four) [above=1.15cm of fourmerged] {4};
-			\node[buffer] (txnslabel) [below=2cm of genbottom] {To Be Committed Buffer:};
+			\node[buffer] (txnslabel) [right=2cm of fourmerged] {To Be Committed Buffer:};
 			\node[bufferitem] (item1) [right=1cm of txnslabel] {1};
 			\node[bufferitem] (item2) [right=0mm of item1] {2};
 			\node[bufferitem] (item3) [right=0mm of item2] {3};

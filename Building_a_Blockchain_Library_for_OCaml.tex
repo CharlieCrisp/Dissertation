@@ -1069,12 +1069,47 @@ end
 	\section{Performance on Remote Machines}
 	%How does performance vary when there are multiple machines
 	\subsection{Single Remote Participant}
+	In order to see how the system performs when network latencies are involved, I first looked at Logan's performance when there is just one Leader and one remote Participant.
+	Figure \ref{figs:remlatencysize} shows how the latency of adding a Logan transaction changes as ths size of the blockchain increases, with a fixed throughput.
+
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.8\textwidth]{figs/single_remote_worker.png}
-		\caption{Logan performance with a single remote Participant}
-		\label{figs:singlocal}
+		\includegraphics[width=0.8\textwidth]{figs/remote_latency_size.png}
+		\caption{Logan latencies with increasing blockchain size}
+		\label{figs:remlatencysize}
 	\end{figure}
+
+	The two interesting features of this graph are the saw tooth shape, and the linear increase in latency.
+	The saw tooth shape is due to the nature of the Leader polls.
+	When a Leader pulls new updates into its mempool, some of these updates will be older than others, and will therefore experience a higher latency than the most recently added updates. 
+	The troughs in the graph represent the transactions which were added immediately before the Leader pulled in new updates.
+	The peaks, on the other hand, represent the transactions added immediately after the Leader pulled in new updates.
+	These transactions will have waited for that entire poll cycle to complete, before being seen by the Leader.\\
+
+	The second interesting feature of the graph is the linear increase in latency. 
+	In order to see what was causing this, I logged the time that the Leader spends completing all of its computational tasks for every poll cycle, and plotted how these delays increase with the blockchain size.
+	Figure \ref{figs:leaderdelays} compares the delays in Leader polls with the number of updates that is pulled in each poll cycle.
+
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.8\textwidth]{figs/leader_delays_num_pulled.png}
+		\caption{Delays incurred by Leader for every poll cycle}
+		\label{figs:leaderdelays}
+	\end{figure}
+
+	There is a clear correlation between the number of updates pulled and the latency in both adding them to the blockchain, and pulling them over the network, but it is not immediately clear what the causation here is.
+	The increase in the time taken adding updates to the blockchain can be put down to the increased number of updates being added. 
+	Not only is it intuitively a linear time operation that will grow as the number of updates found in a poll cycle increases, but Figure \ref{fig:locallatency} shows that when the number of updates in a poll is constant, so is the time taken adding them to the blockchain.
+	This means that this delay can be assigned to the delay that is causing the overall latency, or number of updates found, to rise.
+	Therefore, to find what the cause of this is, I examined the overheads of pulling updates over a network 
+
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.8\textwidth]{figs/gitlatencies.png}
+		\caption{Git overheads with blockchain size}
+		\label{figs:gitlatencies}
+	\end{figure}
+
 	\subsection{Multiple Remote Participants}
 
 	\chapter{Conclusion}

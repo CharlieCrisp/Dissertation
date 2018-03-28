@@ -1106,7 +1106,7 @@ end
 		\begin{subfigure}[t]{\textwidth}
 			\centering
 			\includegraphics[width=0.9\textwidth]{figs/gitlatencies.png}
-			\caption{Latencies of pulling 100 transactions against blockchain size}
+			\caption{Latencies of pulling 100 transactions against mempool size}
 			\label{figs:gitreposize}
 		\end{subfigure}
 		
@@ -1119,11 +1119,17 @@ end
 		\caption{Git and Ezirmin Sync overheads}
 		\label{figs:gitoverheads}
 	\end{figure}
-	Figure \ref{figs:gitreposize} shows that whilst the latency of \texttt{git pull} is pretty much constant, the latency of using Ezirmin to pull updates increases linearly as the size of the mempool increases
+	Figure \ref{figs:gitreposize} shows that whilst the latency of \texttt{git pull} is pretty much constant, the latency of using Ezirmin to pull updates increases linearly as the size of the mempool increases.
+	For Logan, this means that the time taken for Leader to pull updates from mempools, will increase over time.
+	Additionally, Figure \ref{figs:gitpullsize} shows that the latency of using Git increases linearly with the number of transactions pulled.
+	This is an intuitive result that is unfortunately unavoidable due to such factors as network delays and data compression.
+	More importantly however, this graph shows that not only is the Ezirmin implementation of this functionality much slower, but it also grows at a faster rate.\\
 
-	Figure \ref{figs:gitpullsize} shows that the latency of using Git increases linearly with the number of transactions pulled.
-	This is an intuitive result that is unfortunately unavoidable due to network delays, data compression etc.
-	More importantly however, this graph shows that not only is the Ezirmin implementation of this functionality much slower, but it also grows at a faster rate.
+	Putting this together, Figure \ref{figs:gitreposize} shows that for a mempool size of roughly 5000 transactions, the latency of pulling new updates will be around 10 to 12 seconds.
+	This aligns exactly with the equivalent latency shown in Figure \ref{figs:leaderdelays}.
+	The linear increase in this transaction latency is demonstrated for a constant number of updates being pulled so I can conclude that whilst the increasing number of transactions being pulled can have an effect on the latency of Leader polls, the root cause is the linear increase in pull latency as the size of the mempool increases.
+	I have also shown that this linear latency increase is due to the implementation of Ezirmin, and that it is reasonable to assume that a better implementation, i.e. pure Git, could achieve constant time pulls, in the size of the mempool. 
+	Therefore, whilst Logan shows a linear increase in transaction latency with the size of the blockchain, I conclude that a better synchronisation implementation would allow Logan to achieve the success critera set out in the Requirements Analysis.
 
 	\subsection{Multiple Remote Participants}
 

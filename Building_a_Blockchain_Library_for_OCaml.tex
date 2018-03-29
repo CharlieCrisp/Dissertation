@@ -1185,8 +1185,29 @@ end
 	\section{The Effects of Leader Failure}
 
 	\chapter{Conclusion}
+	For my Individual Part II project I have successfully built Logan, a blockchain library that allows developers to easily use distributed blockchain data structures in their applications.
+	The system uses a leader based approach to consensus and is able to function well with mutliple remote nodes. 
+	It is also able to function well even at high throughputs.
+	Unfortunately, adding transactions to the blockchain over a network is a linear time operation with the size of the blockchain, but this is due to a poor implementation of the Git protocol used by Irmin. 
+	With a better implementation, Logan could achieve constant time transaction latencies as the blockchain size increases.
+	In this section, I would like to reflect upon the lessons I have learnt from this project, and on the possible next steps for Logan.
+
+	\section{Irmin as a Mempool Data Structure}
+	Irmin has high overheads for use as a data structure and I would think about using a non-log data structure that would not store transactions which have already been committed. 
+	A Queue would be an idea data structure because the Leader could pop off transactions that it has recognised and this would mean the Participant could get feedback that the Leader had seen each transaction.
+
+	\section{Failure Tolerance and Changing Leaders}
+	Tolerating failure is an aspect of this project that I have sadly not had time to investigate thoroughly.
+	With more time, I would like the opportunity to look into the mechanisms I could build that would allow the system to recover from failure, and to change Leader if the Leader were to fail.
+
+	\section{Adding Participants}
+	Currently, as well as only being able to define a single Leader, Participants can only be defined statically. 
+	Some consensus mechanisms introduce ways of adding and removing nodes to a network and I think it would be very feasible to build this feature into Logan.
 	
-	
+	\section{Using SSH}
+	Logan uses SSH connections to connect the Leader to Participants, but this may not be desirable in all situations and it may add unnecessary overhead. 
+	An alternative would be to use a HTTP protocol and I would like to investigate whether this would have an effect on the performance of the platform.
+
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% the bibliography
 	\bibliographystyle{acm}

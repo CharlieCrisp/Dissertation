@@ -199,7 +199,11 @@
 	This can then be viewed by all participating nodes, with the guarantee of strict consistency.
 	Setting up a network is as easy as specifying the location of the leader on all the participating nodes, and specifying the location of all participating nodes on the leader.\\
 	
-	I have evaluated the project by... FILL IN EVALUATION DETAILS
+	I have evaluated the project by measuring how the applied throughput to a Logan application affects the latency of adding transactions, and how the latency of adding transactions changes as the blockchain size increases.
+	My results showed that Logan is capable of dealing with throughputs of over 100 transactions per second without becoming overloaded, much exceeding my success criteria.
+	I have also shown that for a network with remote Participants, the latency of adding transactions increases linearly with blockchain size. 
+	However, I have been able to attribute this to the implementation of Git that Irmin/Ezirmin uses to pull updates over the network. 
+	I have also shown that pure Git achieves a much better efficiency and that a better OCaml implementation of this protocol would allow Logan to achieve constant transaction latency with blockchain size.
 
 	\chapter{Preparation}
 	Before starting work on the project code, I completed a lot of preparation in order to aid the development process.
@@ -1005,6 +1009,10 @@ end
 		\label{fig:complexconsensusfix}
 	\end{figure}
 
+	\section{Tolerating Leader Failure}
+
+	FILL IN SECTION
+
 	Now I have detailed all the work that I have completed to build Logan.
 	Transactions are sourced from the mempool and added to the blockchain when it can be certain that there will be no missed transactions.
 	Transactions are added in order and never changed such that if a Participant observes the state of the blockchain at any point, it will never observe a conflicting state in the future.
@@ -1060,7 +1068,7 @@ end
 
 	The graph also compares latencies when a simple, constant-time validator is used, which blindly accepts all transactions, and when no validation is performed. 
 	The result without validation was obtained by removing the validation code completely from the codebase and just accepting all transactions.
-	Intuitively, these two results should be the same because they perform the same logical task, and this graph confirms this intuition. 
+	Intuitively, these two results should be equivalent because they perform the same logical task, and this graph confirms this intuition. 
 	From this, we can conclude that if a user provides a constant time algorithm for validating transactions, then the overall time for adding transactions will remain constant.
 	
 	\subsection{Multiple Participants}
@@ -1129,9 +1137,52 @@ end
 	This aligns exactly with the equivalent latency shown in Figure \ref{figs:leaderdelays}.
 	The linear increase in this transaction latency is demonstrated for a constant number of updates being pulled so I can conclude that whilst the increasing number of transactions being pulled can have an effect on the latency of Leader polls, the root cause is the linear increase in pull latency as the size of the mempool increases.
 	I have also shown that this linear latency increase is due to the implementation of Ezirmin, and that it is reasonable to assume that a better implementation, i.e. pure Git, could achieve constant time pulls, in the size of the mempool. 
-	Therefore, whilst Logan shows a linear increase in transaction latency with the size of the blockchain, I conclude that a better synchronisation implementation would allow Logan to achieve the success critera set out in the Requirements Analysis.
+	Therefore, whilst Logan shows a linear increase in transaction latency with the size of the blockchain, I conclude that a better synchronisation implementation would allow Logan to achieve the success critera set out in the Requirements Analysis. \\
+
+	To complete my evaluation of Logan's performance with a single remote Participant, I examined how the latency varied with throughput.
+	I took each measurement for latency by adding a constant number of transactions to the mempool of the Participant at varying throughputs.
+	In order to measure the performance of the system outside of the Ezirmin's synchronisation overheads shown by Figure \ref{figs:gitreposize}, I took each measurement with a clean mempool.
+	Figure \ref{figs:onerem} shows the results of this experiment.
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.9\textwidth]{figs/remote_and_local_thrlat.png}
+		\caption{Latency variations against throughput with one remote Participant and one local Participant}
+		\label{figs:onerem}
+	\end{figure}
+	For the case where only the remote Participant is adding transactions, latency varies between 4 and 16 seconds, increasing linearly from throughputs from 0 to roughly 30 tranactions per second. 
+	It appears that latency levels off at around 30 transactions per second, but this is due to the fact that the throughput has become so high that the time within which transactions are made only spans one or two leader polls.
+	The result of this is that the indications of latency are not indicative of the latency of transactions when throughput is sustained at these values.
+	Beyond this throughput, the remote Participant is not capable of committing transactions to its mempool at a faster rate, and so the system reaches a maximum throughput before becoming overloaded.\\
+
+	Figure \ref{figs:onerem} also shows the case where a local Participant on the Leader's machine is also adding transactions at the same rate as the remote Participant.
+	In this case, the maximum achievable throughput for any given latency doubles. 
+	This indicates that Logan is able to comfortably cope with this nubmer of transactions, and that the only limitation on its performance is due to network overheads which can be attributed to the Ezirmin implementation described earlier.
+	In this case, the system is also able to achieve more than twice the throughput of the single remote Participant case, as the Leader is run on a more powerful machine that is able to write transactions to disk faster.\\
+
+	These results demonstrate that Logan is capable of sustaining throughputs of at least 100 transactions per second, in the case that a single remote Participant is used. 
+	This means that the system much exceeds the success criteria of being able to sustain throughputs of a few transactions per second.
 
 	\subsection{Multiple Remote Participants}
+	After showing that Logan can perform well with a single remote Participant, I evaluated how this performance scales to two remote Participants.
+	Figure \ref{figs:tworems} shows how the latency of making transactions varies with throughput.
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.9\textwidth]{figs/two_remotes_and_part_thrlat.png}
+		\caption{Latency variations against throughput with two remote Participants and one local Participant}
+		\label{figs:tworems}
+	\end{figure}
+	This data was collected in the same way that the data was collected for Figure \ref{figs:onerem}, so the two graphs can be directly compared.
+	For the case where there are just two remote Participants adding transactions, a throughput of 40 transactions per second will yield a latency of around 15 seconds. 
+	This is equivalent to the latencies for the same throughput with just a single remote Participant, so adding an extra remote Participant has not increased the latency for a given throughput at all.
+	However, where a single Participant was only able to achieve a maximum throughput of around 40 transactions per second, two Participants working in parallel can achieve more than twice that throughput.
+	The reason that the leader can achieve almost no additional latency with an extra node is that Participant mempools all exist on isolated branches of the Leader's mempool.
+	This means that it is possible to pull updates from all mempools in parallel. 
+	Logan will wait until all of the updates have been pulled before collating the newly retrieved transactions.
+	The result of this is that, so long as the leader is powerful enough to handle concurrent pulls, the entire update retrieval process will only take as long as the longest mempool retrieval time.
+	The updates from the Participant added in this experiment can be pulled in a comparable time to the the updates from the first Participant, and therefore, there is very little percieved difference in latency.
+	Figure \ref{figs:tworems} also shows that using a local Participant, throughputs can be increased majorly with no increase in latency. 
+	
+	\section{The Effects of Leader Failure}
 
 	\chapter{Conclusion}
 	

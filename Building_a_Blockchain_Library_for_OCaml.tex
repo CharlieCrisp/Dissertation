@@ -1288,26 +1288,24 @@ let rec start_leader () =
 	Maybe measure the extra latency?
 
 	\chapter{Conclusion}
-	For my Part II project I have successfully designed and implemented Logan, a blockchain library that allows developers to easily use distributed blockchain data structures in their applications.
+	\section{Successes}
+	I have successfully designed and implemented Logan, a blockchain library that empowers developers to easily use distributed blockchain data structures in their applications.
+	As blockchain is becoming more and more popular, more uses for it are being suggested by the day. 
+	Logan could be used in a wide range of applications where nodes in a blockchain network can be trusted. 
 	The system uses a leader based approach to consensus and is able to function well with mutliple remote nodes. 
-	It is also able to function well even at high throughputs.
+	It is also able to function well even at high throughputs, and can perform the necessary operations to recover from failure.
 	Unfortunately, adding transactions to the blockchain over a network is a linear time operation with the size of the blockchain, but this is due to a poor implementation of the Git protocol used by Irmin. 
-	With a better implementation, Logan could achieve constant time transaction latencies as the blockchain size increases.
-	In this section, I would like to reflect upon the lessons I have learnt from this project, and on the possible next steps for Logan.
+	With a better implementation, Logan could achieve constant time transaction latencies with the blockchain size, as well as the number of Participants increases.
+
 
 	\section{Possible Further Work}
-	\subsection{Irmin as a Mempool Data Structure}
-	Irmin has high overheads for use as a data structure and I would think about using a non-log data structure that would not store transactions which have already been committed. 
-	A Queue would be an idea data structure because the Leader could pop off transactions that it has recognised and this would mean the Participant could get feedback that the Leader had seen each transaction.
-
 	\subsection{Failure Tolerance and Changing Leaders}
-	Tolerating failure is an aspect of this project that I have sadly not had time to investigate thoroughly.
-	With more time, I would like the opportunity to look into the mechanisms I could build that would allow the system to recover from failure, and to change Leader if the Leader were to fail.
-
-	\subsection{Adding Participants}
+	Tolerating failure is an aspect of this project that I have only touched upon in this project. 
+	I have shown how Logan can perform replication but I have not implemented an automated approach for detecting and recovering from Failure. 
+	This is something I'd like to look into.
+	\subsection{Adding Participants Dynamically}
 	Currently, as well as only being able to define a single Leader, Participants can only be defined statically. 
 	Some consensus mechanisms introduce ways of adding and removing nodes to a network and I think it would be very feasible to build this feature into Logan.
-	
 	\subsection{Using SSH}
 	Logan uses SSH connections to connect the Leader to Participants, but this may not be desirable in all situations and it may add unnecessary overhead. 
 	An alternative would be to use HTTP and I would like to investigate whether this would have an effect on the performance of the platform.

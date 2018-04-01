@@ -1010,15 +1010,111 @@ end
 	\end{figure}
 
 	\section{Tolerating Leader Failure}
+	Now that I have detailed Logan's data strutures and how it achieves consensus, the only aspect of the implementation left to consider is Failure Tolerance.
+	Because Logan implements a leader based consensus mechanism, this means that there is a single point of failure.
+	In the event of a failure, different Participants may have different views of the blockchain and the leader may have even committed transactions to the blockchain which were never viewed by any Participants. 
+	Building fault tolerance into Logan would be enough work to justify a whole new Part II Project. 
+	Instead, in this section I will show a simple modficiation to Logan that will allow manual recovery of the blockchain in the case of a Leader failure. 
+	This will justify that a more complex and automated approach to recovering from leader failure is possible, and will demonstrate a good starting point for implementing such a mechanism. \\
 
-	FILL IN SECTION
+	To demonstrate fault tolerance, I will use the notion of a \textit{Replica}. 
+	Replicas, in computer science, are nodes which duplicate some part of another node's behaviour in order to allow recovery from failure. 
+	They can be either \textit{active}, if they fully duplicate the actions of another replica, or \textit{passive}, if they complete some operation and then transfer the results to another replica.
+	The replication I will demonstrate will be passive.\\
 
-	Now I have detailed all the work that I have completed to build Logan.
-	Transactions are sourced from the mempool and added to the blockchain when it can be certain that there will be no missed transactions.
-	Transactions are added in order and never changed such that if a Participant observes the state of the blockchain at any point, it will never observe a conflicting state in the future.
-	The algorithm used by Logan assumes that clock timestamps are synchronised across all devices.
-	This may not be the case in an arbitrary situation, and consequently, in high load situations some transactions may not be recognised in the correct order. 
-	However, the system is not built for systems of such high load and I do not consider this to be a large issue. 
+	In order to encorporate the notion of replica, the process of adding commits to the blockchain needs to be updated.
+	Now, before a commit is made, it needs to be recognised by a quorum of replicas.
+	Irmin's notion of branches exposes a perfect primitive for this application.
+	In a poll, the Leader can commit transactions to an uncommitted \textit{cache} branch before pushing this to all replicas.
+	If a quorum of these push operations return successfully, then the Leader can merge these transactions into the main blockchain branch to be viewed by all Participants.
+	If a failure were to occur at any point, it is now guaranteed that any transactions in the Leader's blockchain will also exist on a quorum of replicas.
+	This means that the system has access to sufficient information to reconstruct the contents of the blockchain before failure.\\
+	\begin{minipage}{\linewidth}
+	\begin{lstlisting}[caption={Naive Leader Loop}\label{lst:leaderloop}]
+let rec start_leader () = 
+	retrieve_and_process_updates() >>= 
+	commit_to_temporary_blockchain_branch >>=
+	push_to_replica_quorum >>=
+	merge_temp_branch_into_blockchain_master >>=
+	start_leader
+	\end{lstlisting}
+	\end{minipage}
+	\\
+
+	Listing \ref{lst:leaderloop} shows pseudocode for the Leader's poll cycle, now encorporating replicas. 
+	One of the major issues with this approach is that is presents a bottleneck in the Leader's execution which is likely to cause significant delays.\\
+	
+	A better approach would be to start an asychronous thread, which is in charge of pushing to replicas and merging the transactions which have been pushed.
+	This thread will take the blockchain \texttt{cache} branch and use this to create a new \texttt{push-cache} branch which it pushes to replicas.
+	The difference between these two branches is that the \texttt{cache} branch will constantly be updated as new items are added, whereas the \texttt{push-cache} branch will remain unchanged whilst a series of transactions are being pushed to replicas. 
+	When this push returns successfully, the thread will then merge this branch into the blockchain master branch, and loop.
+	\begin{figure}
+		\centering
+		\begin{subfigure}[t]{\textwidth}
+		\centering
+		\begin{tikzpicture}[
+			block/.style={circle, draw=black!100, very thick, minimum size=9mm},
+			invis/.style={circle, draw=black!100, minimum size=9mm},
+			label/.style={rectangle, text width=2cm, align=center}]                       
+			\node[invis] (invis) {\texttt{B}};
+			\node[block] (block1) [right=of invis] {};
+			\node[label] (labelmaster) [above=of block1] {Blockchain master branch};
+			\node[block] (block2) [below right=of block1] {};
+			\node[block] (block3) [right=of block2] {};
+			\node[block] (block4) [right=of block3] {};
+			\node[label] (labelpushcache) [below=of block3] {\texttt{push-cache} branch};
+			\node[block] (block5) [right=of block4] {};
+			\node[label] (labelcache) [above=of block5] {\texttt{cache} branch};
+			\draw[->] (labelmaster.south) -- (block1.north);
+			\draw[->] (labelpushcache.north) -- (block3.south);
+			\draw[->] (labelcache.south) -- (block5.north);
+			\begin{scope}[very thick, -stealth]
+				\draw[<-] (invis.east) -- (block1.west);
+				\draw[<-] (block1.south east) -- (block2.north west);
+				\draw[<-] (block2.east) -- (block3.west);
+				\draw[<-] (block3.east) -- (block4.west);
+				\draw[<-] (block4.east) -- (block5.west);
+			\end{scope}
+		\end{tikzpicture}
+		\caption{During push}
+		\label{fig:replicaasync}
+		\end{subfigure}	
+		\begin{subfigure}[t]{\textwidth}
+		\centering
+		\begin{tikzpicture}[
+			block/.style={circle, draw=black!100, very thick, minimum size=9mm},
+			invis/.style={circle, draw=black!100, minimum size=9mm},
+			label/.style={rectangle, text width=2cm, align=center}]                       
+			\node[invis] (invis) {\texttt{B}};
+			\node[block] (block1) [right=of invis] {};
+			\node[block] (block2) [right=of block1] {};
+			\node[block] (block3) [right=of block2] {};
+			\node[label] (labelmaster) [above=of block3] {Blockchain master branch};
+			\node[block] (block4) [below right=of block3] {};
+			\node[label] (labelpushcache) [below=of block5] {\texttt{push-cache} branch};
+			\node[block] (block5) [right=of block4] {};
+			\node[label] (labelcache) [above=of block5] {\texttt{cache} branch};
+			\draw[->] (labelmaster.south) -- (block3.north);
+			\draw[->] (labelpushcache.north) -- (block5.south);
+			\draw[->] (labelcache.south) -- (block5.north);
+			\begin{scope}[very thick, -stealth]
+				\draw[<-] (invis.east) -- (block1.west);
+				\draw[<-] (block1.east) -- (block2.west);
+				\draw[<-] (block2.east) -- (block3.west);
+				\draw[<-] (block3.south east) -- (block4.north west);
+				\draw[<-] (block4.east) -- (block5.west);
+			\end{scope}
+		\end{tikzpicture}
+		\caption{After push}
+		\label{fig:replicaasyncfinished}
+		\end{subfigure}	
+		\caption{Blockchain data structure with cache for pushing to replicas}
+	\end{figure}
+	Figure \ref{fig:replicaasync} shows a blockchain with some transactions in the cache branch.
+	The first two of these transactions have been recognised by the replication thread and are in the process of being pushed to a quorum of replicas. 
+	The final two transactions have been added after the replication thread started its latest loop, and are therefore currently not being pushed to replicas.
+	Figure \ref{fig:replicaasyncfinished} shows the state of the blockchain after the replication thread has successfully pushed its updates to a quorum.
+	Now the master branch includes the two new transactions, and the \texttt{push-cache} branch has been updated such that the two newest cache transactions will be pushed to the blockchains of all the replicants.
 
 	\chapter{Evaluation}
 	%introduction to evaluation and metrics used
@@ -1039,9 +1135,6 @@ end
 	It is important that the system should be able to work well even when the size of the blockchain is large so that performance will not degrade over time.
 	
 	\section{Performance on a Local Machine}
-	%TODO detail how performance varies on a single machine 
-	\subsection{Single Participant}
-	%What happens when there is one participant only?
 	Figure \ref{fig:singlocal} shows how the latency of transactions varies with throughput for a Participant node on the same machine as the Leader node.
 	Latency stays at between 10-15ms up until the system reaches about 70 transactions per second.
 	The set of data points which lie significantly above the straight line are points where the system has become overloaded. 

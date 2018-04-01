@@ -1071,7 +1071,6 @@ end
 	Intuitively, these two results should be equivalent because they perform the same logical task, and this graph confirms this intuition. 
 	From this, we can conclude that if a user provides a constant time algorithm for validating transactions, then the overall time for adding transactions will remain constant.
 	
-	\subsection{Multiple Participants}
 	%What about with multiple particpants
 
 	\section{Performance on Remote Machines}
@@ -1150,55 +1149,51 @@ end
 	This would also provide the desirable side effect of allowing the Participant to see when the Leader has recognised requested transactions, because they would get popped off the queue. 
 	Whilst Ezirmin provides a Queue data structure, I have not used it in this project in order to reduce implementation complexity.
 	Using this structure would also likely decrease initial performance as it uses OCaml's implementaton of Git.
-	Because of the birectional nature of merging changes (i.e. popping and pushing), it would not be trivial to use command line Git in this case. \\
+	Because of the bidirectional nature of merging changes (i.e. popping and pushing), it would not be trivial to use command line Git in this case. \\
 
-	To complete my evaluation of Logan's performance with a single remote Participant, I examined how the latency varied with throughput.
-	I took each measurement for latency by adding a constant number of transactions to the mempool of the Participant at varying throughputs.
-	In order to measure the performance of the system outside of the Ezirmin's synchronisation overheads shown by Figure \ref{figs:gitreposize}, I took each measurement with a clean mempool.
-	Figure \ref{figs:onerem} shows the results of this experiment.
-	\begin{figure}
-		\centering
-		\includegraphics[width=0.9\textwidth]{figs/remote_and_local_thrlat.png}
-		\caption{Latency variations against throughput with one remote Participant and one local Participant}
-		\label{figs:onerem}
-	\end{figure}
-	For the case where only the remote Participant is adding transactions, latency varies between 4 and 16 seconds, increasing linearly from throughputs from 0 to roughly 30 tranactions per second. 
-	It appears that latency levels off at around 30 transactions per second, but this is due to the fact that the throughput has become so high that the time within which transactions are made only spans one or two leader polls.
-	The result of this is that the indications of latency are not indicative of the latency of transactions when throughput is sustained at these values.
-	Beyond this throughput, the remote Participant is not capable of committing transactions to its mempool at a faster rate, and so the system reaches a maximum throughput before becoming overloaded.\\
-
-	Figure \ref{figs:onerem} also shows the case where a local Participant on the Leader's machine is also adding transactions at the same rate as the remote Participant.
-	In this case, the maximum achievable throughput for any given latency doubles. 
-	This indicates that Logan is able to comfortably cope with this nubmer of transactions, and that the only limitation on its performance is due to network overheads which can be attributed to the Ezirmin implementation described earlier.
-	In this case, the system is also able to achieve more than twice the throughput of the single remote Participant case, as the Leader is run on a more powerful machine that is able to write transactions to disk faster.\\
-
-	These results demonstrate that Logan is capable of sustaining throughputs of at least 100 transactions per second, in the case that a single remote Participant is used. 
-	This means that the system much exceeds the success criteria of being able to sustain throughputs of a few transactions per second.
+	Overall, in the case of a single remote Participant, Logan is able to comfortably reach throughputs of up to 30 transactions per second which is much above the success criteria. 
+	Latencies in this case are less than 10s which is a good result for most applications.
+	Finally, whilst Logan does not fulfil the success criteria of having constant-time blockchain appends, I have demonstrated how this is due to the overheads from using Git, and I have justified how a better synchronisation protocol would allow Logan to achieve this goal.
 
 	\subsection{Multiple Remote Participants}
 	After showing that Logan can perform well with a single remote Participant, I evaluated how this performance scales to two remote Participants.
-	Figure \ref{figs:tworems} shows how the latency of making transactions varies with throughput.
+	Figure \ref{figs:tworems} shows how the latency of making transactions varies with throughput when the pure Git protocol is used.
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.9\textwidth]{figs/two_remotes_and_part_thrlat.png}
-		\caption{Latency variations against throughput with two remote Participants and one local Participant}
+		\includegraphics[width=0.9\textwidth]{figs/2latencies_sizes_throughputs.png}
+		\caption{Latency variations against blockchain size with two remote Participants using pure Git}
 		\label{figs:tworems}
 	\end{figure}
-	This data was collected in the same way that the data was collected for Figure \ref{figs:onerem}, so the two graphs can be directly compared.
-	For the case where there are just two remote Participants adding transactions, a throughput of 40 transactions per second will yield a latency of around 15 seconds. 
-	This is equivalent to the latencies for the same throughput with just a single remote Participant, so adding an extra remote Participant has not increased the latency for a given throughput at all.
-	However, where a single Participant was only able to achieve a maximum throughput of around 40 transactions per second, two Participants working in parallel can achieve more than twice that throughput.
-	The reason that the leader can achieve almost no additional latency with an extra node is that Participant mempools all exist on isolated branches of the Leader's mempool.
-	This means that it is possible to pull updates from all mempools in parallel. 
-	Logan will wait until all of the updates have been pulled before collating the newly retrieved transactions.
-	The result of this is that, so long as the leader is powerful enough to handle concurrent pulls, the entire update retrieval process will only take as long as the longest mempool retrieval time.
-	The updates from the Participant added in this experiment can be pulled in a comparable time to the the updates from the first Participant, and therefore, there is very little percieved difference in latency.
-	Figure \ref{figs:tworems} also shows that using a local Participant, throughputs can be increased majorly with no increase in latency. 
-	
+	An important feature of this graph is the fact that the slope of the graphs have not really changed from the case with only one remote Participant.
+	For a throughput of around 10 transactions per second, transaction latencies will rise by around 5 seconds over 5000 transactions in both cases.
+	The biggest difference is the fact that transaction latencies now start at around 12 seconds, whereas they were around 6 seconds before.
+	This is because native Git does not allow for updates to be pulled from multiple different remote repositories at the same time, and therefore, all remote repositories must be pulled sequentially.
+	Even if protocol is used that can achieve constant time blockchain appends, this result means that latencies will be linear in the number of remote nodes in a network which is undesirable. \\
+
+	Figure \ref{figs:tworemsirmin} shows the performance of Logan when using Irmin's Git rather than pure Git.
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.9\textwidth]{figs/latencies_sizes_throughputs_irmin_git.png}
+		\caption{Latency variations against blockchain size with two remote Participants using Ezirmin's Sync module}
+		\label{figs:tworemsirmin}
+	\end{figure}
+	Whilst using pure Git causes a linear increase in transaction latency with the number of nodes in the network, this result shows that the initial transaction latency for a throughput of around 10 transactions per second remains at roughly 6 seconds. 
+	In contrast to pure Git, provides the functionality for pulling remote updates in parallel and consequently the initial transaction latency has not changed with an extra node in the network.
+	This indicates that the number of nodes in the network will not hinder transaction latency so long as the Leader nodes is computationally powerful enough to process updates from mempools in parallel.\\
+
+	In conclusion, the results from using Irmin's Git implementation and pure Git both show different trade offs in terms of initial transaction latency and increases in transaction latencies. 
+	However, the benefits that each show are not mutually exlusively and could be exploited by
+	 a better protocol.
+	Therefore, if this improved protocol were used, Logan would be able to achieve constant time blockchain transactions in the size of the blockchain, as well as the number of nodes in the network.
+	This would satisfy all of Logan's success criteria.
+	Implementing this protocol would also be outside the scope of this project and I can therefore conclude that my implementation of Logan fulfils all of the success criteria that I set out.
+
 	\section{The Effects of Leader Failure}
 
+	TODO
+
 	\chapter{Conclusion}
-	For my Individual Part II project I have successfully built Logan, a blockchain library that allows developers to easily use distributed blockchain data structures in their applications.
+	For my Part II project I have successfully designed and implemented Logan, a blockchain library that allows developers to easily use distributed blockchain data structures in their applications.
 	The system uses a leader based approach to consensus and is able to function well with mutliple remote nodes. 
 	It is also able to function well even at high throughputs.
 	Unfortunately, adding transactions to the blockchain over a network is a linear time operation with the size of the blockchain, but this is due to a poor implementation of the Git protocol used by Irmin. 

@@ -1043,9 +1043,9 @@ let rec start_leader () =
 
 	Listing \ref{lst:leaderloop} shows pseudocode for the Leader's poll cycle, now encorporating replicas. 
 	One of the major issues with this approach is that is presents a bottleneck in the Leader's execution which is likely to cause significant delays.\\
-	
-	A better approach would be to start an asychronous thread, which is in charge of pushing to replicas and merging the transactions which have been pushed.
-	This thread will take the blockchain \texttt{cache} branch and use this to create a new \texttt{push-cache} branch which it pushes to replicas.
+
+	I have implemented a better approach which starts an asychronous thread, that is in charge of pushing to replicas and merging the transactions which have been pushed.
+	This thread takes the blockchain \texttt{cache} branch and use this to create a new \texttt{push-cache} branch which it pushes to replicas.
 	The difference between these two branches is that the \texttt{cache} branch will constantly be updated as new items are added, whereas the \texttt{push-cache} branch will remain unchanged whilst a series of transactions are being pushed to replicas. 
 	When this push returns successfully, the thread will then merge this branch into the blockchain master branch, and loop.
 	\begin{figure}
@@ -1283,7 +1283,9 @@ let rec start_leader () =
 
 	\section{The Effects of Leader Failure}
 
-	TODO
+	TODO  What should I put in this section??
+	Maybe compare overheads of the asynchronous thread that does the pushing?
+	Maybe measure the extra latency?
 
 	\chapter{Conclusion}
 	For my Part II project I have successfully designed and implemented Logan, a blockchain library that allows developers to easily use distributed blockchain data structures in their applications.

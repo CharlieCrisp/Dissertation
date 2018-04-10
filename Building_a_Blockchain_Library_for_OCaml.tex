@@ -1137,7 +1137,7 @@ let rec start_leader () =
 	In a blockchain system, it is important that the latency is as low as possible. 
 	Latency dictates how long a user must wait before they can be sure that their transaction has been added.
 	It is easy to see why this is important by thinking in terms of a cryptocurrency application.
-	In this context long latencies will cause users to become irritated and potentially stop using your currency.
+	In this context, long latencies will cause users to become irritated and potentially stop using your currency.
 	Throughput is also a useful measure because it shows how well a system can cope with large loads.
 	Again in the context of a cryptocurrency, it is important that lots of users should be able to make transactions at the same time.
 	As with all distributed systems, these two metrics are inevitably linked, and higher system throughputs will lead to larger latencies. 
@@ -1149,11 +1149,13 @@ let rec start_leader () =
 	
 	\section{Performance on a Local Machine}
 	Figure \ref{fig:singlocal} shows how the latency of transactions varies with throughput for a Participant node on the same machine as the Leader node.
-	Latency stays at between 10-15ms up until the system reaches about 70 transactions per second.
+	Latency stays at 10-15ms up until the system reaches about 70 transactions per second.
 	The set of data points which lie significantly above the straight line are points where the system has become overloaded. 
 	The rate of transactions has become so high that latencies have increased and the throughput has actually decreased again. 
 	This is a really interesting result because it shows that Logan's logic functions well at throughputs of between 50 and 60 transactions per second, whilst maintaining low transaction latency.
-	These figures are much better than my success criteria which suggested the system should be able to cope with around 2-3 transactions per second.\\
+	It is worth noting that this result is using a low performance virtual machine hosted in the cloud, with limited disk write performance. 
+	It is reasonable to expect that a more powerful machine would be able to achieve significantly better results.
+	However, despite these machine limitations, these figures are much better than my success criteria which suggested the system should be able to cope with around 2-3 transactions per second.\\
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/single_local_worker.png}
@@ -1162,28 +1164,22 @@ let rec start_leader () =
 	\end{figure}
 
 	Figure \ref{fig:locallatency} shows how the latency of Logan transactions varies as the size of the blockchain increases. 
-	The Figure shows clearly that the latency of adding a transaction is constant in the size of the blockchain.
-	This is a very desirable trait as it means that Logan can be used for systems that run for indefinite periods of time, with arbitrary long blockchain histories.
-	In the requirements analysis, I set out the criteria that Logan should be able to add transactions at constant latency and this result shows that I have been successful in achieving this criteria.\\
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.8\textwidth]{figs/latency_vs_size.png}
+		\includegraphics[width=0.8\textwidth]{figs/local_latency_vs_size.png}
 		\caption{Latency variation with blockchain size on a local Participant}
 		\label{fig:locallatency}
 	\end{figure}
-
-	The graph also compares latencies when a simple, constant-time validator is used, which blindly accepts all transactions, and when no validation is performed. 
-	The result without validation was obtained by removing the validation code completely from the codebase and just accepting all transactions.
-	Intuitively, these two results should be equivalent because they perform the same logical task, and this graph confirms this intuition. 
-	From this, we can conclude that if a user provides a constant time algorithm for validating transactions, then the overall time for adding transactions will remain constant.
-	
-	%What about with multiple particpants
-
+	The Figure shows clearly that the latency of adding a transaction is constant in the size of the blockchain.
+	This is a very significant result because it proves that the logic which Logan uses is capable of achieving constant time blockchain appends in the size of the blockchain.
+	This is a very desirable trait as it means that Logan can be used for systems that run for indefinite periods of time, with arbitrary long blockchains.
+	In the Requirements Analysis, I set out the criteria that Logan should be able to add transactions at constant latency and this result shows that I have been successful in achieving this criteria.\\
 	\section{Performance on Remote Machines}
 	%How does performance vary when there are multiple machines
 	\subsection{Single Remote Participant}
-	In order to see how the system performs when network latencies are involved, I first looked at Logan's performance when there is just one Leader and one remote Participant.
+	In order to see how the system performs when network latencies are involved, I first looked at Logan's performance when there is just one Leader and one remote Participant, i.e. a Participant on a different machine to the Leader.
 	Figure \ref{figs:remlatencysize} compares the latency of adding a Logan transaction changes as ths size of the blockchain increases, for different throughputs.
+	The blockchain size can also be thought of as a measure of time elapsed as the thoughput is constant for each line.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/latencies_sizes_throughputs.png}
@@ -1191,12 +1187,11 @@ let rec start_leader () =
 		\label{figs:remlatencysize}
 	\end{figure}
 	The first noticable feature of this graph is the saw-tooth shape of the latencies at high throughputs.
-	In these cases, the flat or downwards facing segments represent transactions which were committed at the same time after being retrieved over the network as part of the same pull operation.
-	This saw-tooth behaviour accompanies a linear increase in latency over time and this is also the case for the lower throughput results. 
-	Depending on the application, saw-tooth behaviour may be undesirable, however the increased constant factor in latency increases will mostly be less desirable.
-	Latencies start to increase more rapidly for throughputs above 40 transactions so I conclude that the system is performing well up until 30 transactions per second, at which point the performance starts to degrade. \\
+	In these cases, the flat or downward sloping segments represent transactions which were committed in the same poll cycle after being collectively retrieved over the network.
+	Importantly, the system is perforing well up until around 20 to 40 transactions per second.
+	There is also an obvious linear increase in latency for all of the throughputs and this is undesirable behaviour as it indicates that large blockchains will accompany poor performance. \\
 	
-	In order to examine what was causing the higher transaction latencies at higher blockchain sizes, I logged the time that the Leader spent completing different tasks for each poll cycle.
+	In order to examine what was causing the linear increase in latencies with blockchain sizes, I logged the time that the Leader spent completing different tasks for each poll cycle.
 	Figure \ref{figs:leaderdelays} shows how these delays evolve over time and compares them with the number of updates that are pulled in each poll cycle.
 	\begin{figure}
 		\centering
@@ -1206,7 +1201,7 @@ let rec start_leader () =
 	\end{figure}
 	In this figure, the biggest bottleneck is obviously the time taken to pull mempool updates over the network, which increases at least linearly as the size of the mempool increases.
 	Consequently, the number of updates that are retrieved during this period also increases and therefore the time taken adding these updates also increases.
-	This increase in the latency of pulling mempool updates prevents the system from being able to add transactions to the blockchain in constant time, as set out in the requirements analysis %TODO??
+	This increase in the latency of pulling mempool updates prevents the system from being able to add transactions to the blockchain in constant time, as set out in the Requirements Analysis. %TODO??
 	Not only this, but the latencies shown in Figure \ref{figs:leaderdelays} are particularly high, so to investigate this further, I further examined the latencies of using Ezirmin's \texttt{Sync} module against the native Git command line interface. \\
 
 	Figure \ref{figs:gitreposize} compares the latencies of the \texttt{git pull} command with the latencies of using the \texttt{Sync.pull} command provided by Ezirmin.
@@ -1219,7 +1214,7 @@ let rec start_leader () =
 	Whilst the latency of \texttt{git pull} is linear in the size of the blockchain, the latency of using Ezirmin to pull updates increases at a much faster rate. NOTE: UPDATED GRAPH NEEDED AS CURRENT DOESN'T SHOW LATENCY FOR PULLING INTERNAL AND MASTER BRANCH.\\
 
 	These results provide a very bleak outlook on the performance of the implementation of the Git protocol which is used by Ezirmin.
-	In order to show the extent of how this affects my implementation of Logan, I updated the synchronisation implementation to directly call git commands via their command line interface.
+	In order to show the extent of how this affects my implementation of Logan, I updated the synchronisation implementation to directly call Git commands via its command line interface.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.9\textwidth]{figs/latency_sizes_throughputs.png}
@@ -1238,14 +1233,18 @@ let rec start_leader () =
 	Figure \ref{figs:bottleneckspuregit} is also a parallel of Figure \ref{figs:leaderdelays} that shows how using pure Git can massively reduce the latency bottleneck for the Leader.  
 	Whilst this bottleneck is much lower than before, it still takes up much more time than any other stage of the Leader's execution.
 	This suggests that Git using SSH is still a very inefficient way of transferring updates to the leader.  
-	This could be due to many unnecessary overheads in the implementation of Git and SSH, but if a better protocol was used, much better performance could still be achieved. %TODO make less wishy washy
+	This could be due to many unnecessary overheads in the implementation of Git and SSH, such as the SSH handshake and the mechanism Git uses for finding new updates to be transferred between repositories. 
+	If a better protocol was used, much better performance could be achieved. %TODO make less wishy washy
 	Another downside of using pure Git is that it requires any system running a Logan Leader to also have an installation of Git and this can be problematic when compiling to unikernel systems. 
 	This result, however, does suffice as a justification of Logan's potential power if OCaml were to have a better implementation of Git. \\
 
+
+
+	****
 	Whilst I have now shown that Logan can perform well by using pure Git, there is still the unfortunate result that transaction latencies still increase linearly with the size of the mempool.
-	This is due to the linear increase shown by \ref{figs:gitreposize} and the fact that Logan's mempools are always growing. 
-	Because the throughput is constant in this figure, the latency of transferring the same number of transactions over the network should also be constant.
-	Unfortunately this is not the case for Git's implementation which compares the contents of repositories on each pull to determine what updates need to be sent over the network. 
+	This is due to the linear increase shown by Figure \ref{figs:gitreposize} and the fact that Logan's mempools are always growing. 
+	If the network delays were constant in the size of the mempool, then at a constant throughput the Leader should pick up the same number of updates in a cycle, and latencies should stay constant in the size of the mempool.
+	Unfortunately this is not the case for Git's implementation which compares the contents of entire repositories on each pull to determine what updates need to be sent over the network. 
 	However, the information of what data needs to be sent can be known ahead of time and a better streaming protocol would, in theory, allow for this latency to become constant. \\
 
 	Additionally, the fact that mempools are always growing is not a requirement for Logan.

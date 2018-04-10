@@ -1178,8 +1178,9 @@ let rec start_leader () =
 	%How does performance vary when there are multiple machines
 	\subsection{Single Remote Participant}
 	In order to see how the system performs when network latencies are involved, I first looked at Logan's performance when there is just one Leader and one remote Participant, i.e. a Participant on a different machine to the Leader.
-	Figure \ref{figs:remlatencysize} compares the latency of adding a Logan transaction changes as ths size of the blockchain increases, for different throughputs.
-	The blockchain size can also be thought of as a measure of time elapsed as the thoughput is constant for each line.
+	Figure \ref{figs:remlatencysize} compares the latency of making a transaction and the size of the mempool, for different throughputs.
+	The mempool size can also be thought of as a measure of time elapsed as the thoughput is constant for each line.
+	In this situation, mempool size is equivalent to blockchain size but has been used instead because the mempool is the structure being pulled over the network, not the blockchain.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/latencies_sizes_throughputs.png}
@@ -1189,20 +1190,20 @@ let rec start_leader () =
 	The first noticable feature of this graph is the saw-tooth shape of the latencies at high throughputs.
 	In these cases, the flat or downward sloping segments represent transactions which were committed in the same poll cycle after being collectively retrieved over the network.
 	Importantly, the system is perforing well up until around 20 to 40 transactions per second.
-	There is also an obvious linear increase in latency for all of the throughputs and this is undesirable behaviour as it indicates that large blockchains will accompany poor performance. \\
+	There is also an obvious linear increase in latency for all of the throughputs and this is undesirable behaviour as it indicates that large mempools will accompany poor performance. \\
 	
-	In order to examine what was causing the linear increase in latencies with blockchain sizes, I logged the time that the Leader spent completing different tasks for each poll cycle.
+	In order to examine what was causing the linear increase in latencies with mempool size, I logged the time that the Leader spent completing different tasks for each poll cycle.
 	Figure \ref{figs:leaderdelays} shows how these delays evolve over time and compares them with the number of updates that are pulled in each poll cycle.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/leader_delays_num_pulled.png}
-		\caption{Delays incurred by Leader for every poll cycle}
+		\caption{Delays incurred by Leader for every poll cycle. Throughput is constant at 10 transactions per second}
 		\label{figs:leaderdelays}
 	\end{figure}
-	In this figure, the biggest bottleneck is obviously the time taken to pull mempool updates over the network, which increases at least linearly as the size of the mempool increases.
+	In this figure, the biggest bottleneck is obviously the time taken to pull mempool updates over the network, which increases linearly with the size of the mempool.
 	Consequently, the number of updates that are retrieved during this period also increases and therefore the time taken adding these updates also increases.
-	This increase in the latency of pulling mempool updates prevents the system from being able to add transactions to the blockchain in constant time, as set out in the Requirements Analysis. %TODO??
-	Not only this, but the latencies shown in Figure \ref{figs:leaderdelays} are particularly high, so to investigate this further, I further examined the latencies of using Ezirmin's \texttt{Sync} module against the native Git command line interface. \\
+	This increase in the latency of pulling mempool updates prevents the system from being able to add transactions to the blockchain in constant time. %TODO: set this goal out in requirements analysis?
+	Not only this, but the latencies shown in Figure \ref{figs:leaderdelays} are particularly high, so to investigate this further, I examined the latencies of using Ezirmin's \texttt{Sync} module against the native Git command line interface. \\
 
 	Figure \ref{figs:gitreposize} compares the latencies of the \texttt{git pull} command with the latencies of using the \texttt{Sync.pull} command provided by Ezirmin.
 	\begin{figure}
@@ -1213,8 +1214,8 @@ let rec start_leader () =
 	\end{figure}
 	Whilst the latency of \texttt{git pull} is linear in the size of the blockchain, the latency of using Ezirmin to pull updates increases at a much faster rate. NOTE: UPDATED GRAPH NEEDED AS CURRENT DOESN'T SHOW LATENCY FOR PULLING INTERNAL AND MASTER BRANCH.\\
 
-	These results provide a very bleak outlook on the performance of the implementation of the Git protocol which is used by Ezirmin.
-	In order to show the extent of how this affects my implementation of Logan, I updated the synchronisation implementation to directly call Git commands via its command line interface.
+	These results provide a very bleak outlook on the performance of the Git implementation which is used by Ezirmin.
+	In order to show the extent to which this affects Logan, I updated the synchronisation implementation to directly call Git commands via a shell.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.9\textwidth]{figs/latency_sizes_throughputs.png}
@@ -1222,21 +1223,21 @@ let rec start_leader () =
 		\label{figs:latenciespuregit}
 	\end{figure}
 	Figure \ref{figs:latenciespuregit} is a parallel of Figure \ref{figs:remlatencysize} but using this new implementation instead. 
-	This shows that the system can perform significantly better by using pure Git. 
-	Not only can it achieve much better constant factors in the latency increases, but these latencies are also around 2-3 times faster.
+	The figure shows that the system can perform significantly better by using pure Git. 
+	Specifically, the system can achieve much better constant factors in the increase of latencies with mempool size.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.9\textwidth]{figs/bottlenecks.png}
-		\caption{Delays incurred by Leader when using pure Git}
+		\caption{Delays incurred by Leader when using pure Git. Throughput is constant at 10 transactions per second}
 		\label{figs:bottleneckspuregit}
 	\end{figure}
-	Figure \ref{figs:bottleneckspuregit} is also a parallel of Figure \ref{figs:leaderdelays} that shows how using pure Git can massively reduce the latency bottleneck for the Leader.  
+	Figure \ref{figs:bottleneckspuregit} is a parallel of Figure \ref{figs:leaderdelays} that demonstrates that this speedup is due to the greatly reduced times that the leader spends pulling mempool updates as the mempool size grows.
 	Whilst this bottleneck is much lower than before, it still takes up much more time than any other stage of the Leader's execution.
 	This suggests that Git using SSH is still a very inefficient way of transferring updates to the leader.  
 	This could be due to many unnecessary overheads in the implementation of Git and SSH, such as the SSH handshake and the mechanism Git uses for finding new updates to be transferred between repositories. 
 	If a better protocol was used, much better performance could be achieved. %TODO make less wishy washy
-	Another downside of using pure Git is that it requires any system running a Logan Leader to also have an installation of Git and this can be problematic when compiling to unikernel systems. 
-	This result, however, does suffice as a justification of Logan's potential power if OCaml were to have a better implementation of Git. \\
+	Another downside of using pure Git is that it requires any system running a Logan Leader to also have a native installation of Git and this can be problematic when compiling to unikernel systems. 
+	This result, however, does suffice as a justification of Logan's potential performance if OCaml were to have a better implementation of Git. \\
 
 
 
@@ -1269,11 +1270,11 @@ let rec start_leader () =
 		\caption{Latency variations against blockchain size with two remote Participants using pure Git}
 		\label{figs:tworems}
 	\end{figure}
-	An important feature of this graph is the fact that the slope of the graphs have not really changed from the case with only one remote Participant.
-	For a throughput of around 10 transactions per second, transaction latencies will rise by around 5 seconds over 5000 transactions in both cases.
+	An important feature of this graph is the fact that the slope of the plots have not really changed from the case with only one remote Participant.
+	For a throughput of around 10 transactions per second, transaction latencies will still rise by around 5 seconds over 5000.
 	The biggest difference is the fact that transaction latencies now start at around 12 seconds, whereas they were around 6 seconds before.
 	This is because native Git does not allow for updates to be pulled from multiple different remote repositories at the same time, and therefore, all remote repositories must be pulled sequentially.
-	Even if protocol is used that can achieve constant time blockchain appends, this result means that latencies will be linear in the number of remote nodes in a network which is undesirable. \\
+	Even if a protocol is used that can achieve constant time blockchain appends, this result limits latencies to be linear in the number of remote nodes in a network which is undesirable. \\
 
 	Figure \ref{figs:tworemsirmin} shows the performance of Logan when using Irmin's Git rather than pure Git.
 	\begin{figure}
@@ -1282,14 +1283,14 @@ let rec start_leader () =
 		\caption{Latency variations against blockchain size with two remote Participants using Ezirmin's Sync module}
 		\label{figs:tworemsirmin}
 	\end{figure}
-	Whilst using pure Git causes a linear increase in transaction latency with the number of nodes in the network, this result shows that the initial transaction latency for a throughput of around 10 transactions per second remains at roughly 6 seconds. 
-	In contrast to pure Git, provides the functionality for pulling remote updates in parallel and consequently the initial transaction latency has not changed with an extra node in the network.
-	This indicates that the number of nodes in the network will not hinder transaction latency so long as the Leader nodes is computationally powerful enough to process updates from mempools in parallel.\\
+	Importantly, the initial transaction latency has not increased from the case when there is just one remote Participant in the network.
+	In contrast to pure Git, Irmin's Git provides the functionality for pulling remote updates in parallel and consequently the initial transaction latency has not doubled in this case.
+	This indicates that the number of nodes in the network will not hinder transaction latency so long as the Leader node is computationally powerful enough to process updates from mempools in parallel.\\
 
-	In conclusion, the results from using Irmin's Git implementation and pure Git both show different trade offs in terms of initial transaction latency and increases in transaction latencies. 
-	However, the benefits that each show are not mutually exlusively and could be exploited by
-	 a better protocol.
-	Therefore, if this improved protocol were used, Logan would be able to achieve constant time blockchain transactions in the size of the blockchain, as well as the number of nodes in the network.
+	Overall, the results from using Irmin's Git implementation and pure Git both show different trade offs in terms of initial transaction latency and increases in transaction latencies over time. 
+	However, the benefits shown by each implementation are not mutually exlusive.
+	A better implementation of Git should be able to pull mempool updates in parallel whilst achieving the same linear increases in latencies that pure Git acheives. 
+	If I assume, as before, a better streaming implementation for mempool synchronisation, then these results show that it is feasible for Logan to be able to achieve constant latencies in the size of the blockchain, as well as the number of nodes in the network.
 	This would satisfy all of Logan's success criteria.
 	Implementing this protocol would also be outside the scope of this project and I can therefore conclude that my implementation of Logan fulfils all of the success criteria that I set out.
 

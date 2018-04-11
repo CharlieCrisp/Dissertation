@@ -413,10 +413,12 @@ end
 	\begin{itemize}
 		\item The consensus mechanism must guarantee strict consistency in the blockchain state. 
 		Although strict consistency could add large overhead costs, it is necessary for some applications and so is an important part of the final project.
+		\item The system should be capable of handling throughputs of at least 10 transactions per second, with the latency of making a transaction being less than 10 seconds.s
+		\item The latency of adding a block should be constant in the size of the blockchain.
 		\item The consensus mechanism must be scalable. 
-		Within the scope of this project, it should be possible for the blockchain to be shared by 3 or more nodes in a network. 
-		Latencies will inevitably grow at least linearly in the number of nodes in the network.
-		Logan's performance should demonstrate only modest descreases in performance for increases in nodes in a network.
+		Within the scope of this project, it should be possible for the blockchain to be shared by 3 in a network. 
+		Latencies will inevitably grow with the number of nodes in the network.
+		Logan's performance should demonstrate only modest decreases in performance for increases in nodes in a network.
 	\end{itemize}
 
 	\chapter{Implementation} \label{Implementation}
@@ -1156,7 +1158,7 @@ let rec start_leader () =
 	This is a really interesting result because it shows that Logan's logic functions well at throughputs of between 50 and 60 transactions per second, whilst maintaining low transaction latency.
 	It is worth noting that this result is using a low performance virtual machine hosted in the cloud, with limited disk write performance. 
 	It is reasonable to expect that a more powerful machine would be able to achieve significantly better results.
-	However, despite these machine limitations, these figures are much better than my success criteria which suggested the system should be able to cope with around 2-3 transactions per second.\\
+	However, despite these machine limitations, these figures are much better than my success criteria which suggested the system should be able to function with throughputs greater than 10, and with latencies of less than 10 seconds.\\
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/single_local_worker.png}
@@ -1221,6 +1223,7 @@ let rec start_leader () =
 	The figure shows that the system can perform significantly better by using pure Git. 
 	Specifically, the system can achieve much better constant factors in the increase of latencies with mempool size.
 	At a mempool size of 5000 and a throughput of 10, latencies have been reduced from 15 seconds (with OCaml Git) to 8 (with pure Git).
+	This result shows that in this scenario, Logan still satisfies the success criteria of being able to acheive throughputs greater than 10 and latencies less than 10 seconds.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.9\textwidth]{figs/bottlenecks.png}
@@ -1254,8 +1257,8 @@ let rec start_leader () =
 	Using this structure would also likely decrease initial performance as it uses OCaml's implementaton of Git.
 	Because of the bidirectional nature of merging changes (i.e. popping and pushing), it would not be trivial to use command line Git in this case. \\
 
-	Overall, in the case of a single remote Participant, Logan is able to comfortably reach throughputs of up to 40 transactions per second which is much above the success criteria. 
-	Latencies in this case are initially less than 10s which is a good result for most applications.
+	Overall, in the case of a single remote Participant, Logan is able to comfortably reach throughputs of up to 40 transactions per second which is much above the success criteria of 10. 
+	Latencies in this case are initially less than 10s which is a good result for most applications and fulfils the success criteria.
 	Finally, whilst Logan does not fulfil the success criteria of having constant-time blockchain appends, I have demonstrated how this is due to the overheads from using Git, and I have shown two methods that would allow Logan to achieve this goal.
 
 	\section{Performance with Multiple Remote Participants}

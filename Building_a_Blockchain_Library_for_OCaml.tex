@@ -1138,8 +1138,9 @@ let rec start_leader () =
 	Latency dictates how long a user must wait before they can be sure that their transaction has been added.
 	It is easy to see why this is important by thinking in terms of a cryptocurrency application.
 	In this context, long latencies will cause users to become irritated and potentially stop using your currency.
-	Throughput is also a useful measure because it shows how well a system can cope with large loads.
+	Throughput is also a useful measure because it shows how well a system can cope with large loads.  
 	Again in the context of a cryptocurrency, it is important that lots of users should be able to make transactions at the same time.
+	All following measurements of throughput will be in transactions per second unless otherwise stated.
 	As with all distributed systems, these two metrics are inevitably linked, and higher system throughputs will lead to larger latencies. 
 	In the worst case, a large throughput will cause the system to become overloaded, latencies will rise and throughput will even descrease!
 	I have looked at how the throughput applied to the system affects the latency of Logan transactions, in order to try to determine the optimal use case conditions for a Logan system.\\
@@ -1147,7 +1148,7 @@ let rec start_leader () =
 	I have also looked at how the latency of adding transactions varies with the size of the blockchain at a constant throughput.
 	It is important that the system should be able to work well even when the size of the blockchain is large so that performance will not degrade over time.
 	
-	\section{Performance on a Local Machine}
+	\section{Performance with a Local Participant}
 	Figure \ref{fig:singlocal} shows how the latency of transactions varies with throughput for a Participant node on the same machine as the Leader node.
 	Latency stays at 10-15ms up until the system reaches about 70 transactions per second.
 	The set of data points which lie significantly above the straight line are points where the system has become overloaded. 
@@ -1174,13 +1175,12 @@ let rec start_leader () =
 	This is a very significant result because it proves that the logic which Logan uses is capable of achieving constant time blockchain appends in the size of the blockchain.
 	This is a very desirable trait as it means that Logan can be used for systems that run for indefinite periods of time, with arbitrary long blockchains.
 	In the Requirements Analysis, I set out the criteria that Logan should be able to add transactions at constant latency and this result shows that I have been successful in achieving this criteria.\\
-	\section{Performance on Remote Machines}
-	%How does performance vary when there are multiple machines
-	\subsection{Single Remote Participant}
+
+	\section{Performance with Single Remote Participant}
+	\subsection{Logan's Default Performance}
 	In order to see how the system performs when network latencies are involved, I first looked at Logan's performance when there is just one Leader and one remote Participant, i.e. a Participant on a different machine to the Leader.
 	Figure \ref{figs:remlatencysize} compares the latency of making a transaction and the size of the mempool, for different throughputs.
-	The mempool size can also be thought of as a measure of time elapsed as the thoughput is constant for each line.
-	In this situation, mempool size is equivalent to blockchain size but has been used instead because the mempool is the structure being pulled over the network, not the blockchain.
+	Mempool size has been used in place of blockchain size because it is the structure being pulled over the network, not the blockchain.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/latencies_sizes_throughputs.png}
@@ -1189,33 +1189,28 @@ let rec start_leader () =
 	\end{figure}
 	The first noticable feature of this graph is the saw-tooth shape of the latencies at high throughputs.
 	In these cases, the flat or downward sloping segments represent transactions which were committed in the same poll cycle after being collectively retrieved over the network.
-	Importantly, the system is perforing well up until around 20 to 40 transactions per second.
-	There is also an obvious linear increase in latency for all of the throughputs and this is undesirable behaviour as it indicates that large mempools will accompany poor performance. \\
+	Importantly, these teeth are relatively small up until around 40 transactions per second.
+	This figure also shows an obvious linear increase in latency for all throughputs and this is undesirable behaviour as it indicates that large mempools will accompany poor performance. \\
 	
-	In order to examine what was causing the linear increase in latencies with mempool size, I logged the time that the Leader spent completing different tasks for each poll cycle.
-	Figure \ref{figs:leaderdelays} shows how these delays evolve over time and compares them with the number of updates that are pulled in each poll cycle.
+	In order to examine what was causing the linear increase in latencies with mempool size, I logged the time that the Leader spent completing the most time consuming tasks for each poll cycle.
+	Figure \ref{figs:leaderdelays} shows how these delays increase linearly over time and compares them with the number of updates that are pulled in each poll cycle.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/leader_delays_num_pulled.png}
 		\caption{Delays incurred by Leader for every poll cycle. Throughput is constant at 10 transactions per second}
 		\label{figs:leaderdelays}
 	\end{figure}
-	In this figure, the biggest bottleneck is obviously the time taken to pull mempool updates over the network, which increases linearly with the size of the mempool.
-	Consequently, the number of updates that are retrieved during this period also increases and therefore the time taken adding these updates also increases.
-	This increase in the latency of pulling mempool updates prevents the system from being able to add transactions to the blockchain in constant time. %TODO: set this goal out in requirements analysis?
-	Not only this, but the latencies shown in Figure \ref{figs:leaderdelays} are particularly high, so to investigate this further, I examined the latencies of using Ezirmin's \texttt{Sync} module against the native Git command line interface. \\
+	The figure demonstrates a causality where the increases in time taken to pull mempool updates causes and increase the number of updates pulled in the next cycle. 
+	This increase has the knock on effect of increasing the time spent adding these updates to the blockchain.
+	The increase in the latency of pulling mempool updates prevents the system from being able to add transactions to the blockchain in constant time.\\
 
-	Figure \ref{figs:gitreposize} compares the latencies of the \texttt{git pull} command with the latencies of using the \texttt{Sync.pull} command provided by Ezirmin.
-	\begin{figure}
-		\centering
-		\includegraphics[width=0.9\textwidth]{figs/gitlatencies.png}
-		\caption{Latencies of pulling 100 transactions against mempool size}
-		\label{figs:gitreposize}
-	\end{figure}
-	Whilst the latency of \texttt{git pull} is linear in the size of the blockchain, the latency of using Ezirmin to pull updates increases at a much faster rate. NOTE: UPDATED GRAPH NEEDED AS CURRENT DOESN'T SHOW LATENCY FOR PULLING INTERNAL AND MASTER BRANCH.\\
+	\subsection{Logan's Performance Using Pure Git}
+	The latencies shown in Figure \ref{figs:leaderdelays} are particularly high. 
+	This is because Irmin uses an OCaml implementation of Git called `OCaml Git', and the performance of this implementation is much worse than the performance of `pure' Git, i.e. the implementation that is interacted with via a shell.
+	I have built an implementation of Logan which calls pure Git commands directly rather than using OCaml Git and in this section I will show the extent to which this improves Logan's performance.
+	This comes with many disadvantages such as worse compatibility with unikernel systems and a lack of type checking.
+	I am not suggesting that this is an adequate solution, but I am simply showing that a better Git implementation in OCaml can drastically improve performance.\\
 
-	These results provide a very bleak outlook on the performance of the Git implementation which is used by Ezirmin.
-	In order to show the extent to which this affects Logan, I updated the synchronisation implementation to directly call Git commands via a shell.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.9\textwidth]{figs/latency_sizes_throughputs.png}
@@ -1225,6 +1220,7 @@ let rec start_leader () =
 	Figure \ref{figs:latenciespuregit} is a parallel of Figure \ref{figs:remlatencysize} but using this new implementation instead. 
 	The figure shows that the system can perform significantly better by using pure Git. 
 	Specifically, the system can achieve much better constant factors in the increase of latencies with mempool size.
+	At a mempool size of 5000 and a throughput of 10, latencies have been reduced from 15 seconds (with OCaml Git) to 8 (with pure Git).
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.9\textwidth]{figs/bottlenecks.png}
@@ -1235,33 +1231,34 @@ let rec start_leader () =
 	Whilst this bottleneck is much lower than before, it still takes up much more time than any other stage of the Leader's execution.
 	This suggests that Git using SSH is still a very inefficient way of transferring updates to the leader.  
 	This could be due to many unnecessary overheads in the implementation of Git and SSH, such as the SSH handshake and the mechanism Git uses for finding new updates to be transferred between repositories. 
-	If a better protocol was used, much better performance could be achieved. %TODO make less wishy washy
-	Another downside of using pure Git is that it requires any system running a Logan Leader to also have a native installation of Git and this can be problematic when compiling to unikernel systems. 
-	This result, however, does suffice as a justification of Logan's potential performance if OCaml were to have a better implementation of Git. \\
+	Therefore if a better protocol was used, even better performance could be achieved. \\
 
+	\subsection{Achieving Constant Time Latencies}
+	Whilst I have now shown that Logan can perform better by using pure Git, there is still the unfortunate result that transaction latencies increase linearly with the size of the mempool being pulled.
+	This is due to the linear increase shown by Figure \ref{figs:bottleneckspuregit} and the fact that Logan's mempools are always growing. 
+	There are two ways of solving this problem which I will detail in this section.\\
 
+	The first approach requires a better synchronisation mechanism that allows updates to be pulled with constant time in the size of the mempool.
+	This could be achieved by using, for instance, a streaming protocol that keeps track of all the updates which have previously been sent, rather than reevaluating all the updates that need to be sent every time a pull operation is made. 
+	This protocol would allow a Leader to pull updates in constant time, which would in turn mean that the time taken for adding blocks to the blockchain would be constant.
+	This means that all of the Leader's operations could be completed in constant time and therefore latencies would be constant in the size of the mempool/blockchain. \\
 
-	****
-	Whilst I have now shown that Logan can perform well by using pure Git, there is still the unfortunate result that transaction latencies still increase linearly with the size of the mempool.
-	This is due to the linear increase shown by Figure \ref{figs:gitreposize} and the fact that Logan's mempools are always growing. 
-	If the network delays were constant in the size of the mempool, then at a constant throughput the Leader should pick up the same number of updates in a cycle, and latencies should stay constant in the size of the mempool.
-	Unfortunately this is not the case for Git's implementation which compares the contents of entire repositories on each pull to determine what updates need to be sent over the network. 
-	However, the information of what data needs to be sent can be known ahead of time and a better streaming protocol would, in theory, allow for this latency to become constant. \\
-
-	Additionally, the fact that mempools are always growing is not a requirement for Logan.
-	A mempool only needs to contain the latest uncommitted transactions and could therefore take a queue data structure instead of the log data structure used by Logan.
-	In this scenario, Participants would add transactions to their mempool queue which would then be pulled and pop by the Leader.
-	Participants could periodically merge changes from the Leader's copy in order to reduce the size of their blockchain, and therefore the subsequent pull operations.
-	This would also provide the desirable side effect of allowing the Participant to see when the Leader has recognised requested transactions, because they would get popped off the queue. 
+	Another approach would be to use a queue rather than a log for the mempool data structures. 
+	The fact that mempools are always growing is not a requirement for Logan.
+	A mempool only needs to contain the latest uncommitted transactions and could therefore a queue data structure would be a natural choice.
+	In this scenario, Participants would add transactions to their mempool queue which would then be pulled and popped by the Leader.
+	Participants could periodically merge changes (which are just pops) from the Leader's copy in order to reduce the size of their mempool.
+	This would mean that the size of the mempool would not be linear in the number of transactions made by a Participant, and would no longer cause a linear increase in the time taken by a Leader to pull updates.
+	This would also have the desirable side effect of allowing the Participant to see when the Leader has recognised requested transactions, because they would get popped off the queue. 
 	Whilst Ezirmin provides a Queue data structure, I have not used it in this project in order to reduce implementation complexity.
 	Using this structure would also likely decrease initial performance as it uses OCaml's implementaton of Git.
 	Because of the bidirectional nature of merging changes (i.e. popping and pushing), it would not be trivial to use command line Git in this case. \\
 
-	Overall, in the case of a single remote Participant, Logan is able to comfortably reach throughputs of up to 30 transactions per second which is much above the success criteria. 
-	Latencies in this case are less than 10s which is a good result for most applications.
-	Finally, whilst Logan does not fulfil the success criteria of having constant-time blockchain appends, I have demonstrated how this is due to the overheads from using Git, and I have justified how a better synchronisation protocol would allow Logan to achieve this goal.
+	Overall, in the case of a single remote Participant, Logan is able to comfortably reach throughputs of up to 40 transactions per second which is much above the success criteria. 
+	Latencies in this case are initially less than 10s which is a good result for most applications.
+	Finally, whilst Logan does not fulfil the success criteria of having constant-time blockchain appends, I have demonstrated how this is due to the overheads from using Git, and I have shown two methods that would allow Logan to achieve this goal.
 
-	\subsection{Multiple Remote Participants}
+	\section{Performance with Multiple Remote Participants}
 	After showing that Logan can perform well with a single remote Participant, I evaluated how this performance scales to two remote Participants.
 	Figure \ref{figs:tworems} shows how the latency of making transactions varies with throughput when the pure Git protocol is used.
 	\begin{figure}
@@ -1294,11 +1291,8 @@ let rec start_leader () =
 	This would satisfy all of Logan's success criteria.
 	Implementing this protocol would also be outside the scope of this project and I can therefore conclude that my implementation of Logan fulfils all of the success criteria that I set out.
 
-	\section{The Effects of Replication on Performance}
+	\section{Performance with Leader Replication}
 
-	TODO  What should I put in this section??
-	Maybe compare overheads of the asynchronous thread that does the pushing?
-	Maybe measure the extra latency?
 
 	\chapter{Conclusion}
 	\section{Successes}

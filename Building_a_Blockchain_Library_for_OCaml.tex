@@ -413,7 +413,10 @@ end
 	\begin{itemize}
 		\item The consensus mechanism must guarantee strict consistency in the blockchain state. 
 		Although strict consistency could add large overhead costs, it is necessary for some applications and so is an important part of the final project.
-		\item The system should be capable of handling throughputs of at least 10 transactions per second, with the latency of making a transaction being less than 10 seconds.s
+		\item As a baseline, Bitcoin achieves a maximum throughput of roughly 10 transactions per second (tps) \cite{ScalingBitcoin}.
+		Logan should be able to achieve comparable throughputs.
+		\item Again as a baseline, transaction latency achieved by Bitcoin is more than 10 minutes \cite{ScalingBitcoin}.
+		This is widely regarded as poor performance so Logan should be able to achieve better latencies of an order of magnitude of seconds.
 		\item The latency of adding a block should be constant in the size of the blockchain.
 		\item The consensus mechanism must be scalable. 
 		Within the scope of this project, it should be possible for the blockchain to be shared by 3 in a network. 
@@ -1140,9 +1143,8 @@ let rec start_leader () =
 	Latency dictates how long a user must wait before they can be sure that their transaction has been added.
 	It is easy to see why this is important by thinking in terms of a cryptocurrency application.
 	In this context, long latencies will cause users to become irritated and potentially stop using your currency.
-	Throughput is also a useful measure because it shows how well a system can cope with large loads.  
+	Throughput, measured in transactions per second (tps), is also a useful measure because it shows how well a system can cope with large loads.  
 	Again in the context of a cryptocurrency, it is important that lots of users should be able to make transactions at the same time.
-	All following measurements of throughput will be in transactions per second unless otherwise stated.
 	As with all distributed systems, these two metrics are inevitably linked, and higher system throughputs will lead to larger latencies. 
 	In the worst case, a large throughput will cause the system to become overloaded, latencies will rise and throughput will even descrease!
 	I have looked at how the throughput applied to the system affects the latency of Logan transactions, in order to try to determine the optimal use case conditions for a Logan system.\\
@@ -1152,13 +1154,13 @@ let rec start_leader () =
 	
 	\section{Performance with a Local Participant}
 	Figure \ref{fig:singlocal} shows how the latency of transactions varies with throughput for a Participant node on the same machine as the Leader node.
-	Latency stays at 10-15ms up until the system reaches about 70 transactions per second.
+	Latency stays at 10-15ms up until the system reaches about 70tps.
 	The set of data points which lie significantly above the straight line are points where the system has become overloaded. 
 	The rate of transactions has become so high that latencies have increased and the throughput has actually decreased again. 
-	This is a really interesting result because it shows that Logan's logic functions well at throughputs of between 50 and 60 transactions per second, whilst maintaining low transaction latency.
+	This is a really interesting result because it shows that Logan's logic functions well at throughputs of between 50 and 60tps, whilst maintaining low transaction latency.
 	It is worth noting that this result is using a low performance virtual machine hosted in the cloud, with limited disk write performance. 
 	It is reasonable to expect that a more powerful machine would be able to achieve significantly better results.
-	However, despite these machine limitations, these figures are much better than my success criteria which suggested the system should be able to function with throughputs greater than 10, and with latencies of less than 10 seconds.\\
+	However, despite these machine limitations, these figures are much better than my success criteria which suggested the system should be able to function with throughputs greater than 10tps, and with latencies of less than 10s.\\
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/single_local_worker.png}
@@ -1191,7 +1193,7 @@ let rec start_leader () =
 	\end{figure}
 	The first noticable feature of this graph is the saw-tooth shape of the latencies at high throughputs.
 	In these cases, the flat or downward sloping segments represent transactions which were committed in the same poll cycle after being collectively retrieved over the network.
-	Importantly, these teeth are relatively small up until around 40 transactions per second.
+	Importantly, these teeth are relatively small up until around 40tps.
 	This figure also shows an obvious linear increase in latency for all throughputs and this is undesirable behaviour as it indicates that large mempools will accompany poor performance. \\
 	
 	In order to examine what was causing the linear increase in latencies with mempool size, I logged the time that the Leader spent completing the most time consuming tasks for each poll cycle.
@@ -1199,7 +1201,7 @@ let rec start_leader () =
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/leader_delays_num_pulled.png}
-		\caption{Delays incurred by Leader for every poll cycle. Throughput is constant at 10 transactions per second}
+		\caption{Delays incurred by Leader for every poll cycle. Throughput is constant at 10tps}
 		\label{figs:leaderdelays}
 	\end{figure}
 	The figure demonstrates a causality where the increases in time taken to pull mempool updates causes and increase the number of updates pulled in the next cycle. 
@@ -1222,12 +1224,12 @@ let rec start_leader () =
 	Figure \ref{figs:latenciespuregit} is a parallel of Figure \ref{figs:remlatencysize} but using this new implementation instead. 
 	The figure shows that the system can perform significantly better by using pure Git. 
 	Specifically, the system can achieve much better constant factors in the increase of latencies with mempool size.
-	At a mempool size of 5000 and a throughput of 10, latencies have been reduced from 15 seconds (with OCaml Git) to 8 (with pure Git).
-	This result shows that in this scenario, Logan still satisfies the success criteria of being able to acheive throughputs greater than 10 and latencies less than 10 seconds.
+	At a mempool size of 5000 and an applied throughput of 10tps, latencies have been reduced from 15s (with OCaml Git) to 8s (with pure Git).
+	This result shows that in this scenario, Logan still satisfies the success criteria of being able to acheive throughputs of 10tps and latencies less of the order of magnitude of seconds.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.9\textwidth]{figs/bottlenecks.png}
-		\caption{Delays incurred by Leader when using pure Git. Throughput is constant at 10 transactions per second}
+		\caption{Delays incurred by Leader when using pure Git. Throughput is constant at 10tps}
 		\label{figs:bottleneckspuregit}
 	\end{figure}
 	Figure \ref{figs:bottleneckspuregit} is a parallel of Figure \ref{figs:leaderdelays} that demonstrates that this speedup is due to the greatly reduced times that the leader spends pulling mempool updates as the mempool size grows.
@@ -1236,8 +1238,23 @@ let rec start_leader () =
 	This could be due to many unnecessary overheads in the implementation of Git and SSH, such as the SSH handshake and the mechanism Git uses for finding new updates to be transferred between repositories. 
 	Therefore if a better protocol was used, even better performance could be achieved. \\
 
+	\subsection{Logan's Maximum Throughput Capacity}
+	In the previous sections, I evaluated how transaction latencies evolve over time, and compared the results for different applied throughputs.
+	This does not, however, shed light on when the system reaches its maximum throughput capacity.
+	\begin{figure}
+		\includegraphics[width=0.9\textwidth]{figs/appliedvsobservedsingle.png}
+		\caption{Observed throughput plateau with increasing applied throughput}
+		\label{figs:appliedobservedsingle}
+	\end{figure}
+	Figure \ref{figs:appliedobservedsingle} shows how the throughput of transactions made to the blockchain varies with the throughput of transactions made to a Participants mempool. 
+	This is compared to a linear plot of the ideal performance where a Leader never becomes overloaded.
+	This figure clearly shows that the system starts diverging from ideal performance at an applied throughput of around 12tps.
+	The observed throughput then starts to plateau, remaining at around 15tps for any applied throughputs higher than 20tps.
+	This demonstrates that an ideal sustained operating throughput is around 12tps transactions per second which is slightly better than the success criteria of 10tps.
+	Although the system will be able to handle bursts of higher throughputs without performance actually getting worse, it will not be able to cope with these throughputs for sustained periods of time.
+
 	\subsection{Achieving Constant Time Latencies}
-	Whilst I have now shown that Logan can perform better by using pure Git, there is still the unfortunate result that transaction latencies increase linearly with the size of the mempool being pulled.
+	I have now shown that Logan can perform well by using pure Git, however, there is still the unfortunate result that transaction latencies increase linearly with the size of the mempool being pulled.
 	This is due to the linear increase shown by Figure \ref{figs:bottleneckspuregit} and the fact that Logan's mempools are always growing. 
 	There are two ways of solving this problem which I will detail in this section.\\
 
@@ -1271,8 +1288,8 @@ let rec start_leader () =
 		\label{figs:tworems}
 	\end{figure}
 	An important feature of this graph is the fact that the slope of the plots have not really changed from the case with only one remote Participant.
-	For a throughput of around 10 transactions per second, transaction latencies will still rise by around 5 seconds over 5000.
-	The biggest difference is the fact that transaction latencies now start at around 12 seconds, whereas they were around 6 seconds before.
+	For a throughput of around 10tps, transaction latencies will still rise by around 5s over 5000.
+	The biggest difference is the fact that transaction latencies now start at around 12s, whereas they were around 6s before.
 	This is because native Git does not allow for updates to be pulled from multiple different remote repositories at the same time, and therefore, all remote repositories must be pulled sequentially.
 	Even if a protocol is used that can achieve constant time blockchain appends, this result limits latencies to be linear in the number of remote nodes in a network which is undesirable. \\
 

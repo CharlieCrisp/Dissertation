@@ -30,13 +30,10 @@
 	breaklines=true,
 	basicstyle=\normalsize\ttfamily,                 % Code font, Examples: \footnotesize, \ttfamily
 	keywordstyle=\color{darkgreen},
-	commentstyle=\color{airforceblue}
+	commentstyle=\color{airforceblue},
+	frame=single,
+	captionpos=b
 	}
-
-	\surroundwithmdframed[
-	innerleftmargin=8pt,
-	innertopmargin=0pt,
-	innerbottommargin=0pt]{lstlisting}
 
 	\raggedbottom                           % try to avoid widows and orphans
 	\sloppy
@@ -229,7 +226,7 @@
 
 	\subsubsection*{Pattern Matching}
 	OCaml provides a very powerful syntax for matching patterns which allow you to write functions as shown by Listing \ref{lst:pattern_match}.
-	\begin{lstlisting}[caption={OCaml Pattern Matching}\label{lst:pattern_match}]
+	\begin{lstlisting}[caption={OCaml Pattern Matching},label={lst:pattern_match}]
 let pattern_matcher_1 input = match input with
   | Card("spades", 1) -> Printf.printf "It's the ace of spades!"
   | _ -> Printf.printf "Unlucky"
@@ -269,7 +266,7 @@ val bind: 'a option -> ('a -> 'b option) -> 'b option
 	OCaml allows the programmer to define variant types such as the \texttt{Card} type that was defined earlier. This makes it very easy to make use of pattern matching with custom defined types.\\
 	
 	OCaml also introduces the notion of polymorphic variants which are more flexible and do not require an explicit type declaration.
-	\begin{lstlisting}[caption={Polymorphic Variants}\label{lst:poly}]
+	\begin{lstlisting}[caption={Polymorphic Variants},label={lst:poly}]
 # let card = `Card ("spades", 1);;
 - : val card : [> `Card of string * int ] = `Card ("spades", 1)
 	\end{lstlisting}
@@ -282,7 +279,7 @@ val bind: 'a option -> ('a -> 'b option) -> 'b option
 	Modules provide a way of grouping together related code in OCaml.
 	They can be thought of as similar to traditional namespaces, although there a few key differences.
 	OCaml also lets you define module type signatures which modules have to conform to.
-	\begin{lstlisting}[caption={OCaml Modules and Functors}\label{lst:modfun}]
+	\begin{lstlisting}[caption={OCaml Modules and Functors},label={lst:modfun}]
 module type Math = sig
   type t
   val add: t -> t -> t
@@ -305,7 +302,7 @@ end
 	In this case, she would have to create a whole new module for each possible implementation of this abstraction.
 	An example of this could be a datastore that uses either an in-memory or on-disc format for storing data.
 	Functors allow modules to be created from other modules.
-	\begin{lstlisting}[caption={Ezirmin Log Module}\label{lst:logmod}]
+	\begin{lstlisting}[caption={Ezirmin Log Module},label={lst:logmod}]
 module Log(AO : Irmin.AO_MAKER)(V: Tc.S0) = struct
   ...
 end
@@ -329,7 +326,7 @@ end
 	\subsubsection*{Lwt}
 	A library which I spent some time familiarising myself with was Lwt \cite{Lwt}. 
 	Lwt provides a way of interacting with threads in OCaml, although in Lwt they are known as `Promises'.
-	\begin{lstlisting}[caption={Lwt Promises}\label{lst:lwt}]
+	\begin{lstlisting}[caption={Lwt Promises},label={lst:lwt}]
 val Lwt.return : 'a -> 'a Lwt.t 
 val Lwt_main.run : 'a Lwt.t -> 'a
 val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
@@ -355,7 +352,7 @@ val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 	The latency of adding transactions should not increase as the size of the blockchain increases because it is important the library will cope well for systems with indefinitely large blockchains.\\
 
 	\begin{minipage}{\linewidth}
-	\begin{lstlisting}[caption={Blockchain Specification}\label{lst:blockspec}]
+	\begin{lstlisting}[caption={Blockchain Specification},label={lst:blockspec}]
 module type I_LogStringCoder = sig
   type t
   val encode_string: t -> string
@@ -497,7 +494,7 @@ end
 	It is designed to provide a interface to Irmin without functors, but useful defaults instead. 
 	Importantly, it has a built in log data structure which uses Irmin's append-only store, saved on disk in the Git format.
 
-	\begin{lstlisting}[caption={Ezirmin Log}\label{lst:ezirminlog}]
+	\begin{lstlisting}[caption={Ezirmin Log},label={lst:ezirminlog}]
 module type FS_Log = sig
   type elt 
   type cursor 
@@ -518,7 +515,7 @@ end
 	Ezirmin Logs use Irmin blocks to store log entries, and therefore satisfy the first criteria for being considered a blockchain. 
 	To verify that they also satisfy the second criteria, i.e. that blocks are ordered and contain the hash of their parent, I looked at the implementation of log items.
 
-	\begin{lstlisting}[caption={Ezirmin Log Item}\label{lst:a_label}]
+	\begin{lstlisting}[caption={Ezirmin Log Item},label={lst:a_label}]
 type log_item =
 { time    : Time.t;
   message : V.t;
@@ -730,7 +727,7 @@ type log_item =
 	This blockchain can be read by any Participant, and is treated as the empirical source of which transactions have been committed and in which order. 
 	That is, any two nodes that read a copy of the blockchain, will always agree on content and ordering of transactions in the blockchain, up until the end of the shortest copy.\\
 
-	\begin{lstlisting}[caption={Leader Specification}\label{lst:leaderspec}]
+	\begin{lstlisting}[caption={Leader Specification},label={lst:leaderspec}]
 module type I_LeaderConfig = sig
   type t
   module LogCoder: Participant.I_LogStringCoder with type t = t   
@@ -752,7 +749,7 @@ end
 	Participants, in contrast to Leaders, can request transactions to be added to the blockchain. 
 	This is done by writing a transaction to a local mempool, which is then read by the Leader.\\
 
-	\begin{lstlisting}[caption={Participant Specification}\label{lst:partspec}]
+	\begin{lstlisting}[caption={Participant Specification},label={lst:partspec}]
 module type I_LogStringCoder = sig
   type t
   val encode_string: t -> string
@@ -1047,7 +1044,7 @@ end
 	If a failure were to occur at any point after this merge, it is now guaranteed that any transactions in the Leader's blockchain will also exist on a quorum of replicas.
 	This means that the system has access to sufficient information to reconstruct the contents of the blockchain before failure.\\
 	\begin{minipage}{\linewidth}
-	\begin{lstlisting}[caption={Naive Leader Loop}\label{lst:leaderloop}]
+	\begin{lstlisting}[caption={Naive Leader Loop},label={lst:leaderloop}]
 let rec start_leader () = 
 	retrieve_and_process_updates() >>= 
 	commit_to_temporary_blockchain_branch >>=

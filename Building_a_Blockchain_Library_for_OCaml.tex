@@ -1297,7 +1297,7 @@ let rec start_leader () =
 	\end{figure}
 	An important feature of this graph is the fact that the slope of the plots has not changed much from the case with only one remote Participant.
 	For a throughput of around 10tps, transaction latencies will rise by 4.5s over 5000 transactions compared to 3.1s in the single Participant case.
-	I consider this a modest increase that would indeed be solved by using a better synchronisation protocol as described in Section \ref{sect:bettersync}.
+	I consider this a modest increase that would indeed be solved by using a better synchronisation protocol as described in Section \ref{sect:bettersync}. 
 	With this protocol, Logan would satisfy the fourth success criteria. \\
 
 	Another difference is the fact that transaction latencies now start at 11.9s, whereas they were 5.5s in the single Participant case.
@@ -1311,9 +1311,23 @@ let rec start_leader () =
 	However, even with multiple nodes in a network, latencies will still be modest in comparison to the 10 minute latency of a Bitcoin transaction, so even in its current state I can consider my implementation to be somewhat successful.
 
 	\subsection{Throughput}
+	The last aspect of Logan's performance to evaluate for two remote Participants is Throughput.
+	Figure \ref{figs:tworemthrthr} shows the observed throughput against the applied throughput of a Logan system with two Participants and one Leader.
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.9\textwidth]{figs/appliedvsobserved2r.png}
+		\caption{Latency variations against blockchain size with two remote Participants using pure Git}
+		\label{figs:tworemthrthr}
+	\end{figure}
+	The system starts to diverge from ideal throughput at around 30tps, idicating that an suitable sustained operating throughput would be around 20tps.
+	Again, it can be seen that the system can cope with higher applied throughputs for short bursts  but not for sustained periods of time. 
+	This is exactly the same as the case for only a single remote Participant. 
+	Whilst in the previous section, I showed that the latencies will grow with the number of nodes in a network, this result shows that a system will still be able to cope with the same throughputs. 
+	In this sense, not only does Logan satisfy the second of my success criteria, but also the fifth.
 
 	\section{Performance with Leader Replication}
-
+	In section \ref{sec:faulttol} I described how Logan can be updated to introduce the simple notion of a passive replica. 
+	In order to show how this affects Logan's performance, I have...
 
 	\chapter{Conclusion}
 	\section{Successes}

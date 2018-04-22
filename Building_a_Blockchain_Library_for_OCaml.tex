@@ -1329,7 +1329,21 @@ let rec start_leader () =
 
 	\section{Performance with Leader Replication}
 	In section \ref{sec:faulttol} I described how Logan can be updated to introduce the simple notion of a passive replica. 
-	In order to show how this affects Logan's performance, I have...
+	In order to justify that this only introduces minor latencies, I have tested the performance of the system with one remote Participant at a throughput of 10tps. 
+	Figure \ref{figs:confirmationtimes}  shows the time taken between a transaction being added to the blockchain's cache branch, and it being merged into the blockchain's main branch, i.e. after being pushed to a replica.
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.9\textwidth]{figs/confirmationlatencies.png}
+		\caption{Time taken between transactions being added to cache branch and being merged to main blockchain branch, for a single remote replica}
+		\label{figs:confirmationtimes}
+	\end{figure}
+	Unfortunately the latencies of pushing to a remote repository also increase with the size of the blockchain, as is the case for pulling.
+	However, this is again a problem that is minor and would not exist with a better synchronisation protocol. 
+	Importantly, the additional latencies are around 3s which is small and would be an acceptable waiting time for most applications.
+	In this case, the system's latencies are still well within the success criteria of being of the order of magnitude of seconds.\\
+
+	Additionally should the use my suggested approach of using a daemon thread to push transactions to replicas, there would be no additional latencies to the Leader's loop cycle and this means that it should in theory be able to sustain exactly the same throughputs as it would without having any replicas.
+	I therefore consider this a successful demonstration of passive Replication and a good starting point for developing a more complex Fault tolerance solution.
 
 	\chapter{Conclusion}
 	\section{Successes}
@@ -1340,7 +1354,6 @@ let rec start_leader () =
 	Latencies are linear in the size of the blockchain if there are multiple nodes in a network and this is due to the implementation of Git.
 	Git also has very coarse grained locking that doesn't allow for much of the parallelism required by Logan for pulling updates and pushing to Replicas.
 	However, I have shown that Git is the only bottleneck in Logan's operation and that a better synchronisation protocol would allow the linear blockchain appends and much better latencies. 
-
 
 	\section{Possible Further Work}
 	\subsection{Improved Synchronisation Protocol}

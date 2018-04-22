@@ -631,85 +631,45 @@ type log_item =
 
 	\subsection{Existing Consensus Algorithms}
 	\subsubsection*{Proof of Work}
-	%TODO: Use a diagram,
-	Proof of Work (PoW) is a deceptively simple consensus mechanism, used by most cryptocurrencies to avoid the double spending problem.
-	Transactions are contained within blocks which can be broadcast out to the network of participating nodes. 
-	Whenever a block is received by a participating node, the node checks that the block contains a proof of computational work done. 
-	This proof usually takes the form of a random sequence of data (this is known as a nonce) appended to the end of the block, causing the block's hash to be prefixed with a set number of 0s.
-	This acts as a proof of computational work, because the data appended to the end of a block can only be found by a brute force method called mining, but can also be verified easily by simply computing the block's hash.\\
-	
-	Why is this useful? 
-	Well, this makes a guarantee on the validity of the blockchain based on the simple assumption that more that 50\% of the workforce is genuine.
-	That is, ifm we assume that the longest chain of blocks is the correct one, then in order to create a sequence of biased transactions, we would have to create a chain longer than the correct one. 
-	This would require an equal number of `Proof of Work's, which, due to the random nature of block mining, would require more than 50\% of the workforce.
-	Whilst it may be possible to maintain an equally sized chain with less that 50\% of the workforce for a short period of time, the chances of this decrease rapidly as time passes.
-	All in all this means that the longer a block has been in the chain, the more likely it is that the block is valid.\\
+	Proof of Work (PoW) is a consensus mechanism, used by many cryptocurrencies to avoid the double spending problem \cite{Bitcoin}. 
+	This mechanism uses the concept of \textit{Miners} which are nodes that add random nonce values to blocks before computing the hash of the resulting block.
+	If the hash is preceded by a certain number of zeros, this is considered a proof of computational work and blocks are broadcast out to a network.
+	Participants can be sure that a block is not fake with a probability that increases with the size of the chain after that block. \\
 
-	Whilst this forms a very effective mechanism for achieving consensus, there are also some considerable downsides to using a PoW approach to consensus. 
-	Firstly, there is a huge amount of computational work wasted in the process of mining. 
-	The effect of this is energy consumption \cite{BitcoinEnergy} and wastage to a level which can cause serious environmental harm.
-	PoW also does not generalise well outside of the scope of cryptocurrencies.
-	It assumes no trust in any participants which may not be a suitable model for an application. 
-	Additionally, it also assumes that miners can be rewarded, usually with cryptocurrency, but this incentive is ad hoc and may not exist in other applications.
+	Importantly, this scheme assumes that no Participant can be trusted 
+	and it also wastes a large amount of energy \cite{BitcoinEnergy}.
+	It also assumes that Miners can always be rewarded for Mining and this may not always be true, so this scheme is not suitable for use with Logan.
 	
 	\subsubsection*{Mempools}
-	Mempools are an important part of the design of Bitcoin, and whilst they are not inherently linked to the Proof of Work consensus algorithm, they are worth investigating. 
+	Mempools are an important part of the design of Bitcoin, and whilst they are not inherently linked to the Proof of Work consensus algorithm, they are worth investigating as they are used by Logan.
 	When a Bitcoin transaction is made, it is first written into what is known as a Mempool. 
 	This transaction can then be seen by participating miners, who can then choose to put this in the next block that they mine. 
 	This is significant, as it provides a `waiting room' for any transactions that have not yet been validated.  
 
 	\subsubsection*{Proof of Stake}
-	The Proof of Stake (PoS) algorithm is used by some cryptocurrencies and works by randomly allowing participants to create (or `forge') a single block.
-	However, the probability that a participant is chosen to `forge' a block, is weighted by its stake, such that participants with higher stakes in the blockchain are more likely to be chosen to forge a block.\\
-
-	So, why is PoS desirable? 
-	By far the most convincing reason for using PoS over PoW, is that there is no need to waste lots of energy in the process of mining. 
-	This hugely reduces the environmental impacts of scaling a PoS network.
+	The Proof of Stake (PoS) algorithm \cite{ProofofStake} is used by some cryptocurrencies and works by randomly allowing participants to create (or `forge') a single block.
+	However, the probability that a participant is chosen to `forge' a block, is weighted by its stake, such that participants with higher stakes in the blockchain are more likely to be chosen to forge a block.
+	With PoS, there is no need to waste lots of energy in the process of mining. 
 	Using PoS also allows trust to be distributed according to an arbitrary heuristic which can be desirable property in some applications.\\
 
-	One of the flaws of PoS is that it does not have such a strong deterrent against attacks.
-	With PoW, attacks require huge amounts of computational power and it is likely that to create an attack, you would have to spend more on hardware than you would gain. 
-	PoS does not have this same built in mechanism, and so there have been many suggested schemes for increasing the safety of PoS networks.
-	For example, it is possible that participants should need to pay some form of deposit before forging blocks, which can be slashed if they break any rules. 
-	PoS also suffers from the same problem as PoW in that it does not generalise well. 
-	It is another example of a consensus mechanism designed for networks with a strong notion of Stake and with minimal trust in any individual participant.
+	Unfortunately, the notion of `Stake' that is used by PoS may not always be available in the design of a general blockchain system. 
+	It also, like PoW, assumes no trust in participating nodes and is therefore not suitable for use in Logan.
 
 	\subsubsection*{Paxos}
 	Paxos is a family of consensus protocols which can be used to guarantee consistency in distributed systems. 
 	It was first proposed in a paper by Leslie Lamport in 1998 \cite{Paxos}, although the paper was first submitted in 1990.
-	Named after a fictitious civilisation living on the island of Paxos, the algorithm puts forward a way for any number of nodes to propose and agree on a value.
-	Participating nodes belong to various roles, one of which is known as a `Proposer' or Leader.\\
+	The main part of the algorithm is split into two sections, propose and accept where a value is proposed by a node and accepted if a quorum of nodes make a promise to accept, and then accept the value.\\
 
-	The main part of the algorithm is split into two sections, propose and accept.
-	In the first stage, a Proposer decides that it wants to propose a value and then broadcasts out a `Prepare' message to a quorum of `Acceptors'.
-	Acceptors will then decide if they want to make a `Promise' which is a commitment to accepting that proposal in the future. 
-	If a quorum of promises is received by the Proposer, then it will assign a value to its proposal and will again send an `Accept Request' out to a quorum of Acceptors.
-	Finally, if enough `Accept' messages are received then the Proposer can be certain that the value has been agreed upon by consensus.\\
-
-	This algorithm has been proved to be consistent but it also has a lot of complexity and a lot of different variants. 
-	The combination of different roles and states makes it easy to implement incorrectly.
-	It is also important to consider that Paxos describes a `family' of algorithms, with some parts left deliberately unspecified, and choosing how to implement these is not a trivial decision.
-	The final issue with Paxos is that it cannot guarantee progress.
-	Whilst it enforces conditions which make it unlikely that progress will not be made, it is still theoretically possible for the mechanism to stall indefinitely.
+	Paxos has many issues including unspecified behaviour in certain situations, lack of guaranteed progress and overhead of implementation.
+	I have not used it in this project but I have partially taken inspiration from the Roles used by Paxos in the design of my Leader based protocol.
 
 	\subsubsection*{Raft}
 	Raft \cite{Raft} is an algorithm that was designed to be equivalent and as efficient as Paxos, however, it also places a much greater emphasis on comprehensibility.
 	It uses the notion of a \textit{strong leader}, which is an elected server that has total control over which log entries are accepted.
-	There are two other types of server, a \textit{follower} and a \textit{candidate}. 
-	Followers are completely passive, and only respond to requests from leaders and candidates. 
-	A candidate is a server that has put itself forward for election.\\
-
-	So how does the algorithm operate? 
-	Time in Raft is split into \textit{terms} which are labelled by a monotonically increasing integer. 
-	Each term effectively signals a time period where a particular server is the leader. 
-	A term starts with a leadership election when a follower transitions into the candidate state, increments its term number and requests votes from other servers. 
-	It will wait for a majority of votes and then elect itself the leader, unless it times out or receives a message from another leader with a greater term number. 
-	Typically, these leader election processes are triggered when a follower does not receive a heartbeat message from the leader for longer than a given time.
-	In the pathological case, the vote can be split between leaders, triggering a new election which is also split and so on.
-	However, Raft uses randomised election timeouts to avoid this problem.
-	Additionally, Raft also prescribes some restrictions on the servers which can be elected leader so as to avoid newly elected leaders overwriting previously appended log items.\\
+	If the Leader does not send a heartbeat message within a certain timeout period, other nodes in the network will detect this and start an election for a new Leader.\\
 	
 	Raft is an simple algorithm that is easy to understand, but it also guarantees the Log Matching Property that if two logs contain a log entry with the same index and term, then that entry, and all preceding entries will be identical.
+	The notion of a strong leader used in Logan is inspired by Raft.
 
 	\subsection{Roles in a Logan's Approach}
 	Logan uses a mempool and a simple leader-based algorithm to maintain consensus, and in this section, I will describe this approach.

@@ -1029,20 +1029,23 @@ end
 	In the event of a failure, different Participants may have views of the blockchain at different times and the Leader may have committed transactions to the blockchain which were never viewed by any Participants. 
 	Building full fault tolerance and recovery into Logan would be enough work to justify a whole new Part II Project. 
 	Instead, in this section I will show the simple mechanism that Logan uses which allows manual recovery of the blockchain state in the case of a Leader failure. 
+	I will also give a more advanced mechanism which uses a daemon thread that removes the bottleneck from the Leader's execution. 
+	This solution was not implemented as Git has very coarse grained locking that causes many race conditions for this solution, but it will demonstrate how Logan could operate if a protocol with finer grained locking was used. 
 	This will justify that a more complex and automated approach to recovering from Leader failure is possible, and will demonstrate a good starting point for implementing such a mechanism. \\
 
-	To introduce fault tolerance, I will have used \textit{Replicas}. 
+	To introduce fault tolerance, I have used \textit{Replicas}. 
 	Replicas, in computer science, are nodes which duplicate some part of another node's behaviour in order to allow recovery from failure. 
 	They can be either \textit{active}, if they fully duplicate the actions of another replica, or \textit{passive}, if they complete some operation and then transfer the results to another replica.
 	The replication I will demonstrate will be passive.\\
 
-	In order to encorporate the notion of replica, the process of adding commits to the blockchain needs to be altered slightly.
+	In order to encorporate the notion of a replica, the process of adding commits to the blockchain needs to be altered slightly.
 	Now, before a commit is made, it needs to be recognised by a quorum of replicas.
 	Irmin's notion of branches exposes a perfect primitive for this application.
 	In a poll, the Leader can commit transactions to an uncommitted \textit{cache} branch before pushing this to all replicas.
 	If a quorum of these push operations return successfully, then the Leader can merge these transactions into the main blockchain branch to be viewed by all Participants.
 	If a failure were to occur at any point after this merge, it is now guaranteed that any transactions in the Leader's blockchain will also exist on a quorum of replicas.
 	This means that the system has access to sufficient information to reconstruct the contents of the blockchain before failure.\\
+
 	\begin{minipage}{\linewidth}
 	\begin{lstlisting}[caption={Naive Leader Loop},label={lst:leaderloop}]
 let rec start_leader () = 
@@ -1058,7 +1061,9 @@ let rec start_leader () =
 	Listing \ref{lst:leaderloop} shows pseudocode for the Leader's poll cycle, now encorporating replicas. 
 	One of the major issues with this approach is that is presents a bottleneck in the Leader's execution which is likely to cause significant delays.\\
 
-	I have implemented a better approach which starts an asychronous thread, that is in charge of pushing to replicas and merging the transactions which have been pushed.
+	The above describes the replication process that Logan currently implements, however I will now suggest a better method that removes the bottleneck from the Leader's execution.
+	I was not able to implement this as the coarse grained locking provided by Git caused many race conditions, but a better protocol with finer locking would allow the following mechanism to work because there are no real data dependencies in this solution.
+	I propose a different approach that starts an asychronous thread which is in charge of pushing to replicas and merging the transactions which have been pushed.
 	I shall refer to this as the \textit{push thread}, and the \textit{main thread} will now only commit items to the \textit{cache} branch.
 	This thread takes the blockchain cache branch and use this to create a new \textit{push-cache} branch which it pushes to replicas.
 	The difference between these two branches is that the cache branch will constantly be updated as new items are added, whereas the push-cache branch will remain fixed pointing to a particular transaction whilst a series of transactions are being pushed to replicas. 
@@ -1168,7 +1173,7 @@ let rec start_leader () =
 
 	\subsection{Throughput}
 	Now that I have evaluated latencies, I will look at the throughputs that they system is capable of achieving.
-	Figure \ref{fig:singlocal} shows how the observed throughput varies with the applied throughput. 
+	Figure \ref{fig:singlocal} shows how the observed throughput varies with the applied throughput.  
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/appliedvsobservedlocal.png}
@@ -1328,26 +1333,26 @@ let rec start_leader () =
 
 	\chapter{Conclusion}
 	\section{Successes}
-	I have successfully designed and implemented Logan, a blockchain library that empowers developers to easily use distributed blockchain data structures in their applications.
-	As blockchain is becoming more and more popular, more uses for it are being suggested by the day. 
-	Logan could be used in a wide range of applications where nodes in a blockchain network can be trusted. 
-	The system uses a leader based approach to consensus and is able to function well with mutliple remote nodes. 
-	It is also able to function well even at high throughputs, and can perform the necessary operations to recover from failure.
-	Unfortunately, adding transactions to the blockchain over a network is a linear time operation with the size of the blockchain, but this is due to a poor implementation of the Git protocol used by Irmin. 
-	With a better implementation, Logan could achieve constant time transaction latencies with the blockchain size, as well as the number of Participants increases.
+	When I started this project, my goals were to design a library that would allow developers to easily create blockchain applications using OCaml.
+	I have successfully designed and implemented Logan, a blockchain library that achieves that goal.
+	Logan uses a leader based approach to consensus and can achieve latencies of around 10s and throughtputs of up to 30tps.
+	Logan uses Git to store data and to communicate over the network and this has proved to be a large bottleneck in this project. 
+	Latencies are linear in the size of the blockchain if there are multiple nodes in a network and this is due to the implementation of Git.
+	Git also has very coarse grained locking that doesn't allow for much of the parallelism required by Logan for pulling updates and pushing to Replicas.
+	However, I have shown that Git is the only bottleneck in Logan's operation and that a better synchronisation protocol would allow the linear blockchain appends and much better latencies. 
 
 
 	\section{Possible Further Work}
+	\subsection{Improved Synchronisation Protocol}
+	The biggest flaw with Logan that I have mentioned in this report is the use of Git.
+	Further work on Logan should include a new implementation of the network synchronisation protocol.
 	\subsection{Failure Tolerance and Changing Leaders}
 	Tolerating failure is an aspect of this project that I have only touched upon in this project. 
-	I have shown how Logan can perform replication but I have not implemented an automated approach for detecting and recovering from Failure. 
-	This is something I'd like to look into.
+	I have shown how Logan can perform replication but further work could include implementing an automated approach for detecting and recovering from Failure. 
+	This work could also include allowing a network to reallocate a Leader after Leader failure.
 	\subsection{Adding Participants Dynamically}
 	Currently, as well as only being able to define a single Leader, Participants can only be defined statically. 
 	Some consensus mechanisms introduce ways of adding and removing nodes to a network and I think it would be very feasible to build this feature into Logan.
-	\subsection{Using SSH}
-	Logan uses SSH connections to connect the Leader to Participants, but this may not be desirable in all situations and it may add unnecessary overhead. 
-	An alternative would be to use HTTP and I would like to investigate whether this would have an effect on the performance of the platform.
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% the bibliography

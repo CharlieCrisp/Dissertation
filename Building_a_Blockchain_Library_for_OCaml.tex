@@ -1299,8 +1299,10 @@ let rec start_leader () =
 	\end{figure}
 	Unfortunately the latencies of pushing to a remote repository also increase with the size of the blockchain, as is the case for pulling.
 	However, this is again a problem that is minor and would not exist with a better synchronisation protocol. 
-	Importantly, the additional latencies are around 3s which is small and would be an acceptable waiting time for most applications.
-	In this case, the system's latencies are still well within the success criteria of being of the order of magnitude of seconds.\\
+	Importantly, for the case where there is one Replica, the additional latencies are around 3s which is small and would be an acceptable waiting time for most applications.
+	In this case, the system's latencies are still well within the success criteria of being of the order of magnitude of seconds.
+	Figure \cite{figs:confirmationtimes} also shows that using two Replicas rather than one increases latencies by roughly 1.5s. 
+	I again conclude that this is a very acceptable latency given the success criteria of the project. \\
 
 	Additionally should the use my suggested approach of using a daemon thread to push transactions to replicas, there would be no additional latencies to the Leader's loop cycle and this means that it should in theory be able to sustain exactly the same throughputs as it would without having any replicas.
 	I therefore consider this a successful demonstration of passive Replication and a good starting point for developing a more complex Fault tolerance solution.

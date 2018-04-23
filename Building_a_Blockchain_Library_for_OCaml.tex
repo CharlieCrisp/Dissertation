@@ -87,7 +87,7 @@
 	\section*{Original Aims of the Project}
 	
 	To build a library in OCaml, which can be used as a building block for blockchain applications. 
-	The library should allow participating nodes to own a shared copy of a blockchain data structure, agreed upon using consensus.
+	The library should allow participating nodes to own a shared copy of a blockchain data structure, agreed upon by all participating nodes.
 	Nodes should also be able to commit transactions to the blockchain, which should then be visible to other participating nodes. 
 	
 	
@@ -178,8 +178,7 @@
 		\label{fig:mainblockchain}
 	\end{figure}
 	The blockchain, as a cryptographically secure chain of blocks, was first conceptualised by Stuart Haber and W. Scott Stornetta in 1990 \cite{HaberStornetta}.
-	However, until the creation of Git \cite{Git} in 2005, the blockchain was still a relatively niche concept.
-	The invention of Bitcoin in 2008 is seen by many as the most pivotal moment in the history of blockchain technologies.
+	However, the most significant uses of the technology did not come until the creation of Git \cite{Git} in 2005, and the invention of Bitcoin \cite{Bitcoin} in 2008.
 	Bitcoin uses the Proof of Work consensus algorithm to create a decentralised, trust-less, peer to peer network which is used to make transactions between virtual wallets.
 
 	\section{Blockchain Today}
@@ -191,14 +190,14 @@
 
 	\section{Work Completed}
 	I have created Logan, a library that allows developers to create blockchain applications with the ease of importing a library.
-	Logan was designed to exist outside the realm of cryptocurrencies and therefore assumes that all Participants are trustworthy.
-	Consensus is achieved by using a simple leader-based mechanism where the Leader will periodically pull updates from Participants and add them to a central blockchain.
-	This blockchain can viewed by all Participants, with the guarantee of strict consistency.
-	All that needs to be done to set up a network is specify the location of the Leader, Participants, Replicas and to specify any validation required.\\
+	Logan was designed to exist outside the realm of cryptocurrencies and therefore assumes that all participants are trustworthy.
+	Consensus is achieved by using a simple leader-based mechanism where the leader will periodically pull updates from participants and add them to a central blockchain.
+	This blockchain can viewed by all participants, with the guarantee of strict consistency.
+	All that needs to be done to set up a network is specify the location of the leader, participants, replicas and to specify any validation required.\\
 	
 	I have evaluated Logan's performance by measuring latency, throughput and how the latency of adding transactions changes as the blockchain size increases.
 	My results showed that Logan is capable of dealing with throughputs of much beyond my success criteria.
-	I have also shown that for a network with remote Participants, the latency of adding transactions increases linearly with blockchain size. 
+	I have also shown that for a network with remote participants, the latency of adding transactions increases linearly with blockchain size. 
 	However, I have been able to attribute this to the implementation of Git that Irmin/Ezirmin uses to pull updates over the network. 
 	I have also shown that pure Git achieves a much better efficiency and that a better OCaml implementation of this protocol would allow Logan to achieve constant transaction latency with blockchain size.
 	Finally, I have shown that nodes can be added to a Logan network with only a modest increase in transaction latencies.
@@ -309,18 +308,18 @@ end
 	\end{lstlisting}
 	Listing \ref{lst:logmod} is an example from the Ezirmin codebase and shows how to define a functor.
 	The parameter \texttt{AO} is a module used for creating append only stores, and the parameter module \texttt{V} defines a data type.
-	The result of this is a functor, \texttt{Log}, which can be used to create a Log module with either an in-memory or on-disc backend.
+	The result of this is a functor, \texttt{Log}, which can be used to create a Log module with either an in-memory or on-disk backend.
 	\subsubsection*{Development Environment}
 	When developing a large scale system with OCaml, there are a couple of build systems available to use. 
-	`jbuilder' \cite{jbuilder} is one of these systems which is becoming increasingly popular and is used daily by hundreds of developers.
+	jbuilder \cite{jbuilder} is one of these systems which is becoming increasingly popular and is used daily by hundreds of developers.
 	jbuilder allows the developer to specify arbitrary directory structures containing executables, libraries and more.
-	I set up my project to compile Logan, which includes the interface for running both Leader and Participant nodes. 
-	I also defined multiple executables for running both the Leader and Participants in example and test cases. 
+	I set up my project to compile Logan, which includes the interface for running both leader and participant nodes. 
+	I also defined multiple executables for running both the leader and participants in example and test cases. 
 	I used GNU Make \cite{GNUMake} to invoke jbuilder which allowed me to easily build and run any executables from the root of the directory.\\
 	
 	In order to ensure that the project would always build, I set up a continuous integration workflow using Travis-CI. 
 	This ensured that whenever I pushed any updates to my GitHub repository, Travis would attempt to build the system and would notify me whenever there were any errors during the build.
-	This was particularly useful during the Evaluation stage when I was installing my project on multiple remote machines for testing.
+	This was particularly useful during the evaluation stage when I was installing my project on multiple remote machines for testing.
 	Over the development period, Travis flagged issues such as dependency resolution failures or out of date build scripts and I was able to fix these at the point when they first occurred, rather than weeks later when they would have caused many issues during remote installation.
 
 	\subsubsection*{Lwt}
@@ -347,9 +346,9 @@ val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 	\subsection{Data Structure}
 	It is required that any node in a Logan network should be able to add items to and view items in a blockchain. 
 	The data in the blockchain will be referred to as either \textit{blocks} or \textit{transactions}\footnote{Whilst blocks in this project shall be referred to as transactions, most blockchain systems use blocks which contain multiple transactions}. 
-	From a Participant, it should be possible to transactions of arbitrary type. 
+	From a participant, it should be possible to transactions of arbitrary type. 
 	It should also be possible to view an ordered list of all transactions which currently exist in the blockchain.
-	The latency of adding transactions should not increase as the size of the blockchain increases because it is important the library will cope well for systems with indefinitely large blockchains.\\
+	The latency of adding transactions should not increase as the size of the blockchain increases because it is important the library will cope well for systems with extremely long blockchains.\\
 
 	\begin{minipage}{\linewidth}
 	\begin{lstlisting}[caption={Blockchain Specification},label={lst:blockspec}]
@@ -397,7 +396,7 @@ end
 		\item \texttt{add\_transaction\_to\_blockchain} adds a user defined type to the blockchain and then returns a polymorphic variant type containing information about whether the operation was successful. 
 		This will return an error in the case that the transaction is not validated.
 	\end{itemize} 
-	This specification differs slightly from the final specification for Logan because it does not take into account the difference between Leader and Participant nodes.
+	This specification differs slightly from the final specification for Logan because it does not take into account the difference between leader and participant nodes.
 	The specification was deliberately designed without focus on consensus so that the focus was on the external functionality rather than the internal implementation. 
 	The final interface, while different, provides exactly this functionality.
 
@@ -423,7 +422,7 @@ end
 
 	\chapter{Implementation} \label{Implementation}
 	Over the course of this project, I have successfully built Logan, a blockchain library which can perform custom transaction validation.
-	Logan uses a leader-based consensus protocol inspired by Raft also uses the concept of a `transaction waiting room', or \textit{mempool}, which is used by Bitcoin.
+	Logan uses a leader-based consensus protocol inspired by Raft \cite{Raft} and also uses the concept of a `transaction waiting room', or \textit{mempool}, which is used by Bitcoin.
 	Section \ref{sec:sysarch} gives a general overview of Logan's system architecture.
 	Section \ref{sec:datastructure} describes the blockchain data structure that I have used, and justifies why it can be considered a blockchain.
 	I will also describe two bugs that I encountered in these codebases and the fixes that I implemented for each.
@@ -435,12 +434,12 @@ end
 	Logan's goal is to allow multiple nodes in a distributed system to share a blockchain data structure.
 	Nodes in this system should be able to add transactions to the blockchain and read the entire history of previous transactions.
 	I shall refer to blocks in the blockchain as `transactions' as if they contain only a single transaction, however they easily can be made to contain many transactions because the datatype of transactions is arbitrary and specified by the developer.
-	Logan aims to achieve consensus by using a leader-based approach where a \textit{Leader} node can accept transactions from \textit{Participant} nodes and commit them to the blockchain for everyone to see.
-	Participants view the blockchain by retrieving the latest copy over an SSH connection with the Leader.
+	Logan aims to achieve consensus by using a leader-based approach where a leader node can accept transactions from participant nodes and commit them to the blockchain for everyone to see.
+	Participants view the blockchain by retrieving the latest copy over the network from the leader.
 	Participants request for transactions to be committed by writing to their local mempool. 
-	The Leader periodically polls the Participant mempools, again over an SSH connection, to find new transactions to add to the blockchain.
+	The leader periodically polls the participant mempools over the network to find new transactions to add to the blockchain.
 	When a poll finds new transactions, it will use the Validation module to filter all the valid transactions which are then added to the blockchain.
-	It is also possible for a Participant node to exist on the same physical machine as the Leader, in which case the Leader sources updates directly from the mempool, rather than over an SSH connection. 
+	It is also possible for a participant node to exist on the same physical machine as the leader, in which case the leader sources updates directly from the mempool, rather than over an SSH connection. 
 	Figure \ref{fig:sysarch} shows how the architecture for this system is organised.\\	
 
 	\begin{figure}
@@ -465,7 +464,7 @@ end
 	\begin{figure}
 		\begin{center}
 		\includegraphics[width=13cm]{figs/irmin-stores.png}
-		\caption{Architecture of an Irmin Store}
+		\caption{Architecture of an Irmin store}
 		\label{fig:IrminBlockStore}
 		\end{center}
 	\end{figure}
@@ -476,7 +475,7 @@ end
 	Because the Block Store is content-addressable, once blocks are added, their content can never be updated.
 	Instead, updates to Irmin data structures are always made by adding new blocks to the store.
 	\subsubsection*{The Tag Store}
-	Any immutability in Irmin data structures derive from \textit{tags}.
+	Any mutability in Irmin data structures derive from \textit{tags}.
 	Tags provide a way of indexing into any block in the Block Store.
 	This concept is similar to that of branches or references in Git, which provide a way of indexing into a particular commit in the Git history.
 	Because blocks are immutable, any changes to an Irmin data structure can only be visible if a tag is updated to point to a different block. 
@@ -532,8 +531,8 @@ type log_item =
 
 	\subsubsection*{Merging Ezirmin Logs}
 	Aside from using an Ezirmin Log as the blockchain data structure for this project, I also use a \textit{mempool} log to retrieve updates/transactions from remote mempools. 
-	This retrieval process uses the \texttt{Ezirmin.Repo.Sync} module to merge new log items into the Leader's mempool.
-	Under the hood, this module uses the git protocol to pull updates over an SSH connection.\\
+	This retrieval process uses the \texttt{Ezirmin.Repo.Sync} module to merge new log items into the leader's mempool.
+	Under the hood, this module uses the Git protocol to pull updates over the network.\\
 	
 	Irmin allows for the developer to specify custom merge strategies. 
 	Whenever a Irmin Store merges changes from a remote Store, Irmin will do one of two things:
@@ -572,6 +571,7 @@ type log_item =
 			\end{tikzpicture}
 		\caption{Two Ezirmin logs diverging from a shared history, \texttt{H}.}
 		\end{subfigure}
+		\hspace{0.08\textwidth}
 		\begin{subfigure}[t]{0.5\textwidth}
 			\centering
 			\begin{tikzpicture}[
@@ -595,7 +595,7 @@ type log_item =
 			\end{tikzpicture}
 			\caption{After the local log has merged changes from the remote log, the HEAD tag now point to a merge item, \texttt{M1,2}, which is generated by the custom merge function.}
 		\end{subfigure}
-		\caption{Merging Ezirmin Logs}	
+		\caption{Merging Ezirmin logs}	
 		\label{fig:ezirminmerges}
 	\end{figure}
 
@@ -625,20 +625,20 @@ type log_item =
 	Building consensus was by far the most important part of work completed for this project. 
 	In order to guide the design of the consensus mechanism, I completed an extensive amount of research on existing algorithms.
 	This section will briefly summarise this research and my conclusions about their suitability for Logan. 
-	The resulting design for consensus is a leader based approach, where Participants can commit transactions to a mempool.
-	The Leader polls these mempools for updates, which are validated and then committed to the blockchain.
-	This blockchain can be read by all Participants, and provides a definitive source of ordered, committed transactions.
+	The resulting design for consensus is a leader based approach, where participants can commit transactions to a mempool.
+	The leader polls these mempools for updates, which are validated and then committed to the blockchain.
+	This blockchain can be read by all participants, and provides a definitive source of ordered, committed transactions.
 
 	\subsection{Existing Consensus Algorithms}
 	\subsubsection*{Proof of Work}
 	Proof of Work (PoW) is a consensus mechanism, used by many cryptocurrencies to avoid the double spending problem \cite{Bitcoin}. 
-	This mechanism uses the concept of \textit{Miners} which are nodes that add random nonce values to blocks before computing the hash of the resulting block.
+	This mechanism uses the concept of \textit{miners} which are nodes that add random \textit{nonce} values to blocks before computing the hash of the resulting block.
 	If the hash is preceded by a certain number of zeros, this is considered a proof of computational work and blocks are broadcast out to a network.
 	Participants can be sure that a block is not fake with a probability that increases with the size of the chain after that block. \\
 
-	Importantly, this scheme assumes that no Participant can be trusted 
+	Importantly, this scheme assumes that no participant can be trusted 
 	and it also wastes a large amount of energy \cite{BitcoinEnergy}.
-	It also assumes that Miners can always be rewarded for Mining and this may not always be true, so this scheme is not suitable for use with Logan.
+	It also assumes that Miners can always be rewarded for Mining and this may not always be true, so this scheme would not be suitable for some applications.
 	
 	\subsubsection*{Mempools}
 	Mempools are an important part of the design of Bitcoin, and whilst they are not inherently linked to the Proof of Work consensus algorithm, they are worth investigating as they are used by Logan.
@@ -648,11 +648,11 @@ type log_item =
 
 	\subsubsection*{Proof of Stake}
 	The Proof of Stake (PoS) algorithm \cite{ProofofStake} is used by some cryptocurrencies and works by randomly allowing participants to create (or `forge') a single block.
-	However, the probability that a participant is chosen to `forge' a block, is weighted by its stake, such that participants with higher stakes in the blockchain are more likely to be chosen to forge a block.
+	However, the probability that a participant is chosen to forge a block, is weighted by its stake, such that participants with higher stakes in the blockchain are more likely to be chosen to forge a block.
 	With PoS, there is no need to waste lots of energy in the process of mining. 
 	Using PoS also allows trust to be distributed according to an arbitrary heuristic which can be desirable property in some applications.\\
 
-	Unfortunately, the notion of `Stake' that is used by PoS may not always be available in the design of a general blockchain system. 
+	Unfortunately, the notion of stake that is used by PoS may not always be available in the design of a general blockchain system. 
 	It also, like PoW, assumes no trust in participating nodes and is therefore not suitable for use in Logan.
 
 	\subsubsection*{Paxos}
@@ -661,30 +661,30 @@ type log_item =
 	The main part of the algorithm is split into two sections, propose and accept where a value is proposed by a node and accepted if a quorum of nodes make a promise to accept, and then accept the value.\\
 
 	Paxos has many issues including unspecified behaviour in certain situations, lack of guaranteed progress and overhead of implementation.
-	I have not used it in this project but I have partially taken inspiration from the Roles used by Paxos in the design of my Leader based protocol.
+	I have not used it in this project but I have partially taken inspiration from the Roles used by Paxos in the design of my leader based protocol.
 
 	\subsubsection*{Raft}
 	Raft \cite{Raft} is an algorithm that was designed to be equivalent and as efficient as Paxos, however, it also places a much greater emphasis on comprehensibility.
 	It uses the notion of a \textit{strong leader}, which is an elected server that has total control over which log entries are accepted.
-	If the Leader does not send a heartbeat message within a certain timeout period, other nodes in the network will detect this and start an election for a new Leader.\\
+	If the leader does not send a heartbeat message within a certain timeout period, other nodes in the network will detect this and start an election for a new leader.\\
 	
-	Raft is an simple algorithm that is easy to understand, but it also guarantees the Log Matching Property that if two logs contain a log entry with the same index and term, then that entry, and all preceding entries will be identical.
+	Raft is an simple algorithm that is easy to understand, but it also guarantees the \textit{Log Matching Property} that if two logs contain a log entry with the same index and term, then that entry, and all preceding entries will be identical.
 	The notion of a strong leader used in Logan is inspired by Raft.
 
 	\subsection{Roles in a Logan's Approach}
-	Logan uses a mempool and a simple leader-based algorithm to maintain consensus, and in this section, I will describe this approach.
-	Because I have implemented a centralised algorithm, my specification has differed slightly from that presented in the \nameref{Requirements Analysis} to take into account differing functional requirements for a Leader and for a Participant.
-	As I am assuming that all Participants can be trusted, it is possible to use a leader-based approach without introducing security issues such as the ones tackled by the Proof of Work mechanism. 
+	Logan uses a mempool and a simple leader-based algorithm that is inspired by the previously described consensus protocols, and in this section I will describe this approach.
+	Because I have implemented a centralised algorithm, my specification has differed slightly from that presented in the \nameref{Requirements Analysis} to take into account differing functional requirements for a leader and for a participant.
+	As I am assuming that all participants can be trusted, it is possible to use a leader-based approach without introducing security issues such as the ones tackled by the Proof of Work mechanism. 
 	This approach also reduces the potential complexity an overheads of implementing completely decentralised consensus.
-	I have introduced the notion of validation which allows the Leader to accept or reject transactions depending on arbitrary conditions defined by the developer.
-	Finally, Logan uses the notion of a \textit{Replica} which is a machine that performs some of the Leader's functionality to improve fault tolerance.
-	Fault tolerance will not be described in detail in this section but instead in Section \ref{sec:faulttol}.
+	I have introduced the notion of validation which allows the leader to accept or reject transactions depending on arbitrary conditions defined by the developer.
+	Finally, Logan uses the notion of a \textit{replica} which is a machine that performs some of the leader's functionality to improve fault tolerance.
+	Fault tolerance will be described in detail in Section \ref{sec:faulttol}.
 	
 	\subsubsection*{Leaders}
-	Logan uses the notion of a \textit{Strong Leader} similar to that used by the Raft protocol. 
-	The Leader is chosen statically in order to reduce the complexity of implementation, and it also has a statically defined list of \texttt{remotes} which specifies the location of all Participants.
-	The Leader is a node which will never actually request transactions to be added to the blockchain, its role is simply to periodically read requests from the mempools of Participants, validate them, and then add them to the blockchain.
-	This blockchain can be read by any Participant, and is treated as the empirical source of which transactions have been committed and in which order. 
+	Logan uses the notion of a \textit{strong leader} similar to that used by the Raft protocol. 
+	The leader is chosen statically in order to reduce the complexity of implementation, and it also has a statically defined list of \texttt{remotes} which specifies the location of all participants.
+	The leader is a node which will never actually request transactions to be added to the blockchain, its role is simply to periodically read requests from the mempools of participants, validate them, and then add them to the blockchain.
+	This blockchain can be read by any participant, and is treated as the empirical source of which transactions have been committed and in which order. 
 	That is, any two nodes that read a copy of the blockchain, will always agree on content and ordering of transactions in the blockchain, up until the end of the shortest copy.\\
 
 	\begin{lstlisting}[caption={Leader Specification},label={lst:leaderspec}]
@@ -702,12 +702,12 @@ module MakeLeader (Config: I_LeaderConfig) : I_Leader = struct
 end
 	\end{lstlisting}
 
-	Listing \ref{lst:leaderspec} is the specification of the Leader module, which differs slightly from the specification presented in the \nameref{Requirements Analysis}.
+	Listing \ref{lst:leaderspec} is the specification of the leader module, which differs slightly from the specification presented in the \nameref{Requirements Analysis}.
 	In particular, \texttt{init\_leader} performs an initialisation step, and then returns a function which, when executed, will actually start the consensus process.
 
 	\subsubsection*{Participants}
-	Participants, in contrast to Leaders, can request transactions to be added to the blockchain. 
-	This is done by writing a transaction to a local mempool, which is then read by the Leader.\\
+	Participants, in contrast to leaders, can request transactions to be added to the blockchain. 
+	This is done by writing a transaction to a local mempool, which is then read by the leader.\\
 
 	\begin{lstlisting}[caption={Participant Specification},label={lst:partspec}]
 module type I_LogStringCoder = sig
@@ -731,30 +731,30 @@ module Make(Config: I_ParticipantConfig): I_Participant with type t = Config.t =
 end
 	\end{lstlisting}
 
-	Listing \ref{lst:partspec} is a specification that shines a light on the role of Participants and the functionality they provide.
+	Listing \ref{lst:partspec} is a specification that shines a light on the role of participants and the functionality they provide.
 	The module includes the ability to define custom data types that can be stored on the blockchain, to read from the blockchain, and to attempt to write to the blockchain by writing to a mempool.
-	It is also important to note that Participants can exist on the same machine as a Leader, but will exist in an entirely separate process.
+	It is also important to note that participants can exist on the same machine as a leader, but will exist in an entirely separate process.
 
 	\subsubsection*{Replicas}
 	Replicas are nodes which contain the latest copy of the blockchain. 
-	I shall explain later how fault tolerance can be introduced by ensuring that transactions only exist on the visible blockchain once they have been recognised by a quorum of Replicas.
-	Replicas are useful because the Leader is a single point of failure, and if it fails, it is important to have another machine which can recover the state of the Leader just before the point of failure.
+	I shall explain later how fault tolerance can be introduced by ensuring that transactions only exist on the visible blockchain once they have been recognised by a quorum of replicas.
+	Replicas are useful because the leader is a single point of failure, and if it fails, it is important to have another machine which can recover the state of the leader just before the point of failure.
 	
 	\subsection{Retrieving Updates from Mempools}
-	In order to see requested transactions, the Leader has to observe the mempools of the Participants. 
-	The Leader does this by pulling updates from Participant mempools and then adding them to the blockchain.
-	However, it is important to make sure that the Leader does not miss transactions or commit transactions out of order.
+	In order to see requested transactions, the leader has to observe the mempools of the participants. 
+	The leader does this by pulling updates from participant mempools and then adding them to the blockchain.
+	However, it is important to make sure that the leader does not miss transactions or commit transactions out of order.
 	This is tricky because after pulling updates from many mempools the local copies will reflect each mempool at a different moment in time.
 	In this section, I will give a na\"{i}ve method for retrieving updates and I will show how this method is flawed. 
 	This will then motivate the design of a more complex approach that ensures all transactions are committed in order.
-	In both approaches, the Leader will continuously poll mempools for updates and commit transactions that it believes to be valid. \\
+	In both approaches, the leader will continuously poll mempools for updates and commit transactions that it believes to be valid. \\
 	
 	\subsubsection*{A Na\"{i}ve Approach}
-	The first approach to retrieving updates from Participants is to pull updates from all the Participants into separate branches of the Leader's mempool.
-	It is possible view newly retrieved updates for each mempool by maintaining a \textit{Latest Known Cursor} that points to the latest transaction seen by the Leader, i.e. in its last poll.
+	The first approach to retrieving updates from participants is to pull updates from all the participants into separate branches of the leader's mempool.
+	It is possible view newly retrieved updates for each mempool by maintaining a \textit{Latest Known Cursor} that points to the latest transaction seen by the leader, i.e. in its last poll.
 	Figure \ref{fig:readmemudpates} shows how the \textit{Latest Cursor}, \texttt{LC}, to the latest item in the mempool, is used to retrieve updates.
 	In this diagram the dotted nodes represent transactions that have been pulled in the latest poll.
-	The Leader can traverse back through the log from this cursor until it reaches the \textit{Latest Known Cursor}, \texttt{LKC}, and then it can return the newly found updates.\\
+	The leader can traverse back through the log from this cursor until it reaches the \textit{Latest Known Cursor}, \texttt{LKC}, and then it can return the newly found updates.\\
 
 	\begin{figure}
 		\centering
@@ -780,29 +780,29 @@ end
 				\path[dotted, ->] (block3.north)+(-1.5mm,0) edge  [bend right=40]  ([xshift=1.5mm]block2.north);
 			\end{scope}
 		\end{tikzpicture}
-		\caption{Retrieving Updates from a Single Participant Mempool}
+		\caption{Retrieving updates from a single participant mempool}
 		\label{fig:readmemudpates}
 	\end{figure}
-	Once the Leader has retrieved updates from the mempools of all Participants, it can order these transactions by their Ezirmin log item timestamp.
-	After pulling updates from all Participants, the Leader can now see a list of newly retrieved transactions which are ordered by a timestamp.
+	Once the leader has retrieved updates from the mempools of all participants, it can order these transactions by their Ezirmin log item timestamp.
+	After pulling updates from all participants, the leader can now see a list of newly retrieved transactions which are ordered by a timestamp.
 	These updates can be validated and added to the blockchain, and the \textit{Latest Known Cursor} updated to the latest message in each of the mempool.\\
 
 	However, this approach is fundamentally flawed and causes many updates to be seen out of order. 
-	This is because of the delays that occur when mempool updates are retrieved over the network from multiple Participants.
+	This is because of the delays that occur when mempool updates are retrieved over the network from multiple participants.
 	Figure \ref{fig:readremotepartudpatesbroke} demonstrates a typical situation where this occurs.
-	The chains labelled \texttt{W} represent the mempools on the Workers' machines and the middle chain represents the stream of updates as seen by the Leader. These updates are shown as if they are part of a single merged mempool, although in reality they exist on isolated branches in the Leader's mempool, and are only merged by the Leader in memory.
+	The chains labelled \texttt{W} represent the mempools on the Workers' machines and the middle chain represents the stream of updates as seen by the leader. These updates are shown as if they are part of a single merged mempool, although in reality they exist on isolated branches in the leader's mempool, and are only merged by the leader in memory.
 	In the figure, updates from the first worker are pulled before updates from the second.
 	Whilst the operations may take place in parallel, network latencies can cause these operations to pull updates at different times.
-	After the pull from the first Participant has completed, the Participant may have added additional transactions. 
-	These transactions will be timestamped before the latest transaction in the second Participant's mempool, such that when the leader next polls for updates, transactions will be found which have a timestamp before the latest item committed to the blockchain.
+	After the pull from the first participant has completed, the participant may have added additional transactions. 
+	These transactions will be timestamped before the latest transaction in the second participant's mempool, such that when the leader next polls for updates, transactions will be found which have a timestamp before the latest item committed to the blockchain.
 	These items should have been committed first as they have an earlier timestamp.
-	This transaction cannot be inserted into an earlier position of the blockchain because it would mean that different Participants might observe the blockchain in diverging states.
-	It is not clear whether or not these transactions should be committed late or skipped, but ideally all transactions should be committed to the blockchain in the order that they were committed at Participants.
+	This transaction cannot be inserted into an earlier position of the blockchain because it would mean that different participants might observe the blockchain in diverging states.
+	It is not clear whether or not these transactions should be committed late or skipped, but ideally all transactions should be committed to the blockchain in the order that they were committed at participants.
 	I shall refer to these transactions as \textit{missed}.
 
 	\begin{figure}
 		\centering
-		\begin{subfigure}[t]{0.45\textwidth}
+		\begin{subfigure}[t]{0.40\textwidth}
 			\centering
 			\begin{tikzpicture}[
 				block/.style={circle, draw=black!100, very thick, minimum size=7mm},
@@ -831,9 +831,10 @@ end
 			\draw[<-] (genbottom.east) -- (three.west);
 			\end{scope}
 			\end{tikzpicture}
-		\caption{After first Leader poll. Transactions 1 and 3 are recognised by the Leader and added to the blockchain.}
+		\caption{After first leader poll. Transactions 1 and 3 are recognised by the leader and added to the blockchain.}
 		\end{subfigure}
-		\begin{subfigure}[t]{0.45\textwidth}
+		\hspace{0.09\textwidth}
+		\begin{subfigure}[t]{0.40\textwidth}
 			\centering
 			\begin{tikzpicture}[
 				block/.style={circle, draw=black!100, very thick, minimum size=7mm},
@@ -863,7 +864,7 @@ end
 			\draw[<-] (genbottom.east) -- (three.west);
 			\end{scope}
 			\end{tikzpicture}
-			\caption{After second Leader poll. Transaction 2 is retrieved but should be ordered before transaction 3 in the blockchain.}
+			\caption{After second leader poll. Transaction 2 is retrieved but should be ordered before transaction 3 in the blockchain.}
 		\end{subfigure}
 		\caption{Missing mempool updates with a na\"{i}ve consensus mechanism}	
 		\label{fig:readremotepartudpatesbroke}
@@ -871,24 +872,24 @@ end
 	\subsubsection*{A Complex Approach}
 	In order to solve this problem, I first examined the nature of these \textit{missed} transactions and noted the following properties:
 	\begin{enumerate}
-		\item Missed transactions must have been added whilst the Leader is pulling updates. 
+		\item Missed transactions must have been added whilst the leader is pulling updates. 
 		If they had been added before the poll had begun, then they would have been retrieved in previous poll. 
 		Therefore, \textit{missed} transactions must occur after the latest timestamped transaction from the previous pull. 
 		\item Missed transactions must have been added at a point in time earlier than the latest update from the subsequent round of retrieved updates.
-		If they occurred at a later point in time, then they would be correctly received in that subsequent Leader poll.
+		If they occurred at a later point in time, then they would be correctly received in that subsequent leader poll.
 	\end{enumerate}
 
 	These properties naturally suggest a less na{\"i}ve algorithm for retrieving updates which only adds updates that have existed for more than one poll cycle.
-	Once the Leader has retrieved a set of updates, it will add them to a \textit{retrieved} buffer.
-	In the next poll cycle, the Leader will transfer the retrieved buffer to a new \textit{to-be-committed} buffer.
-	The Leader now retrieves new updates from mempools, as before, and will do one of two things for each newly retrieved transaction:
+	Once the leader has retrieved a set of updates, it will add them to a \textit{retrieved} buffer.
+	In the next poll cycle, the leader will transfer the retrieved buffer to a new \textit{to-be-committed} buffer.
+	The leader now retrieves new updates from mempools, as before, and will do one of two things for each newly retrieved transaction:
 	\begin{itemize}
-		\item If a transaction is earlier that the latest transaction in the to-be-committed buffer, the Leader will insert it into the correct position in the to-be-committed buffer based on its timestamp.
-		\item If a transaction is later than the latest transaction in the to-be-committed buffer, the Leader will add it to the retrieved buffer.
+		\item If a transaction is earlier that the latest transaction in the to-be-committed buffer, the leader will insert it into the correct position in the to-be-committed buffer based on its timestamp.
+		\item If a transaction is later than the latest transaction in the to-be-committed buffer, the leader will add it to the retrieved buffer.
 	\end{itemize}
 	Figure \ref{fig:complexconsensusfix} demonstrates how this approach would solve the problem presented in Figure \ref{fig:readremotepartudpatesbroke}.
-	In a), transaction 2 has been missed whilst transactions 1 and 3 have been added to the retrieved buffer. 
-	In b), transactions 1, 2 and 3 have all been inserted into the to-be-committed buffer and will be added to the blockchain.
+	In Figure \ref{a}, transaction 2 has been missed whilst transactions 1 and 3 have been added to the retrieved buffer. 
+	In Figure \ref{b}, transactions 1, 2 and 3 have all been inserted into the to-be-committed buffer and will be added to the blockchain.
 	Transaction 4 has occurred after the latest item in the to-be-committed buffer, i.e. transaction 3, and is therefore added to the retrieved buffer instead. \\
 
 	\begin{figure}
@@ -930,6 +931,7 @@ end
 			\end{scope}
 			\end{tikzpicture}
 		\caption{After first poll}
+		\label{a}
 		\end{subfigure}
 		\begin{subfigure}[t]{\textwidth}
 			\centering
@@ -977,23 +979,24 @@ end
 			\draw[<-] (threemerged.east) -- (fourmerged.west);
 			\end{scope}
 			\end{tikzpicture}
-			\caption{After second Leader poll}
+			\caption{After second leader poll}
+			\label{b}
 		\end{subfigure}
-		\caption{Buffering Updates in a Complex Consensus Mechanism}	
+		\caption{Buffering updates in a complex consensus mechanism}	
 		\label{fig:complexconsensusfix}
 	\end{figure}
 
 	\section{Tolerating Leader Failure}\label{sec:faulttol}
 	Now that I have detailed Logan's data strutures and how it achieves consensus, the only aspect of the implementation left to consider is Fault Tolerance.
-	Because Logan implements a leader-based consensus mechanism, this means that the Leader is a single point of failure.
-	In the event of a failure, different Participants may have views of the blockchain at different times and the Leader may have committed transactions to the blockchain which were never viewed by any Participants. 
-	Building full fault tolerance and recovery into Logan would be enough work to justify a whole new Part II Project. 
-	Instead, in this section I will show the simple mechanism that Logan uses which allows manual recovery of the blockchain state in the case of a Leader failure. 
-	I will also give a more advanced mechanism which uses a daemon thread that removes the bottleneck from the Leader's execution. 
+	Because Logan implements a leader-based consensus mechanism, this means that the leader is a single point of failure.
+	In the event of a failure, different participants may have views of the blockchain at different times and the leader may have committed transactions to the blockchain which were never viewed by any participants. 
+	Building full fault tolerance and recovery into Logan would be outside the scope of this Part II Project. 
+	Instead, in this section I will show the simple mechanism that Logan uses which allows manual recovery of the blockchain state in the case of a leader failure. 
+	I will also give a more advanced mechanism which uses a daemon thread that removes the bottleneck from the leader's execution. 
 	This solution was not implemented as Git has very coarse grained locking that causes many race conditions for this solution, but it will demonstrate how Logan could operate if a protocol with finer grained locking was used. 
-	This will justify that a more complex and automated approach to recovering from Leader failure is possible, and will demonstrate a good starting point for implementing such a mechanism. \\
+	This will justify that a more complex and automated approach to recovering from leader failure is possible, and will demonstrate a good starting point for implementing such a mechanism. \\
 
-	To introduce fault tolerance, I have used \textit{Replicas}. 
+	To introduce fault tolerance, I have used \textit{replicas}. 
 	Replicas, in computer science, are nodes which duplicate some part of another node's behaviour in order to allow recovery from failure. 
 	They can be either \textit{active}, if they fully duplicate the actions of another replica, or \textit{passive}, if they complete some operation and then transfer the results to another replica.
 	The replication I will demonstrate will be passive.\\
@@ -1001,9 +1004,9 @@ end
 	In order to encorporate the notion of a replica, the process of adding commits to the blockchain needs to be altered slightly.
 	Now, before a commit is made, it needs to be recognised by a quorum of replicas.
 	Irmin's notion of branches exposes a perfect primitive for this application.
-	In a poll, the Leader can commit transactions to an uncommitted \textit{cache} branch before pushing this to all replicas.
-	If a quorum of these push operations return successfully, then the Leader can merge these transactions into the main blockchain branch to be viewed by all Participants.
-	If a failure were to occur at any point after this merge, it is now guaranteed that any transactions in the Leader's blockchain will also exist on a quorum of replicas.
+	In a poll, the leader can commit transactions to an uncommitted \textit{cache} branch before pushing this to all replicas.
+	If a quorum of these push operations return successfully, then the leader can merge these transactions into the main blockchain branch to be viewed by all participants.
+	If a failure were to occur at any point after this merge, it is now guaranteed that any transactions in the leader's blockchain will also exist on a quorum of replicas.
 	This means that the system has access to sufficient information to reconstruct the contents of the blockchain before failure.\\
 
 	\begin{minipage}{\linewidth}
@@ -1018,10 +1021,10 @@ let rec start_leader () =
 	\end{minipage}
 	\\
 
-	Listing \ref{lst:leaderloop} shows pseudocode for the Leader's poll cycle, now encorporating replicas. 
-	One of the major issues with this approach is that is presents a bottleneck in the Leader's execution which is likely to cause significant delays.\\
+	Listing \ref{lst:leaderloop} shows pseudocode for the leader's poll cycle, now encorporating replicas. 
+	One of the major issues with this approach is that is presents a bottleneck in the leader's execution which is likely to cause significant delays.\\
 
-	The above describes the replication process that Logan currently implements, however I will now suggest a better method that removes the bottleneck from the Leader's execution.
+	The above describes the replication process that Logan currently implements, however I will now suggest a better method that removes the bottleneck from the leader's execution.
 	I was not able to implement this as the coarse grained locking provided by Git caused many race conditions, but a better protocol with finer locking would allow the following mechanism to work because there are no real data dependencies in this solution.
 	I propose a different approach that starts an asychronous thread which is in charge of pushing to replicas and merging the transactions which have been pushed.
 	I shall refer to this as the \textit{push thread}, and the \textit{main thread} will now only commit items to the \textit{cache} branch.
@@ -1107,11 +1110,11 @@ let rec start_leader () =
 
 	\subsection*{Metrics Used}
 	In order to evaluate the performance of Logan, I have looked at three key metrics: latency, applied throughput and observed throughput.
-	In this evaluation, I will describe the latency of a transaction as the time elapsed between it being committed to a Participant's mempool, and it being committed to the blockchain.
+	In this evaluation, I will describe the latency of a transaction as the time elapsed between it being committed to a participant's mempool, and it being committed to the blockchain.
 	In a blockchain system, it is important that the latency is as low as possible because latency dictates how long a user must wait before they can be sure of their transaction.
 	In the context of a cryptocurrency, for example, long latencies will cause users to become irritated and potentially stop using the currency.
 	Another useful measure is throughput, measured in transactions per second (tps), because it shows how well a system can cope with large loads.
-	Specifically I will look at the \textit{applied} throughput which describes how frequently the Participants are collectively making transactions, and the \textit{observed} throughput which describes how frequently the Leader commits transactions to the blockchain.
+	Specifically I will look at the \textit{applied} throughput which describes how frequently the participants are collectively making transactions, and the \textit{observed} throughput which describes how frequently the leader commits transactions to the blockchain.
 	It is important that Logan should be able to achieve high observed throughputs because it is a limiting factor on how many users can interact with Logan at once.
 	I have evaluated how the applied throughput affects the latency and observed throughput of Logan transactions, in order to try to determine the optimal use case conditions for a Logan system.
 	Lastly, I have looked at how latency varies with the size of the blockchain at a constant applied throughput.
@@ -1119,16 +1122,16 @@ let rec start_leader () =
 	
 	\section{Performance with a Local Participant}
 	\subsection{Latency}
-	Figure \ref{fig:locallatency} shows how the latency of Logan transactions varies as the size of the blockchain increases in the case that there is one Participant on the same physical machine as the Leader. 
+	Figure \ref{fig:locallatency} shows how the latency of Logan transactions varies as the size of the blockchain increases in the case that there is one participant on the same physical machine as the leader. 
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/local_latency_vs_size.png}
-		\caption{Latency variation with blockchain size on a local Participant}
+		\caption{Latency variation with blockchain size on a local participant}
 		\label{fig:locallatency}
 	\end{figure}
 	It is clear that the latency of adding a transaction is constant in the size of the blockchain.
 	This is a very significant result because it proves that the logic which Logan uses is capable of achieving constant time blockchain appends in the size of the blockchain.
-	This means that Logan achieves success criteria 4 for the case where there is a single local Participant.
+	This means that Logan achieves success criteria 4 for the case where there is a single local participant.
 	Latencies are also very low, of the order of magnitude of milliseconds, which means that Logan also achieves success criteria 3, in this use case.\\
 
 	\subsection{Throughput}
@@ -1137,7 +1140,7 @@ let rec start_leader () =
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/appliedvsobservedlocal.png}
-		\caption{Latency variation with throughput on a single local Participant}
+		\caption{Latency variation with throughput on a single local participant}
 		\label{fig:singlocal}
 	\end{figure}
 	The straight line plot in this figure indicates the performance of an ideal system that is capable of matching any applied throughput.
@@ -1149,7 +1152,7 @@ let rec start_leader () =
 
 	\section{Performance with Single Remote Participant}
 	\subsection{Latency}
-	In order to see how the system performs when network latencies are involved, I first looked at Logan's performance when there is just one Leader and one remote Participant, i.e. a Participant on a different machine to the Leader.
+	In order to see how the system performs when network latencies are involved, I first looked at Logan's performance when there is just one leader and one remote participant, i.e. a participant on a different machine to the leader.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/latencies_sizes_throughputs.png}
@@ -1163,13 +1166,13 @@ let rec start_leader () =
 	Importantly, these teeth are relatively small up until around 40tps.
 	This figure also shows an obvious linear increase in latency for all throughputs and this is undesirable behaviour as it indicates that large mempools will accompany poor performance. \\
 	
-	In order to examine what was causing the linear increase in latencies with mempool size, I logged the time that the Leader spent completing the most time consuming tasks for each poll cycle.
+	In order to examine what was causing the linear increase in latencies with mempool size, I logged the time that the leader spent completing the most time consuming tasks for each poll cycle.
 	These tasks turned out to be pulling mempool updates over the network and adding updates to the blockchain.
 	Figure \ref{figs:leaderdelays} shows how these delays increase linearly over time and compares them with the number of updates that are pulled in each poll cycle.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/leader_delays_num_pulled.png}
-		\caption{Delays incurred by Leader for every poll cycle. Throughput is constant at 10tps}
+		\caption{Delays incurred by leader for every poll cycle. Throughput is constant at 10tps}
 		\label{figs:leaderdelays}
 	\end{figure}
 	The figure demonstrates a causality where an increase in time taken to pull mempool updates causes an increase the number of updates pulled in the next cycle. 
@@ -1196,11 +1199,11 @@ let rec start_leader () =
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.9\textwidth]{figs/bottlenecks.png}
-		\caption{Delays incurred by Leader when using pure Git. Throughput is constant at 10tps}
+		\caption{Delays incurred by leader when using pure Git. Throughput is constant at 10tps}
 		\label{figs:bottleneckspuregit}
 	\end{figure}
 	Figure \ref{figs:bottleneckspuregit} is a parallel of Figure \ref{figs:leaderdelays} that demonstrates that this speedup is due to the greatly reduced times that the leader spends pulling mempool updates as the mempool size grows.
-	Whilst this bottleneck is much lower than before, it still takes up much more time than any other stage of the Leader's execution.
+	Whilst this bottleneck is much lower than before, it still takes up much more time than any other stage of the leader's execution.
 	This suggests that Git using SSH is still a very inefficient way of transferring updates to the leader.  
 	This could be due to many unnecessary overheads in the implementation of Git and SSH, such as the SSH handshake and the mechanism Git uses for finding new updates to be transferred between repositories. 
 	Therefore if a better protocol was used, even better performance could be achieved.\\
@@ -1213,12 +1216,12 @@ let rec start_leader () =
 		\caption{Observed throughput plateau with increasing applied throughput}
 		\label{figs:appliedobservedsingle}
 	\end{figure}
-	Figure \ref{figs:appliedobservedsingle} shows how the throughput of transactions made to the blockchain (observed throughput) varies with the throughput of transactions made to a Participants mempool (applied throughput). 
-	This is compared to a linear plot showing the ideal performance of a Leader that never becomes overloaded.
+	Figure \ref{figs:appliedobservedsingle} shows how the throughput of transactions made to the blockchain (observed throughput) varies with the throughput of transactions made to a participants mempool (applied throughput). 
+	This is compared to a linear plot showing the ideal performance of a leader that never becomes overloaded.
 	This figure shows that the system starts diverging from ideal performance at an applied throughput of around 30tps.
 	Whilst the performance gets worse, it does not quite plateau.
-	This is because the Leader runs on a more powerful machine that is capable of doing more disk operations than the less powerful Participant. 
-	The Participant is therefore not capable of overloading the Leader in this scenario.
+	This is because the leader runs on a more powerful machine that is capable of doing more disk operations than the less powerful participant. 
+	The participant is therefore not capable of overloading the leader in this scenario.
 	Overall, this result demonstrates that an ideal sustained operating throughput is around 20tps transactions per second which fulfils success criteria 2.
 	Although the system will be able to handle bursts of higher throughputs, it will not be able to cope with these throughputs for sustained periods of time.
 
@@ -1229,67 +1232,67 @@ let rec start_leader () =
 
 	The first approach requires a better synchronisation mechanism that allows updates to be pulled with constant time in the size of the mempool.
 	This could be achieved by using, for instance, a streaming protocol that keeps track of all the updates which have previously been sent, rather than reevaluating all the updates that need to be sent every time a pull operation is made. 
-	This protocol would allow a Leader to pull updates in constant time, which would in turn mean that the time taken for adding blocks to the blockchain would be constant.
-	This means that all of the Leader's operations could be completed in constant time and therefore latencies would be constant in the size of the mempool/blockchain. \\
+	This protocol would allow a leader to pull updates in constant time, which would in turn mean that the time taken for adding blocks to the blockchain would be constant.
+	This means that all of the leader's operations could be completed in constant time and therefore latencies would be constant in the size of the mempool/blockchain. \\
 
 	Another approach would be to use a queue rather than a log for the mempool data structures. 
 	The fact that mempools are always growing is not a requirement for Logan.
 	A mempool only needs to contain the latest uncommitted transactions and could therefore a queue data structure would be a natural choice.
-	In this scenario, Participants would add transactions to their mempool queue which would then be pulled and popped by the Leader.
-	Participants could periodically merge changes (which are just pops) from the Leader's copy in order to reduce the size of their mempool.
-	This would mean that the size of the mempool would not be linear in the number of transactions made by a Participant, and would no longer cause a linear increase in the time taken by a Leader to pull updates.
-	This would also have the desirable side effect of allowing the Participant to see when the Leader has recognised requested transactions, because they would get popped off the queue. 
+	In this scenario, participants would add transactions to their mempool queue which would then be pulled and popped by the leader.
+	Participants could periodically merge changes (which are just pops) from the leader's copy in order to reduce the size of their mempool.
+	This would mean that the size of the mempool would not be linear in the number of transactions made by a participant, and would no longer cause a linear increase in the time taken by a leader to pull updates.
+	This would also have the desirable side effect of allowing the participant to see when the leader has recognised requested transactions, because they would get popped off the queue. 
 	Whilst Ezirmin provides a Queue data structure, I have not used it in this project in order to reduce implementation complexity.
 	Using this structure would also likely decrease initial performance as it uses OCaml's implementaton of Git.
 	Because of the bidirectional nature of merging changes (i.e. popping and pushing), it would not be trivial to use command line Git in this case. \\
 
-	Overall, in the case of a single remote Participant, Logan is able to comfortably reach throughputs of up to 40 transactions per second which is much above the success criteria of 10. 
+	Overall, in the case of a single remote participant, Logan is able to comfortably reach throughputs of up to 40 transactions per second which is much above the success criteria of 10. 
 	Latencies in this case are initially less than 10s which is a good result for most applications and fulfils the success criteria.
 	Finally, whilst Logan does not fulfil the success criteria of having constant-time blockchain appends, I have demonstrated how this is due to the overheads from using Git, and I have shown two methods that would allow Logan to achieve this goal.
 
 	\section{Performance with Multiple Remote Participants}
 	\subsection{Latency}
-	I have shown that Logan can perform well with a single remote Participant, but it remains to show how this performance scales to multiple Participants. 
+	I have shown that Logan can perform well with a single remote participant, but it remains to show how this performance scales to multiple participants. 
 	Figure \ref{figs:tworems} shows how the latency of making transactions varies with throughput when the pure Git protocol is used.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.9\textwidth]{figs/2latencies_sizes_throughputs.png}
-		\caption{Latency variations against blockchain size with two remote Participants using pure Git}
+		\caption{Latency variations against blockchain size with two remote participants using pure Git}
 		\label{figs:tworems}
 	\end{figure}
-	An important feature of this graph is the fact that the slope of the plots has not changed much from the case with only one remote Participant.
-	For a throughput of around 10tps, transaction latencies will rise by 4.5s over 5000 transactions compared to 3.1s in the single Participant case.
+	An important feature of this graph is the fact that the slope of the plots has not changed much from the case with only one remote participant.
+	For a throughput of around 10tps, transaction latencies will rise by 4.5s over 5000 transactions compared to 3.1s in the single participant case.
 	I consider this a modest increase that would indeed be solved by using a better synchronisation protocol as described in Section \ref{sect:bettersync}. 
 	With this protocol, Logan would satisfy the fourth success criteria. \\
 
-	Another difference is the fact that transaction latencies now start at 11.9s, whereas they were 5.5s in the single Participant case.
+	Another difference is the fact that transaction latencies now start at 11.9s, whereas they were 5.5s in the single participant case.
 	This is because native Git does not allow any parallelism when pulling updates from multiple different remote repositories, and therefore, all remote repositories must be pulled sequentially.
 	Even if a protocol is used that can achieve constant time blockchain appends, this result limits latencies to be linear in the number of remote nodes in a network which is undesirable. 
 	Indeed, using the OCaml Git implementation shows a similar increase of initial transaction latency from 2.7s to 4.5s.
 	It is unfortunate that neither OCaml Git nor pure Git are able to exploit more levels of parallelism, because it is not unreasonable to expect that these implementations should be able to handle concurrent pulls into isolated branches. 
-	Should this be possible, the latencies would only be bound by the largest Participant pull latency, not the number of Participants, and Logan would be able to achieve the fifth success criteria. \\
+	Should this be possible, the latencies would only be bound by the largest participant pull latency, not the number of participants, and Logan would be able to achieve the fifth success criteria. \\
 
 	Overall I conclude that Logan does not satisfy the fourth or fifth success criteria, but a synchronisation mechanism should allow these goals to be reached. 
 	However, even with multiple nodes in a network, latencies will still be modest in comparison to the 10 minute latency of a Bitcoin transaction, so even in its current state I can consider my implementation to be somewhat successful.
 
 	\subsection{Throughput}
-	The last aspect of Logan's performance to evaluate for two remote Participants is Throughput.
-	Figure \ref{figs:tworemthrthr} shows the observed throughput against the applied throughput of a Logan system with two Participants and one Leader.
+	The last aspect of Logan's performance to evaluate for two remote participants is Throughput.
+	Figure \ref{figs:tworemthrthr} shows the observed throughput against the applied throughput of a Logan system with two participants and one leader.
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.9\textwidth]{figs/appliedvsobserved2r.png}
-		\caption{Latency variations against blockchain size with two remote Participants using pure Git}
+		\caption{Latency variations against blockchain size with two remote participants using pure Git}
 		\label{figs:tworemthrthr}
 	\end{figure}
 	The system starts to diverge from ideal throughput at around 30tps, idicating that an suitable sustained operating throughput would be around 20tps.
 	Again, it can be seen that the system can cope with higher applied throughputs for short bursts  but not for sustained periods of time. 
-	This is exactly the same as the case for only a single remote Participant. 
+	This is exactly the same as the case for only a single remote participant. 
 	Whilst in the previous section, I showed that the latencies will grow with the number of nodes in a network, this result shows that a system will still be able to cope with the same throughputs. 
 	In this sense, not only does Logan satisfy the second of my success criteria, but also the fifth.
 
 	\section{Performance with Leader Replication}
 	In section \ref{sec:faulttol} I described how Logan can be updated to introduce the simple notion of a passive replica. 
-	In order to justify that this only introduces minor latencies, I have tested the performance of the system with one remote Participant at a throughput of 10tps. 
+	In order to justify that this only introduces minor latencies, I have tested the performance of the system with one remote participant at a throughput of 10tps. 
 	Figure \ref{figs:confirmationtimes}  shows the time taken between a transaction being added to the blockchain's cache branch, and it being merged into the blockchain's main branch, i.e. after being pushed to a replica.
 	\begin{figure}
 		\centering
@@ -1304,7 +1307,7 @@ let rec start_leader () =
 	Figure \cite{figs:confirmationtimes} also shows that using two Replicas rather than one increases latencies by roughly 1.5s. 
 	I again conclude that this is a very acceptable latency given the success criteria of the project. \\
 
-	Additionally should the use my suggested approach of using a daemon thread to push transactions to replicas, there would be no additional latencies to the Leader's loop cycle and this means that it should in theory be able to sustain exactly the same throughputs as it would without having any replicas.
+	Additionally should the use my suggested approach of using a daemon thread to push transactions to replicas, there would be no additional latencies to the leader's loop cycle and this means that it should in theory be able to sustain exactly the same throughputs as it would without having any replicas.
 	I therefore consider this a successful demonstration of passive Replication and a good starting point for developing a more complex Fault tolerance solution.
 
 	\chapter{Conclusion}
@@ -1324,9 +1327,9 @@ let rec start_leader () =
 	\subsection{Failure Tolerance and Changing Leaders}
 	Tolerating failure is an aspect of this project that I have only touched upon in this project. 
 	I have shown how Logan can perform replication but further work could include implementing an automated approach for detecting and recovering from Failure. 
-	This work could also include allowing a network to reallocate a Leader after Leader failure.
+	This work could also include allowing a network to reallocate a leader after leader failure.
 	\subsection{Adding Participants Dynamically}
-	Currently, as well as only being able to define a single Leader, Participants can only be defined statically. 
+	Currently, as well as only being able to define a single leader, participants can only be defined statically. 
 	Some consensus mechanisms introduce ways of adding and removing nodes to a network and I think it would be very feasible to build this feature into Logan.
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -35,6 +35,8 @@
 	captionpos=b
 	}
 
+
+	\newcommand\tab[1][1cm]{\hspace*{#1}}
 	\raggedbottom                           % try to avoid widows and orphans
 	\sloppy
 	\clubpenalty1000%
@@ -405,20 +407,21 @@ end
 	The actual design and development of the consensus algorithm was completed throughout the duration of the project and involved a lot of research into other consensus mechanisms.
 	However, during the requirements analysis phase of the project I set out some goals for the final implementation.
 	These goals were laid out in order to help drive the design and development of the consensus mechanism. 
-	I decided on the following requirements:
-	\begin{enumerate}
-		\item The consensus mechanism must guarantee strict consistency in the blockchain state. 
+	I decided on the following success criteria which I have given names that are used in the evaluation section\footnote{SC stands for success criteria}:
+	\begin{itemize}
+		\setlength{\itemindent}{2em}
+		\item[\textbf{SC\_1}]The consensus mechanism must guarantee strict consistency in the blockchain state. 
 		Although strict consistency could add large overhead costs, it is necessary for some applications and so is an important part of the final project.
-		\item As a baseline, Bitcoin achieves a maximum throughput of roughly 10 transactions per second (tps) \cite{ScalingBitcoin}.
+		\item[\textbf{SC\_2}] As a baseline, Bitcoin achieves a maximum throughput of roughly 10 transactions per second (tps) \cite{ScalingBitcoin}.
 		Logan should be able to achieve comparable throughputs.
-		\item Again as a baseline, transaction latency achieved by Bitcoin is more than 10 minutes \cite{ScalingBitcoin}.
+		\item[\textbf{SC\_3}] Again as a baseline, transaction latency achieved by Bitcoin is more than 10 minutes \cite{ScalingBitcoin}.
 		This is widely regarded as poor performance so Logan should be able to achieve better latencies of an order of magnitude of seconds.
-		\item The latency of adding a block should be constant in the size of the blockchain.
-		\item The consensus mechanism must be scalable. 
+		\item[\textbf{SC\_4}] The latency of adding a block should be constant in the size of the blockchain.
+		\item[\textbf{SC\_5}] The consensus mechanism must be scalable. 
 		Within the scope of this project, it should be possible for the blockchain to be shared by 3 in a network. 
 		Latencies will inevitably grow with the number of nodes in the network.
 		Logan's performance should demonstrate only modest decreases in performance for increases in nodes in a network.
-	\end{enumerate}
+	\end{itemize}
 
 	\chapter{Implementation} \label{Implementation}
 	Over the course of this project, I have successfully built Logan, a blockchain library which can perform custom transaction validation.
@@ -998,10 +1001,10 @@ end
 
 	To introduce fault tolerance, I have used \textit{replicas}. 
 	Replicas, in computer science, are nodes which duplicate some part of another node's behaviour in order to allow recovery from failure. 
-	They can be either \textit{active}, if they fully duplicate the actions of another replica, or \textit{passive}, if they complete some operation and then transfer the results to another replica.
+	They can be either \textit{active}, if they fully duplicate the actions of another replica, or \textit{passive}, if they complete some operation and then transfer the results to another replica \cite{Replication}.
 	The replication I will demonstrate will be passive.\\
 
-	In order to encorporate the notion of a replica, the process of adding commits to the blockchain needs to be altered slightly.
+	In order to incorporate the notion of a replica, the process of adding commits to the blockchain needs to be altered slightly.
 	Now, before a commit is made, it needs to be recognised by a quorum of replicas.
 	Irmin's notion of branches exposes a perfect primitive for this application.
 	In a poll, the leader can commit transactions to an uncommitted \textit{cache} branch before pushing this to all replicas.
@@ -1009,7 +1012,7 @@ end
 	If a failure were to occur at any point after this merge, it is now guaranteed that any transactions in the leader's blockchain will also exist on a quorum of replicas.
 	This means that the system has access to sufficient information to reconstruct the contents of the blockchain before failure.\\
 
-	\begin{minipage}{\linewidth}
+	\begin{minipage}{\linewidth} 
 	\begin{lstlisting}[caption={Naive Leader Loop},label={lst:leaderloop}]
 let rec start_leader () = 
 	retrieve_and_process_updates() >>= 
@@ -1102,19 +1105,31 @@ let rec start_leader () =
 	\chapter{Evaluation}
 	%introduction to evaluation and metrics used
 	I have successfully built Logan, a blockchain library for OCaml, and in this section I will describe my evaluation of its performance.
-	Of the 5 success criteria set out in Section \ref{Consensus Requirements}, the \nameref{Implementation} chapter shows how the first is satisfied.
-	In this chapter I will detail how Logan fulfils 2 of the 4 remaining criteria.
-	Concretely, I will show that Logan can comfortably achieve throughputs of 10tps, latencies of the order of magnitude of seconds.
-	Lastly, I will show how Logan fails to achieve the final 2 success criteria, i.e. that blockchain appends should take constant time in the size of the blockchain. 
-	However, I will justify why this is not caused by my implementation and I will describe how a better synchronisation library would allow my implementation to achieve these goals.
+	In Section \ref{Consensus Requirements} I set out 5 success criteria which are presented again here in short:
+	\begin{itemize}
+		\setlength{\itemindent}{2em}
+		\item[\textbf{SC\_1}] Logan should achieve strict consistency
+		\item[\textbf{SC\_2}] Logan should be able to achieve throughputs greater than 10tps
+		\item[\textbf{SC\_3}] Logan should be able to achieve latencies on the order of magnitude of seconds
+		\item[\textbf{SC\_4}] Logan should achieve constant latencies in the size of the blockchain
+		\item[\textbf{SC\_5}] Logan should have a scalable consensus mechanism 
+	\end{itemize}
+	Of these success criteria, the \nameref{Implementation} chapter shows how SC\_1 is satisfied.
+	In this chapter I will detail how Logan fulfils SC\_2 and SC\_3.
+	Lastly, I will show how Logan fails to achieve SC\_4 and SC\_5, however, I will justify why this is not caused by my implementation.
+	I will describe how a better synchronisation library would allow my implementation to achieve these goals.
+	In this evaluation I have used a leader machine with a single core Intel Xeon 2.60GHz CPU, a 2.0MB cache and running Ubuntu 16.04.3 LTS. 
+	My first participant machine has single core Intel Xeon 2.20GHz CPU with a 2.0MB cache and running Ubuntu 17.10.
+	My second participant machine is a single core Intel Xeon 2.40GHz CPU with a 3.0MB cache and running Ubuntu 16.04.4 LTS.
 
 	\subsection*{Metrics Used}
 	In order to evaluate the performance of Logan, I have looked at three key metrics: latency, applied throughput and observed throughput.
-	In this evaluation, I will describe the latency of a transaction as the time elapsed between it being committed to a participant's mempool, and it being committed to the blockchain.
+	In this evaluation, I will define the latency of a transaction as the time elapsed between it being committed to a participant's mempool, and it being committed to the blockchain.
 	In a blockchain system, it is important that the latency is as low as possible because latency dictates how long a user must wait before they can be sure of their transaction.
 	In the context of a cryptocurrency, for example, long latencies will cause users to become irritated and potentially stop using the currency.
 	Another useful measure is throughput, measured in transactions per second (tps), because it shows how well a system can cope with large loads.
 	Specifically I will look at the \textit{applied} throughput which describes how frequently the participants are collectively making transactions, and the \textit{observed} throughput which describes how frequently the leader commits transactions to the blockchain.
+	In my experiments I have control over applied throughput and I have measured the resulting observed throughput.
 	It is important that Logan should be able to achieve high observed throughputs because it is a limiting factor on how many users can interact with Logan at once.
 	I have evaluated how the applied throughput affects the latency and observed throughput of Logan transactions, in order to try to determine the optimal use case conditions for a Logan system.
 	Lastly, I have looked at how latency varies with the size of the blockchain at a constant applied throughput.
@@ -1131,8 +1146,8 @@ let rec start_leader () =
 	\end{figure}
 	It is clear that the latency of adding a transaction is constant in the size of the blockchain.
 	This is a very significant result because it proves that the logic which Logan uses is capable of achieving constant time blockchain appends in the size of the blockchain.
-	This means that Logan achieves success criteria 4 for the case where there is a single local participant.
-	Latencies are also very low, of the order of magnitude of milliseconds, which means that Logan also achieves success criteria 3, in this use case.\\
+	This means that Logan achieves SC\_4 for the case where there is a single local participant.
+	Latencies are also very low, of the order of magnitude of milliseconds, which means that Logan also achieves SC\_3, in this use case.\\
 
 	\subsection{Throughput}
 	Now that I have evaluated latencies, I will look at the throughputs that they system is capable of achieving.
@@ -1146,7 +1161,7 @@ let rec start_leader () =
 	The straight line plot in this figure indicates the performance of an ideal system that is capable of matching any applied throughput.
 	The figure clearly shows that Logan is achieving ideal performance up until 100tps.
 	At this point, the observed throughput starts to plateau as the system starts to become overloaded. 
-	This result well exceeds success criteria 2 and shows that Logan's logic is capable of achieving high throughputs.
+	This result well exceeds the requirement of 10tps set out by SC\_2 and shows that Logan's logic is capable of achieving high throughputs.
 	It is worth noting that this result is using a low performance virtual machine hosted in the cloud, with limited disk write performance. 
 	It is reasonable to expect that a more powerful machine would be able to achieve significantly better results.\\
 
@@ -1181,8 +1196,9 @@ let rec start_leader () =
 
 	\subsection{Using Pure Git}
 	The latencies shown in Figure \ref{figs:leaderdelays} are particularly high. 
-	This is because Irmin uses an OCaml implementation of Git called `OCaml Git', and the performance of this implementation is much worse than the performance of `pure' Git, i.e. the implementation that is interacted with via a shell.
-	I have built an implementation of Logan which calls pure Git commands directly rather than using OCaml Git and in this section I will show the extent to which this improves Logan's performance.
+	This is because Irmin uses an OCaml implementation of Git called `OCaml Git' \cite{OcamlGit}, and the performance of this implementation is much worse than the performance of `pure' Git \cite{Git}, i.e. the implementation that is interacted with via a shell.
+	I have built an implementation of Logan which calls pure Git commands directly rather than using OCaml Git.
+	In this section I will show the extent to which this improves Logan's performance.
 	This comes with many disadvantages such as worse compatibility with unikernel systems and a lack of type checking.
 	I am not suggesting that this is an adequate solution, but I am simply showing that a better Git implementation in OCaml can drastically improve performance.\\ 
 
@@ -1204,8 +1220,8 @@ let rec start_leader () =
 	\end{figure}
 	Figure \ref{figs:bottleneckspuregit} is a parallel of Figure \ref{figs:leaderdelays} that demonstrates that this speedup is due to the greatly reduced times that the leader spends pulling mempool updates as the mempool size grows.
 	Whilst this bottleneck is much lower than before, it still takes up much more time than any other stage of the leader's execution.
-	This suggests that Git using SSH is still a very inefficient way of transferring updates to the leader.  
-	This could be due to many unnecessary overheads in the implementation of Git and SSH, such as the SSH handshake and the mechanism Git uses for finding new updates to be transferred between repositories. 
+	This suggests that Git is still a very inefficient way of transferring updates to the leader.  
+	This could be due to many unnecessary overheads in the implementation of Git, such as the mechanism Git uses for finding new updates to be transferred between repositories. 
 	Therefore if a better protocol was used, even better performance could be achieved.\\
 
 	\subsection{Throughput}
@@ -1220,9 +1236,8 @@ let rec start_leader () =
 	This is compared to a linear plot showing the ideal performance of a leader that never becomes overloaded.
 	This figure shows that the system starts diverging from ideal performance at an applied throughput of around 30tps.
 	Whilst the performance gets worse, it does not quite plateau.
-	This is because the leader runs on a more powerful machine that is capable of doing more disk operations than the less powerful participant. 
-	The participant is therefore not capable of overloading the leader in this scenario.
-	Overall, this result demonstrates that an ideal sustained operating throughput is around 20tps transactions per second which fulfils success criteria 2.
+	This is because the participant is not capable of committing enough transactions to overload the leader in this scenario.
+	Overall, this result demonstrates that an ideal sustained operating throughput is around 20tps transactions per second which fulfils SC\_2.
 	Although the system will be able to handle bursts of higher throughputs, it will not be able to cope with these throughputs for sustained periods of time.
 
 	\subsection{Achieving Constant Time Latencies}\label{sect:bettersync}
@@ -1246,9 +1261,9 @@ let rec start_leader () =
 	Using this structure would also likely decrease initial performance as it uses OCaml's implementaton of Git.
 	Because of the bidirectional nature of merging changes (i.e. popping and pushing), it would not be trivial to use command line Git in this case. \\
 
-	Overall, in the case of a single remote participant, Logan is able to comfortably reach throughputs of up to 40 transactions per second which is much above the success criteria of 10. 
-	Latencies in this case are initially less than 10s which is a good result for most applications and fulfils the success criteria.
-	Finally, whilst Logan does not fulfil the success criteria of having constant-time blockchain appends, I have demonstrated how this is due to the overheads from using Git, and I have shown two methods that would allow Logan to achieve this goal.
+	Overall, in the case of a single remote participant, Logan is able to comfortably reach throughputs of up to 40tps which is much above the requirement of 10tps set out by SC\_2. 
+	Latencies in this case are initially less than 10s which is a good result for most applications and fulfils SC\_3.
+	Finally, whilst Logan does not fulfil SC\_4, I have demonstrated how this is due to the overheads from using Git, and I have shown two methods that would allow Logan to achieve this goal.
 
 	\section{Performance with Multiple Remote Participants}
 	\subsection{Latency}
@@ -1263,16 +1278,16 @@ let rec start_leader () =
 	An important feature of this graph is the fact that the slope of the plots has not changed much from the case with only one remote participant.
 	For a throughput of around 10tps, transaction latencies will rise by 4.5s over 5000 transactions compared to 3.1s in the single participant case.
 	I consider this a modest increase that would indeed be solved by using a better synchronisation protocol as described in Section \ref{sect:bettersync}. 
-	With this protocol, Logan would satisfy the fourth success criteria. \\
+	With this protocol, Logan would satisfy SC\_4. \\
 
 	Another difference is the fact that transaction latencies now start at 11.9s, whereas they were 5.5s in the single participant case.
 	This is because native Git does not allow any parallelism when pulling updates from multiple different remote repositories, and therefore, all remote repositories must be pulled sequentially.
 	Even if a protocol is used that can achieve constant time blockchain appends, this result limits latencies to be linear in the number of remote nodes in a network which is undesirable. 
 	Indeed, using the OCaml Git implementation shows a similar increase of initial transaction latency from 2.7s to 4.5s.
 	It is unfortunate that neither OCaml Git nor pure Git are able to exploit more levels of parallelism, because it is not unreasonable to expect that these implementations should be able to handle concurrent pulls into isolated branches. 
-	Should this be possible, the latencies would only be bound by the largest participant pull latency, not the number of participants, and Logan would be able to achieve the fifth success criteria. \\
+	Should this be possible, the latencies would only be bound by the largest participant pull latency, not the number of participants, and Logan would be able to achieve SC\_5. \\
 
-	Overall I conclude that Logan does not satisfy the fourth or fifth success criteria, but a synchronisation mechanism should allow these goals to be reached. 
+	Overall I conclude that Logan does not satisfy SC\_4 or SC\_5, but a synchronisation mechanism should allow these goals to be reached. 
 	However, even with multiple nodes in a network, latencies will still be modest in comparison to the 10 minute latency of a Bitcoin transaction, so even in its current state I can consider my implementation to be somewhat successful.
 
 	\subsection{Throughput}
@@ -1288,7 +1303,7 @@ let rec start_leader () =
 	Again, it can be seen that the system can cope with higher applied throughputs for short bursts  but not for sustained periods of time. 
 	This is exactly the same as the case for only a single remote participant. 
 	Whilst in the previous section, I showed that the latencies will grow with the number of nodes in a network, this result shows that a system will still be able to cope with the same throughputs. 
-	In this sense, not only does Logan satisfy the second of my success criteria, but also the fifth.
+	In this sense, not only does Logan satisfy SC\_2, but also the SC\_5.
 
 	\section{Performance with Leader Replication}
 	In section \ref{sec:faulttol} I described how Logan can be updated to introduce the simple notion of a passive replica. 
@@ -1303,9 +1318,9 @@ let rec start_leader () =
 	Unfortunately the latencies of pushing to a remote repository also increase with the size of the blockchain, as is the case for pulling.
 	However, this is again a problem that is minor and would not exist with a better synchronisation protocol. 
 	Importantly, for the case where there is one Replica, the additional latencies are around 3s which is small and would be an acceptable waiting time for most applications.
-	In this case, the system's latencies are still well within the success criteria of being of the order of magnitude of seconds.
+	In this case, the system's latencies are still well within the requirements of SC\_3.
 	Figure \cite{figs:confirmationtimes} also shows that using two Replicas rather than one increases latencies by roughly 1.5s. 
-	I again conclude that this is a very acceptable latency given the success criteria of the project. \\
+	I again conclude that this is a very acceptable latency in the context of SC\_3. \\
 
 	Additionally should the use my suggested approach of using a daemon thread to push transactions to replicas, there would be no additional latencies to the leader's loop cycle and this means that it should in theory be able to sustain exactly the same throughputs as it would without having any replicas.
 	I therefore consider this a successful demonstration of passive Replication and a good starting point for developing a more complex Fault tolerance solution.

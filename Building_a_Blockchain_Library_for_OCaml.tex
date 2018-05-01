@@ -229,20 +229,7 @@
 	\subsubsection*{Options}
 	An \texttt{Option} is a built in data type that provides a powerful way of using OCaml's pattern matching.
 	By using the \texttt{Some(\ldots)} and \texttt{None} constructors, one can create something of the type \texttt{'a option}. 
-	This is comparable to the \texttt{null} type in languages such as Java, however as it is part of the type system, it forces the programmer to handle any cases where \texttt{null} could be returned.
-
-	\subsubsection*{Polymorphic Variants}
-	OCaml allows the programmer to define variant types such as the \texttt{Card} type that was defined earlier. This makes it very easy to make use of pattern matching with custom defined types.\\
-	
-	OCaml also introduces the notion of polymorphic variants which are more flexible and do not require an explicit type declaration.
-	\begin{lstlisting}[caption={Polymorphic Variants},label={lst:poly}]
-# let card = `Card ("spades", 1);;
-- : val card : [> `Card of string * int ] = `Card ("spades", 1)
-	\end{lstlisting}
-	Listing \ref{lst:poly} shows how a back-tick can be used to define a polymorphic type, and OCaml has automatically inferred a type. 
-	The $>$ symbol acts as a lower limit on the tags that the variant \texttt{card} can take, i.e. it can have the tag \texttt{Card} or any other unspecified tag.
-	When dealing with variant types as \textit{parameters}, the $<$ symbol often appears in the type signature to show that the parameter can belong to only a subset of given set of tags. T
-	The absence of both of these symbols indicates that a variant can take any value from the given set of tags, rather than a superset or subset. 
+	This is comparable to the \texttt{null} type in languages such as Java, however as it is part of the type system, it forces the programmer to handle any cases where \texttt{null} could be returned. 
 
 	\subsubsection*{Modules and Functors}
 	Modules provide a way of grouping together related code in OCaml.

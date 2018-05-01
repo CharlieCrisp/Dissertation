@@ -16,6 +16,7 @@
 	\usepackage{courier}
 	\usepackage{caption}
 	\usepackage{subcaption}
+	\usepackage{float}
 
 	\definecolor{lightlightgray}{gray}{0.6}
 	\definecolor{darkgreen}{rgb}{0,0.6,0}
@@ -309,8 +310,7 @@ val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 	It should also be possible to view an ordered list of all transactions which currently exist in the blockchain.
 	The latency of adding transactions should not increase as the size of the blockchain increases because it is important the library will cope well for systems with extremely long blockchains.\\
 
-	\begin{minipage}{\linewidth}
-	\begin{lstlisting}[caption={Blockchain Specification},label={lst:blockspec}]
+	\begin{lstlisting}[caption={Blockchain Specification},label={lst:blockspec},float,floatplacement=H]
 module type I_LogStringCoder = sig
   type t
   val encode_string: t -> string
@@ -341,8 +341,6 @@ module Make(Config: I_Config): I_Blockchain with type t = Config.t = struct
   ...
 end
 	\end{lstlisting}
-	\end{minipage}\\
-	\\
 	Listing \ref{lst:blockspec} is the initial technical specification that I used to define Logan, and the functions complete the following operations:
 	\begin{itemize}
 		\item \texttt{I\_Config} contains information which is required to run the blockchain, including \texttt{remotes} which is a list of other participating nodes.
@@ -381,25 +379,28 @@ end
 	\end{itemize}
 
 	\chapter{Implementation} \label{Implementation}
-	Over the course of this project, I have successfully built Logan, a blockchain library which can perform custom transaction validation.
+	Over the course of this project I have built Logan, a blockchain library which can perform custom transaction validation.
 	Logan uses a leader-based consensus protocol inspired by Raft \cite{Raft} and also uses the concept of a `transaction waiting room', or \textit{mempool}, which is used by Bitcoin.
 	Section \ref{sec:sysarch} gives a general overview of Logan's system architecture.
 	Section \ref{sec:datastructure} describes the blockchain data structure that I have used, and justifies why it can be considered a blockchain.
 	I will also describe two bugs that I encountered in these codebases and the fixes that I implemented for each.
-	Finally, Section \ref{sec:consensus} gives a description of the research I completed when designing Logan's consensus mechanism. 
-	I will first present a na\"{i}ve approach to consensus and explain why this is flawed and will cause transactions to be committed out of order.
+	Finally, Section \ref{sec:consensus} gives a description of Logan's consensus mechanism. 
+	I will first present a na\"{i}ve approach to consensus and explain why this is flawed and may cause participants to temporarily view alternate orderings of blocks in the blockchain.
 	I will then present an improved mechanism, which Logan uses, that guarantees correct ordering of requested transactions.
+	Lastly, I will explain how Logan can achieve passive replication that allows the latest leader state to be recovered after a leader failure.
+	This is a simple approach to fault tolerance but will show how a more complex approach could be incorporated.
 
 	\section{System Architecture}\label{sec:sysarch}
 	Logan's goal is to allow multiple nodes in a distributed system to share a blockchain data structure.
 	Nodes in this system should be able to add transactions to the blockchain and read the entire history of previous transactions.
-	I shall refer to blocks in the blockchain as `transactions' as if they contain only a single transaction, however they easily can be made to contain many transactions because the datatype of transactions is arbitrary and specified by the developer.
-	Logan aims to achieve consensus by using a leader-based approach where a leader node can accept transactions from participant nodes and commit them to the blockchain for everyone to see.
+	I shall refer to blocks in the blockchain as \textit{transactions} as if they contain only a single transaction, however they easily can be made to contain many transactions because the datatype of transactions is arbitrary and specified by the developer.
+	Logan aims to achieve consensus by using a leader-based approach where a leader can accept transactions from participants and commit them to the blockchain for everyone to see.
 	Participants view the blockchain by retrieving the latest copy over the network from the leader.
 	Participants request for transactions to be committed by writing to their local mempool. 
 	The leader periodically polls the participant mempools over the network to find new transactions to add to the blockchain.
-	When a poll finds new transactions, it will use the Validation module to filter all the valid transactions which are then added to the blockchain.
-	It is also possible for a participant node to exist on the same physical machine as the leader, in which case the leader sources updates directly from the mempool, rather than over an SSH connection. 
+	When the leader finds new transactions, it will use the validation module to filter all the valid transactions and add them to the blockchain.
+	If necessary, the leader will first push these changes to the specified replicas.
+	It is also possible for a participant node to exist on the same physical machine as the leader, in which case the leader sources updates directly from the mempool, rather than over a network connection. 
 	Figure \ref{fig:sysarch} shows how the architecture for this system is organised.\\	
 
 	\begin{figure}
@@ -415,8 +416,9 @@ end
 	In order to justify that this data structure can be considered a blockchain, I took some time to investigate its semantic properties. 
 	Whilst there is no universally agreed-upon definition of a blockchain, I have used the following two criteria to define the blockchain:
 	\begin{enumerate}
-		\item Data is stored in `blocks'.
-		\item Blocks are ordered in a tree structure where each block contains the hash its parent block.
+		\setlength{\itemindent}{2em}
+			\item[\textbf{DS\_1}] Data is stored in `blocks'.
+			\item[\textbf{DS\_2}] Blocks are ordered in a tree-like structure where each block contains the hash its parent block.
 	\end{enumerate}
 	This definition deliberately makes no mention of consensus, and exists purely to justify the validity of the blockchain data structure.
 	\subsection{Irmin}
@@ -443,10 +445,10 @@ end
 	When Irmin merges data structures, it creates new blocks and updates the relevant tags to point to these, however, the old blocks remain in the block store.
 	\subsubsection*{Irmin Stores}
 	An Irmin Store is simply the combination of a Block Store and a Tag Store.
-	Considering the criteria set out earlier for a data structure to be considered a blockchain, Irmin Stores satisfy the first criteria, i.e. that data is stored in Blocks.
-	Indeed, they also come close to satisfying the second criteria, as all blocks are indexed by the hash of their content. 
+	Considering the criteria set out earlier for a data structure to be considered a blockchain, Irmin Stores satisfy DS\_1.
+	Indeed, they also come close to satisfying DS\_2, as all blocks are indexed by the hash of their content. 
 	However, this is not quite enough, as blocks are not required to contain hashes of parents in a chain.
-	In order to satisfy these criteria, I looked to Ezirmin which provides a log data structure.
+	In order to satisfy this criteria, I looked to Ezirmin which provides a log data structure.
 
 	\subsection{Ezirmin}
 	Ezirmin is a library that provides a simplified interface to the Irmin library. 
@@ -471,8 +473,8 @@ end
 
 	\subsubsection*{Ezirmin Log as a Blockchain}
 	Logan uses an Ezirmin Log as an implementation of a blockchain, and to verify that this is a valid data structure to use, I investigated the implementation of Ezirmin Logs.
-	Ezirmin Logs use Irmin blocks to store log entries, and therefore satisfy the first criteria for being considered a blockchain. 
-	To verify that they also satisfy the second criteria, i.e. that blocks are ordered and contain the hash of their parent, I looked at the implementation of log items.
+	Ezirmin Logs use Irmin blocks to store log entries, and therefore satisfy DS\_1. 
+	To verify that they also satisfy DS\_2 I looked at the implementation of log items.
 
 	\begin{lstlisting}[caption={Ezirmin Log Item},label={lst:a_label}]
 type log_item =
@@ -482,30 +484,21 @@ type log_item =
 	\end{lstlisting}
 
 	Listing \ref{lst:a_label} is taken from the Ezirmin Log implementation and shows how each log item has a \texttt{prev} value which is a key pointing to its parent log item. 
-	This imposes an ordering of log items, and means that any changes to previous log items will not be observed, as they will simply create a new block with a new address. 
+	Because keys in Irmin are also hashes, this means that an Ezirmin log forms an ordered chain of blocks, each containing the hash of its parent. 
+	Therefore this satisfies DS\_2.
+
+	\subsubsection*{Merging Ezirmin Logs}
 	Merging Ezirmin Logs causes new \texttt{Merge} blocks (as opposed to \texttt{Value} blocks) to be created that collate multiple log entries from divergent log histories.
 	These entries are ordered by their timestamps and this means that after a merge, items may appear to have been inserted into the log history.
+	This behaviour is demonstrated in Figure \ref{fig:ezirminmerges}.
+	For a blockchain, this would mean that multiple participants may observe different orderings depending on whether they view the blockchain before or after a merge.
 	This is not desirable behaviour for a blockchain, so I have ensured that the blockchain data structure maintained by Logan is never merged with other structures, only appended to. 
 	Consequently, each blockchain transaction will exist in its own \texttt{Value} block and will never removed or reordered in the blockchain.
 	Therefore an Ezirmin Log satisfies both of my conditions to be considered a blockchain.
 
-	\subsubsection*{Merging Ezirmin Logs}
-	Aside from using an Ezirmin Log as the blockchain data structure for this project, I also use a \textit{mempool} log to retrieve updates/transactions from remote mempools. 
+	Aside from using an Ezirmin Log as the blockchain data structure for this project, I have also used a \textit{mempool} log to retrieve updates/transactions from remote mempools. 
 	This retrieval process uses the \texttt{Ezirmin.Repo.Sync} module to merge new log items into the leader's mempool.
-	Under the hood, this module uses the Git protocol to pull updates over the network.\\
-	
-	Irmin allows for the developer to specify custom merge strategies. 
-	Whenever a Irmin Store merges changes from a remote Store, Irmin will do one of two things:
-	\begin{enumerate}
-		\item If the newly discovered blocks do not have a divergent history to the current store, they will simply be added to the Block Store. 
-			In other words, if only new blocks have been added in the remote store, these will be added to the local store. 
-		\item If the remote and local stores have divergent histories, then a custom three way merge is made using the heads of each store and their latest common ancestor.
-			This merge is defined by the developer.
-	\end{enumerate}
-	Figure \ref{fig:ezirminmerges} shows how a local Ezirmin Log performs a merge from a remote log with a diverging history.
-	Before the merge, the local store has a \texttt{Value} block, \texttt{V1}, but the remote store has a different \texttt{Value} block, \texttt{V2}.
-	After the local store has merged changes from the remote store, a new \texttt{Merge} block, \texttt{M1,2}, has been created which contains both histories as defined by the custom merge function. 
-	Blocks \texttt{V1} and \texttt{V2} still exist in the block store, but the HEAD tag has been updated to point to \texttt{M1,2}.
+	Under the hood, this module uses the OCaml Git to pull updates over the network.\\
 
 	\begin{figure}
 		\centering
@@ -562,7 +555,7 @@ type log_item =
 	\subsubsection*{Ezirmin Bugs}
 	Whilst Ezirmin provides a set of very desirable semantic properties, it is not a widely used library. 
 	Consequently, during the course of the project, I encountered bugs in the Ezirmin codebase which I had to debug and fix.
-	In this section I shall outline the two bugs that I encountered the changes I made to the Ezirmin codebase to fix them.\\
+	In this section I shall outline the two bugs that I encountered and the changes I made to the Ezirmin codebase to fix them.\\
 	
 	The first bug occurs when updates are merged into a log over a network.\footnote{The issue on GitHub can be found at \href{https://github.com/kayceesrk/ezirmin/pull/7}{https://github.com/kayceesrk/ezirmin/pull/7}}
 	Irmin uses Git as a backend and in order to merge updates over a network, the \texttt{git pull} command is used.
@@ -571,11 +564,11 @@ type log_item =
 	This will cause an error when Ezirmin tries to read these objects which do not actually exist locally. 
 	The solution that I implemented to this problem is to use an internal branch which uses an Irmin Store to explicitly track every blob in the log.
 	Items are added to this Irmin Store on the internal branch every time they are added to the log.
-	This operation inserts these blobs into the git tree such that if \texttt{git pull} is performed on the internal branch, all the blocks required by the master branch will be retrieved.\\
+	This operation inserts these blobs into the Git tree such that if \texttt{git pull} is performed on the internal branch, all the blocks required by the master branch will be retrieved.\\
 
-	The second bug that I encountered derived from the merge behaviour of Ezirmin logs when there are more than two remote machines merging updates from each others' log.\footnote{The issue on GitHub can be found at \href{https://github.com/kayceesrk/ezirmin/pull/8}{https://github.com/kayceesrk/ezirmin/pull/8}}
+	The second bug that I encountered derived from the merge behaviour of Ezirmin logs when there are more than two remote machines merging updates from each others' log\footnote{The issue on GitHub can be found at \href{https://github.com/kayceesrk/ezirmin/pull/8}{https://github.com/kayceesrk/ezirmin/pull/8}}.
 	The issue is that when a \texttt{Merge} block is created, it may contain log items which, on other machines, are stored as \texttt{Value} blocks or as different \texttt{Merge} blocks.
-	The result is that Irmin sees these blocks as different, and Ezirmin does not perform any checks to detect or remove duplicate log items occuring in different contexts.
+	The result is that these are seen as divergent histories and Ezirmin does not perform any checks to detect or remove duplicate log items that occur in different contexts.
 	This behaviour resulted from complex sequences of merge operations and so was difficult to reproduce, but in the worst case caused the size of the blockchain to grow exponentially with the number of merge operations performed.
 	In one case, a log with 40 unique log items grew to be greater than 120,000 log items in size due to duplicates.
 	I implemented a fix by removing duplicate log items when a merge operation takes place. 
@@ -584,8 +577,8 @@ type log_item =
 	\section{Achieving Consensus}\label{sec:consensus}
 	Building consensus was by far the most important part of work completed for this project. 
 	In order to guide the design of the consensus mechanism, I completed an extensive amount of research on existing algorithms.
-	This section will briefly summarise this research and my conclusions about their suitability for Logan. 
-	The resulting design for consensus is a leader based approach, where participants can commit transactions to a mempool.
+	This section will briefly summarise this research and my conclusions about their suitability for Logan.
+	I will then present the resulting design for consensus which is a leader based approach, where participants can commit transactions to a mempool.
 	The leader polls these mempools for updates, which are validated and then committed to the blockchain.
 	This blockchain can be read by all participants, and provides a definitive source of ordered, committed transactions.
 
@@ -594,11 +587,11 @@ type log_item =
 	Proof of Work (PoW) is a consensus mechanism, used by many cryptocurrencies to avoid the double spending problem \cite{Bitcoin}. 
 	This mechanism uses the concept of \textit{miners} which are nodes that add random \textit{nonce} values to blocks before computing the hash of the resulting block.
 	If the hash is preceded by a certain number of zeros, this is considered a proof of computational work and blocks are broadcast out to a network.
-	Participants can be sure that a block is not fake with a probability that increases with the size of the chain after that block. \\
+	Participants can be sure that a block is agreed upon by consensus with a probability that increases with the size of the chain after that block. \\
 
 	Importantly, this scheme assumes that no participant can be trusted 
 	and it also wastes a large amount of energy \cite{BitcoinEnergy}.
-	It also assumes that Miners can always be rewarded for Mining and this may not always be true, so this scheme would not be suitable for some applications.
+	It also assumes that miners can always be rewarded for mining and this may not always be true, so this scheme would not be suitable for some applications.
 	
 	\subsubsection*{Mempools}
 	Mempools are an important part of the design of Bitcoin, and whilst they are not inherently linked to the Proof of Work consensus algorithm, they are worth investigating as they are used by Logan.
@@ -618,7 +611,9 @@ type log_item =
 	\subsubsection*{Paxos}
 	Paxos is a family of consensus protocols which can be used to guarantee consistency in distributed systems. 
 	It was first proposed in a paper by Leslie Lamport in 1998 \cite{Paxos}, although the paper was first submitted in 1990.
-	The main part of the algorithm is split into two sections, propose and accept where a value is proposed by a node and accepted if a quorum of nodes make a promise to accept, and then accept the value.\\
+	The main part of the algorithm is split into two sections, `propose' and `accept'.
+	In the propose stage, a value is proposed by a node to all other nodes, and a other nodes make a promise to accept.. 
+	In the accept stage the value is accepted if a quorum of nodes made a promise to accept and then actually accept the value.\\
 
 	Paxos has many issues including unspecified behaviour in certain situations, lack of guaranteed progress and overhead of implementation.
 	I have not used it in this project but I have partially taken inspiration from the Roles used by Paxos in the design of my leader based protocol.
@@ -632,7 +627,7 @@ type log_item =
 	The notion of a strong leader used in Logan is inspired by Raft.
 
 	\subsection{Roles in a Logan's Approach}
-	Logan uses a mempool and a simple leader-based algorithm that is inspired by the previously described consensus protocols, and in this section I will describe this approach.
+	Logan uses a mempool and a simple leader-based algorithm that is inspired by the previously described consensus protocols, and in this section I will describe the roles of nodes in a Logan network.
 	Because I have implemented a centralised algorithm, my specification has differed slightly from that presented in the requirements analysis to take into account differing functional requirements for a leader and for a participant.
 	As I am assuming that all participants can be trusted, it is possible to use a leader-based approach without introducing security issues such as the ones tackled by the Proof of Work mechanism. 
 	This approach also reduces the potential complexity an overheads of implementing completely decentralised consensus.

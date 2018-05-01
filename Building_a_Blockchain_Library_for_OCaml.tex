@@ -209,22 +209,22 @@
 	Before starting work on the project code, I completed a lot of preparation in order to aid the development process.
 	I spent some time learning to use OCaml and familiarising myself with its features.
 	This was important because it allowed me to write idiomatic code which was not only powerful, but could also provide an intuitive API for other developers to use.
-	I also spent some time investigating a few key libraries, such as Irmin and Lwt.
-	Understanding these libraries, the data structures they provide, and the technologies they present, allowed me to focus on the technological challenges in the project and not waste time reinventing the wheel. 
+	I also spent some time investigating Lwt which is an OCaml library that allows multi-threading through monadic `promises'.
 	Setting up a good development environment allowed me to run automated builds and, therefore, catch any errors in the code early.
 	This was particularly useful during the evaluation as it involved installing the project on many remote machines.
-	Being able to catch issues like dependency resolution or out of date build commands made the evaluation process much easier.
-	Lastly, I spent some time developing a \nameref{Requirements Analysis} for the final product. 
-	This analysis helped drive the design and development of the blockchain library whilst not restricting the work that I was able to complete.
+	Being able to catch issues like dependency resolution or out-of-date build commands made the evaluation process much easier.
+	Lastly, I spent some time developing a requirements analysis for the final product. 
+	This analysis helped drive the design and development Logan as well as providing a baseline that was useful when evaluating its performance.
 
 	\section{Starting Point}
 	The project built upon functionality provided by Irmin [1] which is a distributed data store system. Irmin is fast, durable and has all the necessary capabilities required to build a blockchain.
 	The project also made use of Ezirmin \cite{Ezirmin} which provides a simplified API to Irmin, and defines a log data structure which was used to build the blockchain and mempool structures for this project.
 
 	\section{Using OCaml}
-	At the start of the project, I had never used OCaml for any project of significance. 
-	Whilst the first year Foundations of Computer Science course had given me some background into functional programming, there were still many key OCaml features which I had to learn.
-	In the first few weeks of my project, I spent time studying the book Real World OCaml \cite{RealWorldOCaml} which proved a great introduction to many of OCaml's features.  
+	At the start of the project I had never used OCaml, so in the first few weeks of my project I spent time studying the book Real World OCaml \cite{RealWorldOCaml} which proved a great introduction to many of OCaml's features.  
+	In this section I will give a brief overview of some of OCaml's language features which are used in Logan's technical specification.
+	I will then give a description of the development environment I set up during the course of the project.
+	Finally I will give a description of the Lwt library for threading as it is extensively used in Logan's codebase and specification.
 
 	\subsubsection*{Pattern Matching}
 	OCaml provides a very powerful syntax for matching patterns which allow you to write functions as shown by Listing \ref{lst:pattern_match}.
@@ -677,7 +677,7 @@ type log_item =
 
 	\subsection{Roles in a Logan's Approach}
 	Logan uses a mempool and a simple leader-based algorithm that is inspired by the previously described consensus protocols, and in this section I will describe this approach.
-	Because I have implemented a centralised algorithm, my specification has differed slightly from that presented in the \nameref{Requirements Analysis} to take into account differing functional requirements for a leader and for a participant.
+	Because I have implemented a centralised algorithm, my specification has differed slightly from that presented in the requirements analysis to take into account differing functional requirements for a leader and for a participant.
 	As I am assuming that all participants can be trusted, it is possible to use a leader-based approach without introducing security issues such as the ones tackled by the Proof of Work mechanism. 
 	This approach also reduces the potential complexity an overheads of implementing completely decentralised consensus.
 	I have introduced the notion of validation which allows the leader to accept or reject transactions depending on arbitrary conditions defined by the developer.
@@ -706,7 +706,7 @@ module MakeLeader (Config: I_LeaderConfig) : I_Leader = struct
 end
 	\end{lstlisting}
 
-	Listing \ref{lst:leaderspec} is the specification of the leader module, which differs slightly from the specification presented in the \nameref{Requirements Analysis}.
+	Listing \ref{lst:leaderspec} is the specification of the leader module, which differs slightly from the specification presented in the requirements analysis.
 	In particular, \texttt{init\_leader} performs an initialisation step, and then returns a function which, when executed, will actually start the consensus process.
 
 	\subsubsection*{Participants}

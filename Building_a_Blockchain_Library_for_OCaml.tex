@@ -135,17 +135,18 @@
 	Blockchain technology has existed for a long time, but the definition of `blockchain' has changed drastically since its conception.
 	Previously used just to describe a data structure, the term `blockchain' is now widely used to also describe the accompanying consensus mechanisms.
 	This is mainly due to the increasing popularity of cryptocurrencies such as Bitcoin \cite{Bitcoin} which use the `Proof of Work' algorithm to solve the double spending problem.
-	Blockchain is undoubtedly the most important technology in the field of cryptocurrencies, where no single client can be trusted, however, it also has many use cases outside this sector.
-	For instance, it can be used in situations where clients \textit{can} be trusted like a hospital maintaining internal medical records, or a bank wishing to record transactions from many of its own distributed clients.\\
+	Blockchain is undoubtedly the most important technology in the field of cryptocurrencies where no single client can be trusted, however, it also has many use cases outside this sector.
+	For instance, blockchain can be used in situations where clients \textit{can} be trusted, such as a hospital maintaining internal medical records, or a bank wishing to record transactions from many of its own distributed clients.\\
 	
-	In this report I will present `Logan', a blockchain library in OCaml which allows the easy creation of blockchain applications.
+	In this report I present `Logan', a blockchain library that I have built in OCaml which allows the easy creation of blockchain applications.
 	The blockchain is synchronised via a leader-based consensus mechanism with strict consistency.
+	Logan also provides the ability to ensure passive replication such that in the event of a leader failure, the leader's state at the point of failure can be recovered.
 	Developers using this library are also able to define custom validation of transactions being added to the blockchain.
 	Because the application is written in OCaml, it can be compiled to bytecode, unikernels or even javascript and is therefore suitable for a wide range of destination applications and devices.
 
 	\section{The History of the Blockchain}
 	The blockchain, in its simplest form, is a series of blocks of data, where each block contains the hash of the content of the previous block. 
-	Figure \ref{fig:mainblockchain} is a graphical representation of a typical blockchain data structure.\\
+	Figure \ref{fig:mainblockchain} is a graphical representation of a typical blockchain data structure with a `genesis block' and different chains branching from it.\\
 
 	\begin{figure}
 		\begin{center}
@@ -185,8 +186,7 @@
 
 	\section{Blockchain Today}
 	At the time of writing, cryptocurrencies are generating both a huge amount of excitement and cynicism in popular media. 
-	Aside from Bitcoin, cryptocurrencies like Ethereum \cite{Ethereum} have introduced the concept of Smart Contracts which allow the execution of code on the blockchain.\\
-	
+	Aside from Bitcoin, cryptocurrencies like Ethereum \cite{Ethereum} have introduced the concept of Smart Contracts which allow the execution of code on the blockchain.
 	Whilst it is possible to think of applications for blockchain technology in almost every sector, the development of applications outside the scope of crytocurrencies has been limited. 
 	If one considers the example of OCaml, there are currently no libraries which allow a user to easily get started with building blockchain applications. \\
 
@@ -195,14 +195,15 @@
 	Logan was designed to exist outside the realm of cryptocurrencies and therefore assumes that all participants are trustworthy.
 	Consensus is achieved by using a simple leader-based mechanism where the leader will periodically pull updates from participants and add them to a central blockchain.
 	This blockchain can viewed by all participants, with the guarantee of strict consistency.
-	All that needs to be done to set up a network is specify the location of the leader, participants, replicas and to specify any validation required.\\
+	The system is also capable of running passive replication so that in the case of leader failure, the state of the leader at the point of failure can be manually recovered.
+	To use Logan, all that a developer needs to specify is the location of the leader, participants and replicas, and to specify, if necessary, how the leader should perform validation.\\
 	
-	I have evaluated Logan's performance by measuring latency, throughput and how the latency of adding transactions changes as the blockchain size increases.
-	My results showed that Logan is capable of dealing with throughputs of much beyond my success criteria.
+	I have evaluated Logan's performance by observing how the throughput that the system achieves varies with applied throughput, and by measuring how the latencies change as the blockchain size increases.
+	My results showed that Logan is capable of dealing with throughputs and latencies which are much better than those achieved by Bitcoin.
 	I have also shown that for a network with remote participants, the latency of adding transactions increases linearly with blockchain size. 
 	However, I have been able to attribute this to the implementation of Git that Irmin/Ezirmin uses to pull updates over the network. 
 	I have also shown that pure Git achieves a much better efficiency and that a better OCaml implementation of this protocol would allow Logan to achieve constant transaction latency with blockchain size.
-	Finally, I have shown that nodes can be added to a Logan network with only a modest increase in transaction latencies.
+	Finally, I have shown that participant and replica nodes can be added to a Logan network with only a modest increase in transaction latencies.
 
 	\chapter{Preparation}
 	Before starting work on the project code, I completed a lot of preparation in order to aid the development process.

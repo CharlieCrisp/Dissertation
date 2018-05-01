@@ -32,7 +32,7 @@
 	basicstyle=\normalsize\ttfamily,                 % Code font, Examples: \footnotesize, \ttfamily
 	keywordstyle=\color{darkgreen},
 	commentstyle=\color{airforceblue},
-	frame=single,
+	frame=tb,
 	captionpos=b
 	}
 
@@ -627,27 +627,27 @@ type log_item =
 	The notion of a strong leader used in Logan is inspired by Raft.
 
 	\subsection{Roles in a Logan's Approach}
-	Logan uses a mempool and a simple leader-based algorithm that is inspired by the previously described consensus protocols, and in this section I will describe the roles of nodes in a Logan network.
-	Because I have implemented a centralised algorithm, my specification has differed slightly from that presented in the requirements analysis to take into account differing functional requirements for a leader and for a participant.
-	As I am assuming that all participants can be trusted, it is possible to use a leader-based approach without introducing security issues such as the ones tackled by the Proof of Work mechanism. 
-	This approach also reduces the potential complexity an overheads of implementing completely decentralised consensus.
-	I have introduced the notion of validation which allows the leader to accept or reject transactions depending on arbitrary conditions defined by the developer.
-	Finally, Logan uses the notion of a \textit{replica} which is a machine that performs some of the leader's functionality to improve fault tolerance.
-	Fault tolerance will be described in detail in Section \ref{sec:faulttol}.
+	Logan uses a mempool and a simple leader-based algorithm that is inspired by the previously described consensus protocols.
+	As I am assuming that all participants can be trusted, it is possible to use a leader based approach without introducing security issues such as the ones tackled by the Proof of Work mechanism. 
+	Because I have implemented a centralised algorithm, Logan's specification differs slightly from the requirements analysis.
+	This is accounted for by by the differing functional requirements for a leader and for a participant, which aren't considered in the requirements analysis.
+	In this section I will describe the roles of different nodes in a Logan network, and I will present their new functional specification.
 	
 	\subsubsection*{Leaders}
 	Logan uses the notion of a \textit{strong leader} similar to that used by the Raft protocol. 
-	The leader is chosen statically in order to reduce the complexity of implementation, and it also has a statically defined list of \texttt{remotes} which specifies the location of all participants.
-	The leader is a node which will never actually request transactions to be added to the blockchain, its role is simply to periodically read requests from the mempools of participants, validate them, and then add them to the blockchain.
-	This blockchain can be read by any participant, and is treated as the empirical source of which transactions have been committed and in which order. 
-	That is, any two nodes that read a copy of the blockchain, will always agree on content and ordering of transactions in the blockchain, up until the end of the shortest copy.\\
+	The leader is chosen statically in order to reduce the complexity of implementation, and it also has a statically defined list of remotes which specifies the location of all participants.
+	In this approach the leader never actually requests transactions to be added to the blockchain, its role is simply to periodically read requests from the mempools of participants, validate them, and then add them to the blockchain.
+	To add transactions from a leader's machine, a separate participant program must be run.
+	The leader's blockchain can be read by any participant, and is treated as the empirical source of which transactions have been committed and in which order, with the guarantee that any ordering of blocks seen in the blockchain is final and will not change.
+	This property is very similar to the Log Matching Property guaranteed by Raft, only with no notion of indexes or terms.\\
 
 	\begin{lstlisting}[caption={Leader Specification},label={lst:leaderspec}]
 module type I_LeaderConfig = sig
   type t
   module LogCoder: Participant.I_LogStringCoder with type t = t   
   module Validator: I_Validator with type t = t 
-  val remotes: string list
+	val remotes: string list
+	val replicas: string list
 end
 module type I_Leader = sig
   val init_leader: unit -> (unit -> unit Lwt.t) Lwt.t
@@ -686,7 +686,7 @@ module Make(Config: I_ParticipantConfig): I_Participant with type t = Config.t =
 end
 	\end{lstlisting}
 
-	Listing \ref{lst:partspec} is a specification that shines a light on the role of participants and the functionality they provide.
+	Listing \ref{lst:partspec} is a specification that demonstrates the role of participants and the functionality they provide.
 	The module includes the ability to define custom data types that can be stored on the blockchain, to read from the blockchain, and to attempt to write to the blockchain by writing to a mempool.
 	It is also important to note that participants can exist on the same machine as a leader, but will exist in an entirely separate process.
 
@@ -696,21 +696,19 @@ end
 	Replicas are useful because the leader is a single point of failure, and if it fails, it is important to have another machine which can recover the state of the leader just before the point of failure.
 	
 	\subsection{Retrieving Updates from Mempools}
-	In order to see requested transactions, the leader has to observe the mempools of the participants. 
-	The leader does this by pulling updates from participant mempools and then adding them to the blockchain.
-	However, it is important to make sure that the leader does not miss transactions or commit transactions out of order.
-	This is tricky because after pulling updates from many mempools the local copies will reflect each mempool at a different moment in time.
-	In this section, I will give a na\"{i}ve method for retrieving updates and I will show how this method is flawed. 
-	This will then motivate the design of a more complex approach that ensures all transactions are committed in order.
+	A leader will operates by pulling updates from participant mempools and then adding them to the blockchain.
+	However, it is important that the leader does not miss transactions or commit transactions out of order.
+	This is tricky because after pulling updates from many mempools the local copies will reflect each mempool at different moments in time.
+	In this section, I will give a na\"{i}ve method for retrieving and adding updates to the blockchain and I will show how this method is flawed. 
+	This will then motivate the design of a more complex approach, which Logan implements, that ensures all transactions are committed in order by holding them back for a full poll cycle.
 	In both approaches, the leader will continuously poll mempools for updates and commit transactions that it believes to be valid. \\
 	
 	\subsubsection*{A Na\"{i}ve Approach}
 	The first approach to retrieving updates from participants is to pull updates from all the participants into separate branches of the leader's mempool.
 	It is possible view newly retrieved updates for each mempool by maintaining a \textit{Latest Known Cursor} that points to the latest transaction seen by the leader, i.e. in its last poll.
-	Figure \ref{fig:readmemudpates} shows how the \textit{Latest Cursor}, \texttt{LC}, to the latest item in the mempool, is used to retrieve updates.
+	Figure \ref{fig:readmemudpates} shows how the \textit{Latest Cursor}, \texttt{LC}, which points to the latest item in the mempool, is used to retrieve updates.
 	In this diagram the dotted nodes represent transactions that have been pulled in the latest poll.
-	The leader can traverse back through the log from this cursor until it reaches the \textit{Latest Known Cursor}, \texttt{LKC}, and then it can return the newly found updates.\\
-
+	The leader can traverse back through the log from this cursor until it reaches the \textit{Latest Known Cursor}, \texttt{LKC}, and then it can return the newly found updates.
 	\begin{figure}
 		\centering
 		\begin{tikzpicture}[
@@ -738,22 +736,22 @@ end
 		\caption{Retrieving updates from a single participant mempool}
 		\label{fig:readmemudpates}
 	\end{figure}
-	Once the leader has retrieved updates from the mempools of all participants, it can order these transactions by their Ezirmin log item timestamp.
-	After pulling updates from all participants, the leader can now see a list of newly retrieved transactions which are ordered by a timestamp.
-	These updates can be validated and added to the blockchain, and the \textit{Latest Known Cursor} updated to the latest message in each of the mempool.\\
+	Once the leader has retrieved all updates from the mempools of all participants, it can collate all these transactions into a single list ordered by their timestamp.
+	This timestamp marks the time which transactions are added to the mempool on a participants machine.
+	These transactions can be validated and added to the blockchain, and the \textit{Latest Known Cursor} updated to the latest message in each of the mempool.\\
 
 	However, this approach is fundamentally flawed and causes many updates to be seen out of order. 
-	This is because of the delays that occur when mempool updates are retrieved over the network from multiple participants.
+	This is because the approach implicitly assumes that all updates from mempools can be retrieved instantaneously, and does not account for network delays.
 	Figure \ref{fig:readremotepartudpatesbroke} demonstrates a typical situation where this occurs.
-	The chains labelled \texttt{W} represent the mempools on the Workers' machines and the middle chain represents the stream of updates as seen by the leader. These updates are shown as if they are part of a single merged mempool, although in reality they exist on isolated branches in the leader's mempool, and are only merged by the leader in memory.
+	The chains labelled \texttt{P} represent the mempools on the participants' machines and the middle chain represents the stream of updates as seen by the leader.
 	In the figure, updates from the first worker are pulled before updates from the second.
-	Whilst the operations may take place in parallel, network latencies can cause these operations to pull updates at different times.
-	After the pull from the first participant has completed, the participant may have added additional transactions. 
-	These transactions will be timestamped before the latest transaction in the second participant's mempool, such that when the leader next polls for updates, transactions will be found which have a timestamp before the latest item committed to the blockchain.
-	These items should have been committed first as they have an earlier timestamp.
-	This transaction cannot be inserted into an earlier position of the blockchain because it would mean that different participants might observe the blockchain in diverging states.
-	It is not clear whether or not these transactions should be committed late or skipped, but ideally all transactions should be committed to the blockchain in the order that they were committed at participants.
-	I shall refer to these transactions as \textit{missed}.
+	After the pull from the first participant has completed and retrieved transaction 1, the first participant has added transaction 2 which has not been retrieved by the leader. 
+	However, transaction 2 is timestamped before transaction 3 which is retrieved during the same poll cycle.
+	In the na\"{i}ve approach, transactions 1 and 3 will be added to the blockchain and transaction 2 will be retrieved and committed during the next poll.
+	It will consequently come after transaction 3 even though it has an earlier timestamp, and this is not fair.
+	This transaction also cannot be inserted into an earlier position of the blockchain because it would mean that different participants might observe the blockchain in diverging states.
+	I.e. it would break the equivalent of the log matching property which Logan claims to achieve.
+	Because transaction 2 was missed during the first leader poll, I will refer to all such transactions as \textit{missed}.
 
 	\begin{figure}
 		\centering
@@ -764,9 +762,9 @@ end
 				invis/.style={circle, draw=black!100, minimum size=9mm},
 				label/.style={rectangle, text width=1.2cm, align=center}
 			]
-			\node[invis] (gentop) {\texttt{W}};
+			\node[invis] (gentop) {\texttt{P}};
 			\node[invis] (genmiddle) [below=of gentop] {\texttt{L}};
-			\node[invis] (genbottom) [below=of genmiddle] {\texttt{W}};
+			\node[invis] (genbottom) [below=of genmiddle] {\texttt{P}};
 			\node[block] (one) [right=5mm of gentop] {1};
 			\node[block] (onemerged) [right=10mm of genmiddle, dashed] {1};
 			\node[block] (two) [right=5mm of one] {2};
@@ -796,9 +794,9 @@ end
 				invis/.style={circle, draw=black!100, minimum size=9mm},
 				label/.style={rectangle, text width=1.2cm, align=center}
 			]
-			\node[invis] (gentop) {\texttt{W}};
+			\node[invis] (gentop) {\texttt{P}};
 			\node[invis] (genmiddle) [below=of gentop] {\texttt{L}};
-			\node[invis] (genbottom) [below=of genmiddle] {\texttt{W}};
+			\node[invis] (genbottom) [below=of genmiddle] {\texttt{P}};
 			\node[block] (one) [right=5mm of gentop] {1};
 			\node[block] (onemerged) [right=10mm of genmiddle] {1};
 			\node[block] (two) [right=5mm of one] {2};
@@ -827,25 +825,29 @@ end
 	\subsubsection*{A Complex Approach}
 	In order to solve this problem, I first examined the nature of these \textit{missed} transactions and noted the following properties:
 	\begin{enumerate}
-		\item Missed transactions must have been added whilst the leader is pulling updates. 
+		\item Any missed transactions must have been added whilst the leader was pulling updates. 
 		If they had been added before the poll had begun, then they would have been retrieved in previous poll. 
-		Therefore, \textit{missed} transactions must occur after the latest timestamped transaction from the previous pull. 
+		Therefore, \textit{missed} transactions must occur after the latest timestamped transaction from the previous poll. 
 		\item Missed transactions must have been added at a point in time earlier than the latest update from the subsequent round of retrieved updates.
 		If they occurred at a later point in time, then they would be correctly received in that subsequent leader poll.
 	\end{enumerate}
 
-	These properties naturally suggest a less na{\"i}ve algorithm for retrieving updates which only adds updates that have existed for more than one poll cycle.
-	Once the leader has retrieved a set of updates, it will add them to a \textit{retrieved} buffer.
+	These properties naturally suggest a simple adjustment to the na\"{i}ve solution, which only adds transactions to the blockchain if they have existed on the leader's machine for more than one poll cycle.
+	When a leader is first started and retrieves its first set of updates, it will add them to a \textit{retrieved} buffer.
 	In the next poll cycle, the leader will transfer the retrieved buffer to a new \textit{to-be-committed} buffer.
-	The leader now retrieves new updates from mempools, as before, and will do one of two things for each newly retrieved transaction:
+	From now on, when the leader retrieves new updates from mempools it will do one of two things for each newly retrieved transaction:
 	\begin{itemize}
-		\item If a transaction is earlier that the latest transaction in the to-be-committed buffer, the leader will insert it into the correct position in the to-be-committed buffer based on its timestamp.
-		\item If a transaction is later than the latest transaction in the to-be-committed buffer, the leader will add it to the retrieved buffer.
+		\item If a transaction has an earlier timestamp than the latest transaction in the to-be-committed buffer, the leader will insert it into the correct position in the to-be-committed buffer based on its timestamp.
+		\item If a transaction has a later timestamp than the latest transaction in the to-be-committed buffer, the leader will add it to the retrieved buffer.
 	\end{itemize}
+	Then, all the leader has to do is validate the transactions in the to-be-committed buffer and add them to the blockchain.
 	Figure \ref{fig:complexconsensusfix} demonstrates how this approach would solve the problem presented in Figure \ref{fig:readremotepartudpatesbroke}.
 	In Figure \ref{a}, transaction 2 has been missed whilst transactions 1 and 3 have been added to the retrieved buffer. 
 	In Figure \ref{b}, transactions 1, 2 and 3 have all been inserted into the to-be-committed buffer and will be added to the blockchain.
-	Transaction 4 has occurred after the latest item in the to-be-committed buffer, i.e. transaction 3, and is therefore added to the retrieved buffer instead. \\
+	Transaction 4 has occurred after the latest item in the to-be-committed buffer, i.e. transaction 3, and is therefore added to the retrieved buffer instead. 
+	So now that the previously described nature of missed transactions has been accounted for, it can be guaranteed that all transactions will be committed to the blockchain in the order that they were committed to their participants mempools.
+	This approach does not take participant failure into account and this could potentially stall progress of the leader. 
+	However, this could be very easily accounted for with a timeout mechanism similar to the leader timeout used in Raft.\\
 
 	\begin{figure}
 		\centering
@@ -859,9 +861,9 @@ end
 				bufferitem/.style={rectangle, draw=black!100, align=center},
 				spacer/.style={rectangle, text=white}
 			]
-			\node[invis] (gentop) {\texttt{W}};
+			\node[invis] (gentop) {\texttt{P}};
 			\node[invis] (genmiddle) [below=of gentop] {\texttt{L}};
-			\node[invis] (genbottom) [below=of genmiddle] {\texttt{W}};
+			\node[invis] (genbottom) [below=of genmiddle] {\texttt{P}};
 			\node[block] (one) [right=5mm of gentop] {1};
 			\node[block] (onemerged) [right=10mm of genmiddle, dashed] {1};
 			\node[block] (two) [right=5mm of one] {2};
@@ -898,10 +900,10 @@ end
 				bufferitem/.style={rectangle, draw=black!100, align=center},
 				spacer/.style={rectangle, text=white}
 			]
-			\node[invis] (gentop) {\texttt{W}};
+			\node[invis] (gentop) {\texttt{P}};
 			\node[spacer] (space) [above=1cm of gentop] {.};
 			\node[invis] (genmiddle) [below=of gentop] {\texttt{L}};
-			\node[invis] (genbottom) [below=of genmiddle] {\texttt{W}};
+			\node[invis] (genbottom) [below=of genmiddle] {\texttt{P}};
 			\node[block] (one) [right=5mm of gentop] {1};
 			\node[block] (onemerged) [right=10mm of genmiddle] {1};
 			\node[block] (twomerged) [right=5mm of onemerged, dashed] {2};
@@ -964,7 +966,6 @@ end
 	If a failure were to occur at any point after this merge, it is now guaranteed that any transactions in the leader's blockchain will also exist on a quorum of replicas.
 	This means that the system has access to sufficient information to reconstruct the contents of the blockchain before failure.\\
 
-	\begin{minipage}{\linewidth} 
 	\begin{lstlisting}[caption={Naive Leader Loop},label={lst:leaderloop}]
 let rec start_leader () = 
 	retrieve_and_process_updates() >>= 
@@ -973,8 +974,6 @@ let rec start_leader () =
 	merge_temp_branch_into_blockchain_master >>=
 	start_leader
 	\end{lstlisting}
-	\end{minipage}
-	\\
 
 	Listing \ref{lst:leaderloop} shows pseudocode for the leader's poll cycle, now encorporating replicas. 
 	One of the major issues with this approach is that is presents a bottleneck in the leader's execution which is likely to cause significant delays.\\

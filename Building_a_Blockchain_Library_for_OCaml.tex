@@ -250,22 +250,23 @@ end
 	\end{lstlisting}
 	Listing \ref{lst:modfun} is a simple example that defines a module signature \texttt{Math} for adding and subtracting a custom type.
 	The module \texttt{IntegerMath} is a module which adheres to this signature. 
-	The syntax \texttt{with type t = int} serves the purpose of letting the compiler know that the type t is externally visible.
-	Whilst this example uses the trivial example of integer maths, it is easy to imagine this extending to, for example, matrices or sets where these functions are not part of the language.\\
+	The syntax \texttt{with type t = int} lets the compiler know that the type t is externally visible.\\
 
 	Modules are really useful for allowing the effective division of code into isolated units, but on their own, they are slightly inflexible. 
-	Maybe a developer would want to abstract some lower level details of code used by a module.
+	For instance a developer might want to abstract some lower level details of code used by a module.
 	In this case, she would have to create a whole new module for each possible implementation of this abstraction.
-	An example of this could be a datastore that uses either an in-memory or on-disc format for storing data.
-	Functors allow modules to be created from other modules.
+	Functors make this process much easier by allowing modules to be created from other modules. 
+	This means that any abstracted details can be injected into a module through the use of a functor.
+	An example drawn from Ezirmin is a datastore that uses either an in-memory or on-disk format for storing data as shown in Listing \ref{lst:logmod}.
 	\begin{lstlisting}[caption={Ezirmin Log Module},label={lst:logmod}]
 module Log(AO : Irmin.AO_MAKER)(V: Tc.S0) = struct
   ...
 end
 	\end{lstlisting}
-	Listing \ref{lst:logmod} is an example from the Ezirmin codebase and shows how to define a functor.
 	The parameter \texttt{AO} is a module used for creating append only stores, and the parameter module \texttt{V} defines a data type.
+	Both of these modules can be used withing the struct, which allows a flexible backend implementation.
 	The result of this is a functor, \texttt{Log}, which can be used to create a Log module with either an in-memory or on-disk backend.
+
 	\subsubsection*{Development Environment}
 	When developing a large scale system with OCaml, there are a couple of build systems available to use. 
 	jbuilder \cite{jbuilder} is one of these systems which is becoming increasingly popular and is used daily by hundreds of developers.
@@ -280,7 +281,7 @@ end
 	Over the development period, Travis flagged issues such as dependency resolution failures or out of date build scripts and I was able to fix these at the point when they first occurred, rather than weeks later when they would have caused many issues during remote installation.
 
 	\subsubsection*{Lwt}
-	A library which I spent some time familiarising myself with was Lwt \cite{Lwt}. 
+	Lwt \cite{Lwt} is a library which I spent some time familiarising myself. 
 	Lwt provides a way of interacting with threads in OCaml, although in Lwt they are known as `Promises'.
 	\begin{lstlisting}[caption={Lwt Promises},label={lst:lwt}]
 val Lwt.return : 'a -> 'a Lwt.t 
@@ -298,11 +299,12 @@ val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 
 	\section{Requirements Analysis} \label{Requirements Analysis}
 	During the preparation stage of my project, I spent some time analysing the requirements that would be suitable for Logan. 
-	This proved a good way of guiding the progress of the project and making sure that I solved all the problems that I set out to. 
+	This proved a good way of guiding the progress of the project and making sure that the final result had satisfactory performance. 
 	Here, I will set out the criteria that I decided upon before starting development on the project.
+
 	\subsection{Data Structure}
 	It is required that any node in a Logan network should be able to add items to and view items in a blockchain. 
-	The data in the blockchain will be referred to as either \textit{blocks} or \textit{transactions}\footnote{Whilst blocks in this project shall be referred to as transactions, most blockchain systems use blocks which contain multiple transactions}. 
+	The data in the blockchain will be referred to as either \textit{blocks} or \textit{transactions}\footnote{The terms `block' and `transaction' will be used interchangeably here, however in general systems will haver blocks that contain many transactions. In Logan, this feature is configurable by the developer}. 
 	From a participant, it should be possible to transactions of arbitrary type. 
 	It should also be possible to view an ordered list of all transactions which currently exist in the blockchain.
 	The latency of adding transactions should not increase as the size of the blockchain increases because it is important the library will cope well for systems with extremely long blockchains.\\
@@ -354,7 +356,7 @@ end
 		This will return an error in the case that the transaction is not validated.
 	\end{itemize} 
 	This specification differs slightly from the final specification for Logan because it does not take into account the difference between leader and participant nodes.
-	The specification was deliberately designed without focus on consensus so that the focus was on the external functionality rather than the internal implementation. 
+	The specification was deliberately designed \textit{without} focus on consensus so that the focus was on the external-facing functionality rather than the internal implementation. 
 	The final interface, while different, provides exactly this functionality.
 
 	\subsection{Consensus}\label{Consensus Requirements}
@@ -362,7 +364,7 @@ end
 	The actual design and development of the consensus algorithm was completed throughout the duration of the project and involved a lot of research into other consensus mechanisms.
 	However, during the requirements analysis phase of the project I set out some goals for the final implementation.
 	These goals were laid out in order to help drive the design and development of the consensus mechanism. 
-	I decided on the following success criteria which I have given names that are used in the evaluation section\footnote{SC stands for success criteria}:
+	I decided on the following success criteria which I have given names that are used in the evaluation section:
 	\begin{itemize}
 		\setlength{\itemindent}{2em}
 		\item[\textbf{SC\_1}]The consensus mechanism must guarantee strict consistency in the blockchain state. 

@@ -231,26 +231,6 @@
 	By using the \texttt{Some(\ldots)} and \texttt{None} constructors, one can create something of the type \texttt{'a option}. 
 	This is comparable to the \texttt{null} type in languages such as Java, however as it is part of the type system, it forces the programmer to handle any cases where \texttt{null} could be returned.
 
-	\subsubsection*{Error Handling}
-	OCaml provides multiple different ways of dealing with errors and exceptions. 
-	A simple way of signifying an error in your return type, is to return an \texttt{option} which will be \texttt{None} if there is an error. 
-	Whilst this can be inflexible for larger solutions, it also provides a quick and simple way of signifying that something has gone wrong.\\
-
-	Another way of dealing with options in return types is to use the \texttt{bind} function:
-	\begin{lstlisting}
-val bind: 'a option -> ('a -> 'b option) -> 'b option
-	\end{lstlisting} 
-	As the type signature demonstrates, \texttt{bind} takes an \texttt{option} and applies a function to its contents if it exists, or returns \texttt{None} otherwise.\\
-	
-	OCaml provides a built in type \texttt{Result.t} which is an extension of optional return types, where the programmer is able to define arbitrary data to accompany the error type. 
-	The following demonstrates a successful return type of \texttt{int} (with an unspecified \texttt{Error} type), and a \texttt{string} error type (with an unspecified \texttt{Ok} type).
-	\begin{lstlisting}
-# Ok 3;;
-- : ('a, int) result = Ok 3
-# Error "Something went wrong";;
-- : (string, 'a) result = Error "Something went wrong";;
-	\end{lstlisting} 
-
 	\subsubsection*{Polymorphic Variants}
 	OCaml allows the programmer to define variant types such as the \texttt{Card} type that was defined earlier. This makes it very easy to make use of pattern matching with custom defined types.\\
 	

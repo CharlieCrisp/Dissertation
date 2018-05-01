@@ -226,19 +226,6 @@
 	I will then give a description of the development environment I set up during the course of the project.
 	Finally I will give a description of the Lwt library for threading as it is extensively used in Logan's codebase and specification.
 
-	\subsubsection*{Pattern Matching}
-	OCaml provides a very powerful syntax for matching patterns which allow you to write functions as shown by Listing \ref{lst:pattern_match}.
-	\begin{lstlisting}[caption={OCaml Pattern Matching},label={lst:pattern_match}]
-let pattern_matcher_1 input = match input with
-  | Card("spades", 1) -> Printf.printf "It's the ace of spades!"
-  | _ -> Printf.printf "Unlucky"
-let pattern_matcher_2 = function
-  | Card(suit, 1) -> Printf.printf "It's the ace of %s!" suit
-  | _ -> Printf.printf "Unlucky"
-	\end{lstlisting}
-	Listing \ref{lst:pattern_match} shows a function that will print a special string if it is passed the Ace of Spades. 
-	Here, the pattern matching checks the that the tuple associated with the data type contains the string \texttt{spades} and the number 1.
-	The second example assigns the variable \texttt{pattern\_matcher\_2} to an anonymous \texttt{function} which matches the first argument of the tuple to the variable \texttt{suit}.
 	\subsubsection*{Options}
 	An \texttt{Option} is a built in data type that provides a powerful way of using OCaml's pattern matching.
 	By using the \texttt{Some(\ldots)} and \texttt{None} constructors, one can create something of the type \texttt{'a option}. 

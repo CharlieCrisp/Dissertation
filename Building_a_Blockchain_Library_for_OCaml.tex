@@ -21,6 +21,7 @@
 	\definecolor{lightlightgray}{gray}{0.6}
 	\definecolor{darkgreen}{rgb}{0,0.6,0}
 	\definecolor{airforceblue}{rgb}{0.36, 0.54, 0.70}
+	\definecolor{greyish}{rgb}{0.35, 0.35, 0.35}
 
 
 	\usetikzlibrary{positioning,fit,calc}
@@ -30,7 +31,7 @@
 	showstringspaces=false,
 	breaklines=true,
 	basicstyle=\normalsize\ttfamily,                 % Code font, Examples: \footnotesize, \ttfamily
-	keywordstyle=\color{darkgreen},
+	keywordstyle=\color{greyish}\textbf,
 	commentstyle=\color{airforceblue},
 	frame=tb,
 	captionpos=b
@@ -944,18 +945,18 @@ end
 	\end{figure}
 
 	\section{Tolerating Leader Failure}\label{sec:faulttol}
-	Now that I have detailed Logan's data strutures and how it achieves consensus, the only aspect of the implementation left to consider is Fault Tolerance.
+	Now that I have detailed Logan's data strutures and the process through which is achieves consensus, the only aspect of the implementation left to consider is fault tolerance.
 	Because Logan implements a leader-based consensus mechanism, this means that the leader is a single point of failure.
-	In the event of a failure, different participants may have views of the blockchain at different times and the leader may have committed transactions to the blockchain which were never viewed by any participants. 
-	Building full fault tolerance and recovery into Logan would be outside the scope of this Part II Project. 
-	Instead, in this section I will show the simple mechanism that Logan uses which allows manual recovery of the blockchain state in the case of a leader failure. 
-	I will also give a more advanced mechanism which uses a daemon thread that removes the bottleneck from the leader's execution. 
+	In the event of a failure, different participants may have local copies of the blockchain at different times, i.e. one participant's copy may contain some transactions which other participants' do not.
+	Building full failure detection and recovery into Logan would be outside the scope of this Part II Project. 
+	Instead in this section I will show the simple mechanism, that Logan uses, which allows manual recovery of the blockchain state in the case of a leader failure. 
+	I will then explain how this leads to a bottleneck in the leader's execution before giving a more advanced mechanism which uses a daemon thread that removes the bottleneck from the leader's execution. 
 	This solution was not implemented as Git has very coarse grained locking that causes many race conditions for this solution, but it will demonstrate how Logan could operate if a protocol with finer grained locking was used. 
 	This will justify that a more complex and automated approach to recovering from leader failure is possible, and will demonstrate a good starting point for implementing such a mechanism. \\
 
 	To introduce fault tolerance, I have used \textit{replicas}. 
 	Replicas, in computer science, are nodes which duplicate some part of another node's behaviour in order to allow recovery from failure. 
-	They can be either \textit{active}, if they fully duplicate the actions of another replica, or \textit{passive}, if they complete some operation and then transfer the results to another replica \cite{Replication}.
+	They can be either \textit{active} if they fully duplicate the actions of another replica, or \textit{passive} if another machine completes some operation before transfering the result to that replica \cite{Replication}.
 	The replication I will demonstrate will be passive.\\
 
 	In order to incorporate the notion of a replica, the process of adding commits to the blockchain needs to be altered slightly.
@@ -975,16 +976,13 @@ let rec start_leader () =
 	start_leader
 	\end{lstlisting}
 
-	Listing \ref{lst:leaderloop} shows pseudocode for the leader's poll cycle, now encorporating replicas. 
-	One of the major issues with this approach is that is presents a bottleneck in the leader's execution which is likely to cause significant delays.\\
-
-	The above describes the replication process that Logan currently implements, however I will now suggest a better method that removes the bottleneck from the leader's execution.
-	I was not able to implement this as the coarse grained locking provided by Git caused many race conditions, but a better protocol with finer locking would allow the following mechanism to work because there are no real data dependencies in this solution.
-	I propose a different approach that starts an asychronous thread which is in charge of pushing to replicas and merging the transactions which have been pushed.
-	I shall refer to this as the \textit{push thread}, and the \textit{main thread} will now only commit items to the \textit{cache} branch.
-	This thread takes the blockchain cache branch and use this to create a new \textit{push-cache} branch which it pushes to replicas.
-	The difference between these two branches is that the cache branch will constantly be updated as new items are added, whereas the push-cache branch will remain fixed pointing to a particular transaction whilst a series of transactions are being pushed to replicas. 
-	When this push returns successfully, the thread will then merge this branch into the blockchain master branch, and loop.
+	Listing \ref{lst:leaderloop} shows pseudocode for the leader's poll cycle, now incorporating replicas. 
+	One of the major issues with this approach is that it introduces a bottleneck in the leader's execution which causes unnecessary delays.
+	I propose a different approach that starts an asychronous \textit{push-thread} which is in charge of pushing to replicas and merging the transactions which have been pushed.
+	This thread is initially created by, but separate to, the \textit{main thread} which only commits items to a \textit{cache} branch.
+	The push-thread operates by cloning the blockchain cache branch into a new \textit{push-cache} branch which it pushes to replicas.
+	The difference between the cache and push-cache branches is that the cache branch will constantly be updated by the main thread as new transactions are retrieved from participants, whereas the push-cache branch will remain fixed containing a particular set of transactions whilst the push-thread pushes these to replicas. 
+	When this push returns successfully, the push-cache thread will then merge this push-cache branch into the blockchain master branch, and loop. 
 	\begin{figure}
 		\centering
 		\begin{subfigure}[t]{\textwidth}
@@ -994,14 +992,14 @@ let rec start_leader () =
 			invis/.style={circle, draw=black!100, minimum size=9mm},
 			label/.style={rectangle, text width=2cm, align=center}]                       
 			\node[invis] (invis) {\texttt{B}};
-			\node[block] (block1) [right=of invis] {};
+			\node[block] (block1) [right=of invis] {1};
 			\node[label] (labelmaster) [above=of block1] {Blockchain master branch};
-			\node[block] (block2) [below right=of block1] {};
-			\node[block] (block3) [right=of block2] {};
-			\node[block] (block4) [right=of block3] {};
-			\node[label] (labelpushcache) [below=of block3] {\textit{push-cache} branch};
-			\node[block] (block5) [right=of block4] {};
-			\node[label] (labelcache) [above=of block5] {\textit{cache} branch};
+			\node[block] (block2) [below right=of block1] {2};
+			\node[block] (block3) [right=of block2] {3};
+			\node[block] (block4) [right=of block3] {4};
+			\node[label] (labelpushcache) [below=of block3] {push-cache branch};
+			\node[block] (block5) [right=of block4] {5};
+			\node[label] (labelcache) [above=of block5] {cache branch};
 			\draw[->] (labelmaster.south) -- (block1.north);
 			\draw[->] (labelpushcache.north) -- (block3.south);
 			\draw[->] (labelcache.south) -- (block5.north);
@@ -1023,14 +1021,14 @@ let rec start_leader () =
 			invis/.style={circle, draw=black!100, minimum size=9mm},
 			label/.style={rectangle, text width=2cm, align=center}]                       
 			\node[invis] (invis) {\texttt{B}};
-			\node[block] (block1) [right=of invis] {};
-			\node[block] (block2) [right=of block1] {};
-			\node[block] (block3) [right=of block2] {};
+			\node[block] (block1) [right=of invis] {1};
+			\node[block] (block2) [right=of block1] {2};
+			\node[block] (block3) [right=of block2] {3};
 			\node[label] (labelmaster) [above=of block3] {Blockchain master branch};
-			\node[block] (block4) [below right=of block3] {};
-			\node[label] (labelpushcache) [below=of block5] {\textit{push-cache} branch};
-			\node[block] (block5) [right=of block4] {};
-			\node[label] (labelcache) [above=of block5] {\textit{cache} branch};
+			\node[block] (block4) [below right=of block3] {4};
+			\node[label] (labelpushcache) [below=of block5] {push-cache branch};
+			\node[block] (block5) [right=of block4] {5};
+			\node[label] (labelcache) [above=of block5] {cache branch};
 			\draw[->] (labelmaster.south) -- (block3.north);
 			\draw[->] (labelpushcache.north) -- (block5.south);
 			\draw[->] (labelcache.south) -- (block5.north);
@@ -1048,10 +1046,16 @@ let rec start_leader () =
 		\caption{Blockchain data structure with cache for pushing to replicas}
 	\end{figure}
 	Figure \ref{fig:replicaasync} shows a blockchain with four transactions in the cache branch.
-	The first two of these transactions have been recognised by the push thread and are in the process of being pushed to a quorum of Replicas. 
-	The final two transactions have been added after the push thread started its latest loop, and are therefore currently not being pushed to replicas.
-	Figure \ref{fig:replicaasyncfinished} shows the state of the blockchain after the push thread has successfully pushed its updates to a quorum.
-	Now the master branch includes the two new transactions, and the \textit{push-cache} branch has been updated such that the two newest cache transactions will be pushed to the blockchains of all the replicants.
+	Transactions 2 and 3 have been added to the push-cache by the push-thread and are in the process of being pushed to replicas. 
+	Transactions 4 and 5, however, were added by the main thread after the push thread started its latest loop, and are therefore currently not being pushed to replicas.
+	Figure \ref{fig:replicaasyncfinished} shows the state of the blockchain after the push thread has successfully pushed transactions 2 and 3 to a quorum of replicas.
+	Now the master branch includes transactions 2 and 3, and the \textit{push-cache} branch has been updated to include transactions 4 and 5 will now be pushed to the blockchains of all the replicants.\\
+
+	This new approach allows for the leaders functionality to be separated into two threads which can run in parallel. 
+	This is beneficial because as two isolated threads, neither has a negative effect on the performance of the other.
+	Whilst I did implement this approach in Logan, it suffered massively from coarse grained locking provided by Git and has therefore not been included in the final implementation.
+	Git's coarse graned locking meant that fake race conditions were being caused even though this approach does not add any true race conditions.
+	A better library than Git with finer locking would allow the following mechanism to work without hindering the performance of the main leader thread.
 
 	\chapter{Evaluation}
 	%introduction to evaluation and metrics used

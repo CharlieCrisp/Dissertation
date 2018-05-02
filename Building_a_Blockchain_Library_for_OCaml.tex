@@ -1285,7 +1285,7 @@ let rec start_leader () =
 	\chapter{Conclusion}
 	\section{Successes}
 	When I started this project, my goals were to design a library that would allow developers to easily create blockchain applications using OCaml.
-	I have successfully designed and implemented Logan, a blockchain library that achieves that goal.
+	I have designed and implemented Logan, a blockchain library that achieves that goal.
 	Logan uses a leader based approach to consensus and can achieve latencies of around 10s and throughtputs of up to 30tps.
 	Logan uses Git to store data and to communicate over the network and this has proved to be a large bottleneck in this project. 
 	Latencies are linear in the size of the blockchain if there are multiple nodes in a network and this is due to the implementation of Git.
@@ -1293,16 +1293,20 @@ let rec start_leader () =
 	However, I have shown that Git is the only bottleneck in Logan's operation and that a better synchronisation protocol would allow the linear blockchain appends and much better latencies. 
 
 	\section{Possible Further Work}
-	\subsection{Improved Synchronisation Protocol}
+	There are many different ways in which Logan could be improved with more time.
+	Here are some of the most important parts which could be improved:
+	\begin{itemize}
+	\item \textbf{Improved Synchronisation Protocol}.
 	The biggest flaw with Logan that I have mentioned in this report is the use of Git.
 	Further work on Logan should include a new implementation of the network synchronisation protocol.
-	\subsection{Failure Tolerance and Changing Leaders}
+	\item \textbf{Failure Tolerance and Changing Leaders}.
 	Tolerating failure is an aspect of this project that I have only touched upon in this project. 
-	I have shown how Logan can perform replication but further work could include implementing an automated approach for detecting and recovering from Failure. 
-	This work could also include allowing a network to reallocate a leader after leader failure.
-	\subsection{Adding Participants Dynamically}
+	I have shown how Logan can perform passive replication but further work could include implementing an automated approach for detecting and recovering from failure. 
+	This work could also include allowing a system to reallocate a leader after leader failure.
+	\item \textbf{Adding Participants Dynamically}.
 	Currently, as well as only being able to define a single leader, participants can only be defined statically. 
 	Some consensus mechanisms introduce ways of adding and removing nodes to a network and I think it would be very feasible to build this feature into Logan.
+	\end{itemize}
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% the bibliography

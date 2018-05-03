@@ -82,14 +82,17 @@
 	
 	\section*{Original Aims of the Project}
 	
-	To build a library in OCaml, which can be used as a building block for blockchain applications. 
+	The original aim of the project was to build a library in OCaml, which could be used as a building block for blockchain applications. 
 	The library should allow participating nodes to own a shared copy of a blockchain data structure, agreed upon by all participating nodes.
 	Nodes should also be able to commit transactions to the blockchain, which should then be visible to other participating nodes. 
 	
-	
 	\section*{Work Completed}
 	
-	All that has been completed appears in this dissertation.
+	I have successfully built Logan, a blockchain library in OCaml.
+	Logan achieves consensus using a simple leader based protocol where a leader will poll participants for new updates to add to the blockchain.
+	Logan also provides the capability to run passive replicas which store the leader's state to allow full recovery in the even of a leader failure.
+	Logan can achieve latencies of around 10 seconds and throughputs of up to 30 transactions per second. 
+	Logan does not achieve all its success criteria but in this report I attribute this to the implementation of Git used, rather than Logan's implementation.
 	
 	\section*{Special Difficulties}
 	
@@ -105,9 +108,11 @@
 	extent for a comparable purpose.
 	
 	\bigskip
-	\leftline{Signed}
+	\noindent 
+	Signed \includegraphics[width=3cm]{figs/signature.png} \\
 	\bigskip
-	\leftline{Date}
+	\noindent 
+	Date \today
 	
 	\tableofcontents
 	

@@ -1114,7 +1114,7 @@ let rec start_leader () =
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/appliedvsobservedlocal.png} 
-		\caption{Latency variation with throughput on a single local participant}
+		\caption{Observed throughput with increasing applied throughput for a single local participant}
 		\label{fig:singlocal}
 	\end{figure}
 	The straight line plot in this figure indicates the performance of an ideal system that is capable of matching any applied throughput.
@@ -1130,7 +1130,7 @@ let rec start_leader () =
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/latencies_sizes_throughputs.png}
-		\caption{Logan latencies with increasing blockchain size}
+		\caption{Logan latencies with increasing blockchain size for one remote participant}
 		\label{figs:remlatencysize}
 	\end{figure} 
 	Figure \ref{figs:remlatencysize} compares the latency of making a transaction and the size of the participant's mempool, for different applied throughputs.
@@ -1164,7 +1164,7 @@ let rec start_leader () =
 	\begin{figure} 
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/latency_sizes_throughputs.png}
-		\caption{Logan latencies using pure Git instead of OCaml's implementation}
+		\caption{Logan latencies with increasing blockchain size for one remote participant. Leader is using pure Git}
 		\label{figs:latenciespuregit}
 	\end{figure}
 	Figure \ref{figs:latenciespuregit} is a parallel of Figure \ref{figs:remlatencysize} but using this new implementation instead. 
@@ -1176,7 +1176,7 @@ let rec start_leader () =
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/bottlenecks.png}
-		\caption{Delays incurred by leader when using pure Git. Throughput is constant at 10tps}
+		\caption{Delays incurred by leader for every poll cycle when using pure Git. Throughput is constant at 10tps}
 		\label{figs:bottleneckspuregit} 
 	\end{figure}
 	Figure \ref{figs:bottleneckspuregit} is a parallel of Figure \ref{figs:leaderdelays} that demonstrates that this speedup is due to the greatly reduced times that the leader spends pulling mempool updates as the mempool size grows.
@@ -1189,8 +1189,9 @@ let rec start_leader () =
 	In the previous sections, I have evaluated how transaction latencies evolve over time, and compared the results for different applied throughputs.
 	This does not, however, shed light on when the system reaches its maximum throughput capacity.
 	\begin{figure}
+		\centering
 		\includegraphics[width=0.8\textwidth] {figs/appliedvsobservedsingle.png}
-		\caption{Observed throughput plateau with increasing applied throughput}
+		\caption{Observed throughput with increasing applied throughput for a single remote participant using pure Git}
 		\label{figs:appliedobservedsingle}
 	\end{figure}
 	Figure \ref{figs:appliedobservedsingle} shows how observed throughput varies with applied throughput. 
@@ -1232,7 +1233,7 @@ let rec start_leader () =
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/2latencies_sizes_throughputs.png}
-		\caption{Latency variations against blockchain size with two remote participants using pure Git}
+		\caption{Logan latencies with increasing blockchain size for two remote participants.}
 		\label{figs:tworems}
 	\end{figure}
 	For a throughput of around 10tps, transaction latencies will rise by 4.5s over 5000 transactions compared to 3.1s in the single participant case.
@@ -1255,7 +1256,7 @@ let rec start_leader () =
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.8\textwidth]{figs/appliedvsobserved2r.png}
-		\caption{Latency variations against blockchain size with two remote participants using pure Git}
+		\caption{Observed throughput with increasing applied throughput for two remote participants using pure Git}
 		\label{figs:tworemthrthr}
 	\end{figure}
 	The system starts to diverge from ideal throughput at around 30tps, idicating that an suitable sustained operating throughput would be around 20tps.

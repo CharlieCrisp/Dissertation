@@ -1,41 +1,54 @@
 @article{Bitcoin,
-title={Bitcoin: A Peer-to-Peer Electronic Cash System},
-author={Satoshi Nakamoto},
-year={2008}
-},
-@article{HaberStornetta,
-title={How to time-stamp a digital document},
-author={Stuart Haber and W. Scott Stornetta},
-year={1990}
+    author = {Satoshi Nakamoto},
+    title = {Bitcoin: A peer-to-peer electronic cash system},
+    url={http://bitcoin.org/bitcoin.pdf},
+    year = {2008}
+}
+@InProceedings{10.1007/3-540-38424-3_32,
+    author="Haber, Stuart
+    and Stornetta, W. Scott",
+    editor="Menezes, Alfred J.
+    and Vanstone, Scott A.",
+    title="How to Time-Stamp a Digital Document",
+    booktitle="Advances in Cryptology-CRYPT0' 90",
+    year="1991",
+    publisher="Springer Berlin Heidelberg",
+    address="Berlin, Heidelberg",
+    pages="437--455",
+    abstract="The prospect of a world in which all text, audio, picture, and video documents are in digital form on easily modifiable media raises the issue of how to certify when a document was created or last changed. The problem is to time-stamp the data, not the medium. We propose computationally practical procedures for digital time-stamping of such documents so that it is infeasible for a user either to back-date or to forward-date his document, even with the collusion of a time-stamping service. Our procedures maintain complete privacy of the documents themselves, and require no record-keeping by the time-stamping service.",
+    isbn="978-3-540-38424-3"
 },
 @misc{Git,
-title={Git: A distributed version control system},
-author={Linus Torvalds},
-year={2005}
+    title={Git},
+    author={Linus Torvalds},
+    year={2005},
+    url={https://git-scm.com/}
 },
 @misc{OcamlGit,
-title={OCaml Git: Pure OCaml Git format and protocol},
-howpublished="\url{https://github.com/mirage/ocaml-git}"
+    title={OCaml Git: Pure OCaml Git format and protocol},
+    url={https://github.com/mirage/ocaml-git}
 },
 @misc{Ethereum,
-title={Ethereum White Paper},
-howpublished="\url{https://github.com/ethereum/wiki/wiki/White-Paper}",
+    title={Ethereum's White Paper},
+    organisation={Ethereum Foundation},
+    year={2014},
+    url={https://github.com/ethereum/wiki/wiki/White-Paper}
 },
 @misc{Irmin,
-title={Introducing Irmin: Git-like distributed, branchable storage},
-author={Thomas Gazagnaire},
-howpublished="\url{https://mirage.io/blog/introducing-irmin}",
-year={2014}
+    title={Irmin: Git-like distributed, branchable storage},
+    author={Thomas Gazagnaire},
+    url={https://mirage.io/blog/introducing-irmin},
+    year={2014}
 },
 @misc{Ezirmin,
-title={Ezirmin: An easy interface to the Irmin library},
-author={KC Sivaramakrishnan},
-howpublished="\url{http://kcsrk.info/ocaml/irmin/crdt/2017/02/15/an-easy-interface-to-irmin-library/}",
-year={2017}
+    title={Ezirmin: An easy interface to the Irmin library},
+    author={KC Sivaramakrishnan},
+    url={http://kcsrk.info/ocaml/irmin/crdt/2017/02/15/an-easy-interface-to-irmin-library/},
+    year={2017}
 },
 @misc{ProofofStake,
-title={Proof of Stake FAQ},
-howpublished="\url{https://github.com/ethereum/wiki/wiki/Proof-of-Stake-FAQ}"
+    title={Proof of Stake FAQ},
+    url={https://github.com/ethereum/wiki/wiki/Proof-of-Stake-FAQ}
 },
 @book{RealWorldOCaml,
     author    = "Yaron, Minsky and Anil, Madhavapeddy and Jason, Hickey",
@@ -44,40 +57,70 @@ howpublished="\url{https://github.com/ethereum/wiki/wiki/Proof-of-Stake-FAQ}"
     publisher = "O'Reilly Media",
     address   = "Sebastopol, California"
 },
-@misc{jbuilder,
+@manual{jbuilder,
     title={jbuilder},
-    howpublished="\url{https://jbuilder.readthedocs.io/en/latest/overview.html}",
+    url={https://jbuilder.readthedocs.io/en/latest/overview.html}
 },
 @misc{GNUMake,
     title={GNU Make},
-    howpublished="\url{https://www.gnu.org/software/make/}"
+    url={https://www.gnu.org/software/make/}
 },
 @misc{Lwt,
     title={Lwt: A cooperative threads library for OCaml},
-    howpublished="\url{https://ocsigen.org/lwt/}"
+    url={https://ocsigen.org/lwt/}
 },
 @misc{BitcoinEnergy,
     title={Bitcoin Energy Consumption Index},
-    howpublished="\url{https://digiconomist.net/bitcoin-energy-consumption}",
+    url={https://digiconomist.net/bitcoin-energy-consumption}
 },
-@article{Paxos, 
-    title={The Part-Time Parliament},
-    author={Leslie Lamport},
-    year={1998}
+@article{Paxos,
+    author = {Lamport, Leslie},
+    title = {The Part-time Parliament},
+    journal = {ACM Trans. Comput. Syst.},
+    issue_date = {May 1998},
+    volume = {16},
+    number = {2},
+    month = may,
+    year = {1998},
+    issn = {0734-2071},
+    pages = {133--169},
+    numpages = {37},
+    url = {http://doi.acm.org/10.1145/279227.279229},
+    doi = {10.1145/279227.279229},
+    acmid = {279229},
+    publisher = {ACM},
+    address = {New York, NY, USA},
+    keywords = {state machines, three-phase commit, voting},
 },
 @article{Replication,
-    title={Specification of Replication Techniques, Semi-Passive
-Replication, and Lazy Consensus},
-    author={Xavier D´efago and Andr´e Schiper},
-    year={}
-},
-@article{ScalingBitcoin,
-    title={On Scaling Decentralised Blockchains},
-    author={Croman Kyle and Eyal Ittay},
-    year={2016}
-},
-@article{Raft,
-    title={In Search of an Understandable Consensus Algorithm},
-    author={Diego Ongaro and John Ousterhout},
-    year={2014}
+    author = {Défago, Xavier and Schiper, André},
+    year = {2002},
+    month = {10},
+    pages = {},
+    title = {Specification of Replication Techniques, Semi-Passive Replication, and Lazy Consensus}
 }
+@article{ScalingBitcoin,
+    author = {Croman, Kyle and Decker, Christian and Eyal, Ittay and Gencer, Adem Efe and Juels, Ari and Kosba, Ahmed and Miller, Andrew and Saxena, Prateek and Shi, Elaine and Gün Sirer, Emin and Song, Dawn and Wattenhofer, Roger},
+    year = {2016},
+    month = {02},
+    pages = {106-125},
+    title = {On Scaling Decentralized Blockchains},
+    volume = {9604},
+    isbn = {978-3-662-53356-7},
+    booktitle = {Bitcoin and Blockchain}
+}
+@article{Raft,
+    author = {Ongaro, Diego and Ousterhout, John},
+    title = {In Search of an Understandable Consensus Algorithm},
+    booktitle = {Proceedings of the 2014 USENIX Conference on USENIX Annual Technical Conference},
+    series = {USENIX ATC'14},
+    year = {2014},
+    isbn = {978-1-931971-10-2},
+    location = {Philadelphia, PA},
+    pages = {305--320},
+    numpages = {16},
+    url = {http://dl.acm.org/citation.cfm?id=2643634.2643666},
+    acmid = {2643666},
+    publisher = {USENIX Association},
+    address = {Berkeley, CA, USA},
+} 

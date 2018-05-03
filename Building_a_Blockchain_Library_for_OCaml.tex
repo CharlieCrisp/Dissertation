@@ -4,7 +4,6 @@
 	\usepackage[margin=25mm]{geometry}  % adjusts page layout
 	\usepackage{graphicx}  % allows inclusion of PDF, PNG and JPG images
 	\usepackage{verbatim}
-	\usepackage{docmute}   % only needed to allow inclusion of proposal.tex
 	\usepackage{import} %import proposal from another folder
 	\usepackage{pdfpages}
 	\usepackage{listings}
@@ -17,13 +16,12 @@
 	\usepackage{caption}
 	\usepackage{subcaption}
 	\usepackage{float}
+	\usepackage[style=ieee]{biblatex} 
+	\addbibresource{refs.bib}
 
-	\definecolor{lightlightgray}{gray}{0.6}
-	\definecolor{darkgreen}{rgb}{0,0.6,0}
 	\definecolor{airforceblue}{rgb}{0.36, 0.54, 0.70}
 	\definecolor{greyish}{rgb}{0.35, 0.35, 0.35}
-
-
+ 
 	\usetikzlibrary{positioning,fit,calc}
 
 	\lstset{
@@ -39,21 +37,15 @@
 
 
 	\newcommand\tab[1][1cm]{\hspace*{#1}}
-	\raggedbottom                           % try to avoid widows and orphans
+	\raggedbottom                           % try to  avoid widows and orphans
 	\sloppy
 	\clubpenalty1000%
 	\widowpenalty1000%
 	
-	\renewcommand{\baselinestretch}{1.1}    % adjust line spacing to make
-																					% more readable
-	
+	\renewcommand{\baselinestretch}{1.1}  
+
 	\begin{document}
-	
-	
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	% Title
-	
-	
+
 	\pagestyle{empty}
 	
 	\rightline{\LARGE \textbf{Charlie Crisp}}
@@ -136,7 +128,7 @@
 	\chapter{Introduction}
 	Blockchain technology has existed for a long time, but the definition of `blockchain' has changed drastically since its conception.
 	Previously used just to describe a data structure, the term `blockchain' is now widely used to also describe the accompanying consensus mechanisms.
-	This is mainly due to the increasing popularity of cryptocurrencies such as Bitcoin \cite{Bitcoin} which use the `Proof of Work' algorithm to solve the double spending problem.
+	This is mainly due to the increasing popularity of cryptocurrencies such as Bitcoin \parencite{} which use the `Proof of Work' algorithm to solve the double spending problem.
 	Blockchain is undoubtedly the most important technology in the field of cryptocurrencies where no single client can be trusted, however, it also has many use cases outside this sector.
 	For instance, blockchain can be used in situations where clients \textit{can} be trusted, such as a hospital maintaining internal medical records, or a bank wishing to record transactions from many of its own distributed clients.\\
 	
@@ -182,13 +174,13 @@
 		\caption{A typical blockchain structure}
 		\label{fig:mainblockchain}
 	\end{figure}
-	The blockchain, as a cryptographically secure chain of blocks, was first conceptualised by Stuart Haber and W. Scott Stornetta in 1990 \cite{HaberStornetta}.
-	However, the most significant uses of the technology did not come until the creation of Git \cite{Git} in 2005, and the invention of Bitcoin \cite{Bitcoin} in 2008.
+	The blockchain, as a cryptographically secure chain of blocks, was first conceptualised by Stuart Haber and W. Scott Stornetta in 1990 \parencite{10.1007/3-540-38424-3_32}.
+	However, the most significant uses of the technology did not come until the creation of Git \parencite{Git} in 2005, and the invention of Bitcoin \parencite{Bitcoin} in 2008.
 	Bitcoin uses the Proof of Work consensus algorithm to create a decentralised, trust-less, peer to peer network which is used to make transactions between virtual wallets.
 
 	\section{Blockchain Today}
 	At the time of writing, cryptocurrencies are generating both a huge amount of excitement and cynicism in popular media. 
-	Aside from Bitcoin, cryptocurrencies like Ethereum \cite{Ethereum} have introduced the concept of Smart Contracts which allow the execution of code on the blockchain.
+	Aside from Bitcoin, cryptocurrencies like Ethereum \parencite{Ethereum} have introduced the concept of Smart Contracts which allow the execution of code on the blockchain.
 	Whilst it is possible to think of applications for blockchain technology in almost every sector, the development of applications outside the scope of crytocurrencies has been limited. 
 	If one considers the example of OCaml, there are currently no libraries which allow a user to easily get started with building blockchain applications. \\
 
@@ -219,11 +211,11 @@
 	This analysis helped drive the design and development Logan as well as providing a baseline that was useful when evaluating its performance.
 
 	\section{Starting Point}
-	The project built upon functionality provided by Irmin [1] which is a distributed data store system. Irmin is fast, durable and has all the necessary capabilities required to build a blockchain.
-	The project also made use of Ezirmin \cite{Ezirmin} which provides a simplified API to Irmin, and defines a log data structure which was used to build the blockchain and mempool structures for this project.
+	The project built upon functionality provided by Irmin \parencite{Irmin} which is a distributed data store system. Irmin is fast, durable and has all the necessary capabilities required to build a blockchain.
+	The project also made use of Ezirmin \parencite{Ezirmin} which provides a simplified API to Irmin, and defines a log data structure which was used to build the blockchain and mempool structures for this project. 
 
 	\section{Using OCaml}
-	At the start of the project I had never used OCaml, so in the first few weeks of my project I spent time studying the book Real World OCaml \cite{RealWorldOCaml} which proved a great introduction to many of OCaml's features.  
+	At the start of the project I had never used OCaml, so in the first few weeks of my project I spent time studying the book Real World OCaml \parencite{RealWorldOCaml} which proved a great introduction to many of OCaml's features.  
 	In this section I will give a brief overview of some of OCaml's language features which are used in Logan's technical specification.
 	I will then give a description of the development environment I set up during the course of the project.
 	Finally I will give a description of the Lwt library for threading as it is extensively used in Logan's codebase and specification.
@@ -271,11 +263,11 @@ end
 
 	\subsubsection*{Development Environment}
 	When developing a large scale system with OCaml, there are a couple of build systems available to use. 
-	jbuilder \cite{jbuilder} is one of these systems which is becoming increasingly popular and is used daily by hundreds of developers.
+	jbuilder \parencite{jbuilder} is one of these systems which is becoming increasingly popular and is used daily by hundreds of developers.
 	jbuilder allows the developer to specify arbitrary directory structures containing executables, libraries and more.
 	I set up my project to compile Logan, which includes the interface for running both leader and participant nodes. 
 	I also defined multiple executables for running both the leader and participants in example and test cases. 
-	I used GNU Make \cite{GNUMake} to invoke jbuilder which allowed me to easily build and run any executables from the root of the directory.\\
+	I used GNU Make \parencite{GNUMake} to invoke jbuilder which allowed me to easily build and run any executables from the root of the directory.\\
 	
 	In order to ensure that the project would always build, I set up a continuous integration workflow using Travis-CI. 
 	This ensured that whenever I pushed any updates to my GitHub repository, Travis would attempt to build the system and would notify me whenever there were any errors during the build.
@@ -283,7 +275,7 @@ end
 	Over the development period, Travis flagged issues such as dependency resolution failures or out of date build scripts and I was able to fix these at the point when they first occurred, rather than weeks later when they would have caused many issues during remote installation.
 
 	\subsubsection*{Lwt}
-	Lwt \cite{Lwt} is a library which I spent some time familiarising myself. 
+	Lwt \parencite{Lwt} is a library which I spent some time familiarising myself. 
 	Lwt provides a way of interacting with threads in OCaml, although in Lwt they are known as `Promises'.
 	\begin{lstlisting}[caption={Lwt Promises},label={lst:lwt}]
 val Lwt.return : 'a -> 'a Lwt.t 
@@ -368,9 +360,9 @@ end
 		\setlength{\itemindent}{2em}
 		\item[\textbf{SC\_1}]The consensus mechanism must guarantee strict consistency in the blockchain state. 
 		Although strict consistency could add large overhead costs, it is necessary for some applications and so is an important part of the final project.
-		\item[\textbf{SC\_2}] As a baseline, Bitcoin achieves a maximum throughput of roughly 10 transactions per second (tps) \cite{ScalingBitcoin}.
+		\item[\textbf{SC\_2}] As a baseline, Bitcoin achieves a maximum throughput of roughly 10 transactions per second (tps) \parencite{ScalingBitcoin}.
 		Logan should be able to achieve comparable throughputs.
-		\item[\textbf{SC\_3}] Again as a baseline, transaction latency achieved by Bitcoin is more than 10 minutes \cite{ScalingBitcoin}.
+		\item[\textbf{SC\_3}] Again as a baseline, transaction latency achieved by Bitcoin is more than 10 minutes \parencite{ScalingBitcoin}.
 		This is widely regarded as poor performance so Logan should be able to achieve better latencies of an order of magnitude of seconds.
 		\item[\textbf{SC\_4}] The latency of adding a block should be constant in the size of the blockchain.
 		\item[\textbf{SC\_5}] The consensus mechanism must be scalable. 
@@ -381,7 +373,7 @@ end
 
 	\chapter{Implementation} \label{Implementation}
 	Over the course of this project I have built Logan, a blockchain library which can perform custom transaction validation.
-	Logan uses a leader-based consensus protocol inspired by Raft \cite{Raft} and also uses the concept of a `transaction waiting room', or \textit{mempool}, which is used by Bitcoin.
+	Logan uses a leader-based consensus protocol inspired by Raft \parencite{Raft} and also uses the concept of a `transaction waiting room', or \textit{mempool}, which is used by Bitcoin.
 	Section \ref{sec:sysarch} gives a general overview of Logan's system architecture.
 	Section \ref{sec:datastructure} describes the blockchain data structure that I have used, and justifies why it can be considered a blockchain.
 	I will also describe two bugs that I encountered in these codebases and the fixes that I implemented for each.
@@ -412,7 +404,7 @@ end
 	\end{figure}
 
 	\section{The Blockchain Data Structure}\label{sec:datastructure}
-	Irmin  \cite{Irmin} is a library for OCaml providing datastore functionality using a Git backend.
+	Irmin  \parencite{Irmin} is a library for OCaml providing datastore functionality using a Git backend.
 	Ezirmin is a wrapper around Irmin that provides a simple log data structure which I have used as a blockchain.
 	In order to justify that this data structure can be considered a blockchain, I took some time to investigate its semantic properties. 
 	Whilst there is no universally agreed-upon definition of a blockchain, I have used the following two criteria to define the blockchain:
@@ -583,15 +575,15 @@ type log_item =
 	The leader polls these mempools for updates, which are validated and then committed to the blockchain.
 	This blockchain can be read by all participants, and provides a definitive source of ordered, committed transactions.
 
-	\subsection{Existing Consensus Algorithms}
-	\subsubsection*{Proof of Work}
-	Proof of Work (PoW) is a consensus mechanism, used by many cryptocurrencies to avoid the double spending problem \cite{Bitcoin}. 
+	\subsection{Existing Consensus Algorithms} 
+	\subsubsection*{Proof of Work} 
+	Proof of Work (PoW) is a consensus mechanism, used by many cryptocurrencies to avoid the double spending problem \parencite{Bitcoin}. 
 	This mechanism uses the concept of \textit{miners} which are nodes that add random \textit{nonce} values to blocks before computing the hash of the resulting block.
 	If the hash is preceded by a certain number of zeros, this is considered a proof of computational work and blocks are broadcast out to a network.
 	Participants can be sure that a block is agreed upon by consensus with a probability that increases with the size of the chain after that block. \\
 
 	Importantly, this scheme assumes that no participant can be trusted 
-	and it also wastes a large amount of energy \cite{BitcoinEnergy}.
+	and it also wastes a large amount of energy \parencite{BitcoinEnergy}.
 	It also assumes that miners can always be rewarded for mining and this may not always be true, so this scheme would not be suitable for some applications.
 	
 	\subsubsection*{Mempools}
@@ -601,7 +593,7 @@ type log_item =
 	This is significant, as it provides a `waiting room' for any transactions that have not yet been validated.  
 
 	\subsubsection*{Proof of Stake}
-	The Proof of Stake (PoS) algorithm \cite{ProofofStake} is used by some cryptocurrencies and works by randomly allowing participants to create (or `forge') a single block.
+	The Proof of Stake (PoS) algorithm \parencite{ProofofStake} is used by some cryptocurrencies and works by randomly allowing participants to create (or `forge') a single block.
 	However, the probability that a participant is chosen to forge a block, is weighted by its stake, such that participants with higher stakes in the blockchain are more likely to be chosen to forge a block.
 	With PoS, there is no need to waste lots of energy in the process of mining. 
 	Using PoS also allows trust to be distributed according to an arbitrary heuristic which can be desirable property in some applications.\\
@@ -611,7 +603,7 @@ type log_item =
 
 	\subsubsection*{Paxos}
 	Paxos is a family of consensus protocols which can be used to guarantee consistency in distributed systems. 
-	It was first proposed in a paper by Leslie Lamport in 1998 \cite{Paxos}, although the paper was first submitted in 1990.
+	It was first proposed in a paper by Leslie Lamport in 1998 \parencite{Paxos}, although the paper was first submitted in 1990.
 	The main part of the algorithm is split into two sections, `propose' and `accept'.
 	In the propose stage, a value is proposed by a node to all other nodes, and a other nodes make a promise to accept.. 
 	In the accept stage the value is accepted if a quorum of nodes made a promise to accept and then actually accept the value.\\
@@ -620,7 +612,7 @@ type log_item =
 	I have not used it in this project but I have partially taken inspiration from the Roles used by Paxos in the design of my leader based protocol.
 
 	\subsubsection*{Raft}
-	Raft \cite{Raft} is an algorithm that was designed to be equivalent and as efficient as Paxos, however, it also places a much greater emphasis on comprehensibility.
+	Raft \parencite{Raft} is an algorithm that was designed to be equivalent and as efficient as Paxos, however, it also places a much greater emphasis on comprehensibility.
 	It uses the notion of a \textit{strong leader}, which is an elected server that has total control over which log entries are accepted.
 	If the leader does not send a heartbeat message within a certain timeout period, other nodes in the network will detect this and start an election for a new leader.\\
 	
@@ -956,7 +948,7 @@ end
 
 	To introduce fault tolerance, I have used \textit{replicas}. 
 	Replicas, in computer science, are nodes which duplicate some part of another node's behaviour in order to allow recovery from failure. 
-	They can be either \textit{active} if they fully duplicate the actions of another replica, or \textit{passive} if another machine completes some operation before transfering the result to that replica \cite{Replication}.
+	They can be either \textit{active} if they fully duplicate the actions of another replica, or \textit{passive} if another machine completes some operation before transfering the result to that replica \parencite{Replication}.
 	The replication I will demonstrate will be passive.\\
 
 	In order to incorporate the notion of a replica, the process of adding commits to the blockchain needs to be altered slightly.
@@ -1153,7 +1145,7 @@ let rec start_leader () =
 
 	\subsection{Using Pure Git}
 	The latencies shown in Figure \ref{figs:leaderdelays} are particularly high. 
-	This is because Irmin uses an OCaml implementation of Git called `OCaml Git' \cite{OcamlGit}, and the performance of this implementation is much worse than the performance of `pure' Git \cite{Git}, i.e. the implementation that is interacted with via a shell.
+	This is because Irmin uses an OCaml implementation of Git called `OCaml Git' \parencite{OcamlGit}, and the performance of this implementation is much worse than the performance of `pure' Git \parencite{Git}, i.e. the implementation that is interacted with via a shell.
 	I have created a modified implementation of Logan which calls pure Git commands directly rather than using OCaml Git.
 	In this section I will show the extent to which this improves Logan's performance.
 	This approach comes with many disadvantages such as worse compatibility with unikernel systems and a lack of type checking.
@@ -1310,8 +1302,7 @@ let rec start_leader () =
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	% the bibliography
-	\bibliographystyle{acm}
-	\bibliography{refs}
+	\printbibliography
 	\addcontentsline{toc}{chapter}{Bibliography}
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

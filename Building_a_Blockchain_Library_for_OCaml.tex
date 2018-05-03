@@ -22,6 +22,10 @@
 	\definecolor{airforceblue}{rgb}{0.36, 0.54, 0.70}
 	\definecolor{greyish}{rgb}{0.35, 0.35, 0.35}
  
+	\newcommand{\vcenteredinclude}[1]{\begingroup
+	\setbox0=\hbox{\includegraphics[width=4cm]{#1}}%
+	\parbox{\wd0}{\box0}\endgroup}
+
 	\usetikzlibrary{positioning,fit,calc}
 
 	\lstset{
@@ -72,7 +76,7 @@
 	College:            & \bf Pembroke College                     \\
 	Project Title:      & \bf Building a Blockchain Library for OCaml \\
 	Examination:        & \bf Computer Science Tripos -- Part II, July 2018  \\
-	Word Count:         & \bf ????\footnotemark[1]\\
+	Word Count:         & \bf 10933\\
 	Project Originator: & KC Sivaramakrishnan                    \\
 	Supervisor:         & KC Sivaramakrishnan                    
 	\end{tabular}
@@ -97,7 +101,7 @@
 	\section*{Special Difficulties}
 	
 	None
-	 
+	
 	\newpage
 	\section*{Declaration}
 	
@@ -109,10 +113,11 @@
 	
 	\bigskip
 	\noindent 
-	Signed \includegraphics[width=3cm]{figs/signature.png} \\
+	Signed:
+	\vcenteredinclude{figs/signature.png} \\ \\
 	\bigskip
 	\noindent 
-	Date \today
+	Date: \space \space \space \today
 	
 	\tableofcontents
 	
@@ -121,8 +126,8 @@
 	\newpage
 	\section*{Acknowledgements}
 	
-	I would like to thank KC Sivaramakrishnan for supervising me throughout the duration of the dissertation.\\
-	I would also like to thank Anil Madhavapeddy for allowing me to use his laptop for the duration of the dissertation, and being a very supportive DoS.\\
+	I would like to thank KC Sivaramakrishnan for supervising me throughout the duration of the dissertation.
+	I would also like to thank Anil Madhavapeddy for allowing me to use his laptop for the duration of the dissertation, and being a very supportive DoS.
 	Finally I would like to thank my friends and family for supporting me through my final year.
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -133,7 +138,7 @@
 	\chapter{Introduction}
 	Blockchain technology has existed for a long time, but the definition of `blockchain' has changed drastically since its conception.
 	Previously used just to describe a data structure, the term `blockchain' is now widely used to also describe the accompanying consensus mechanisms.
-	This is mainly due to the increasing popularity of cryptocurrencies such as Bitcoin \parencite{} which use the `Proof of Work' algorithm to solve the double spending problem.
+	This is mainly due to the increasing popularity of cryptocurrencies such as Bitcoin \parencite{Bitcoin} which use the `Proof of Work' algorithm to solve the double spending problem.
 	Blockchain is undoubtedly the most important technology in the field of cryptocurrencies where no single client can be trusted, however, it also has many use cases outside this sector.
 	For instance, blockchain can be used in situations where clients \textit{can} be trusted, such as a hospital maintaining internal medical records, or a bank wishing to record transactions from many of its own distributed clients.\\
 	

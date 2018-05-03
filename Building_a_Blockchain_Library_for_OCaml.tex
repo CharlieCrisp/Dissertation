@@ -1113,7 +1113,7 @@ let rec start_leader () =
 	Figure \ref{fig:singlocal} shows how the observed throughput varies with the applied throughput.  
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.8\textwidth]{figs/appliedvsobservedlocal.png}
+		\includegraphics[width=0.8\textwidth]{figs/appliedvsobservedlocal.png} 
 		\caption{Latency variation with throughput on a single local participant}
 		\label{fig:singlocal}
 	\end{figure}
@@ -1132,7 +1132,7 @@ let rec start_leader () =
 		\includegraphics[width=0.8\textwidth]{figs/latencies_sizes_throughputs.png}
 		\caption{Logan latencies with increasing blockchain size}
 		\label{figs:remlatencysize}
-	\end{figure}
+	\end{figure} 
 	Figure \ref{figs:remlatencysize} compares the latency of making a transaction and the size of the participant's mempool, for different applied throughputs.
 	Mempool size has been used in place of blockchain size because it is the structure being pulled over the network, not the blockchain.
 	The first noticable feature of this graph is the saw-tooth shape of the latencies at high throughputs.
@@ -1161,9 +1161,9 @@ let rec start_leader () =
 	This approach comes with many disadvantages such as worse compatibility with unikernel systems and a lack of type checking.
 	I am not suggesting that this is an adequate solution, but I am simply showing that a better Git implementation in OCaml can drastically improve performance.\\ 
 
-	\begin{figure}
+	\begin{figure} 
 		\centering
-		\includegraphics[width=0.9\textwidth]{figs/latency_sizes_throughputs.png}
+		\includegraphics[width=0.8\textwidth]{figs/latency_sizes_throughputs.png}
 		\caption{Logan latencies using pure Git instead of OCaml's implementation}
 		\label{figs:latenciespuregit}
 	\end{figure}
@@ -1175,9 +1175,9 @@ let rec start_leader () =
 	So whilst the latencies are initially larger, they have much better constant factors using pure Git.
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.9\textwidth]{figs/bottlenecks.png}
+		\includegraphics[width=0.8\textwidth]{figs/bottlenecks.png}
 		\caption{Delays incurred by leader when using pure Git. Throughput is constant at 10tps}
-		\label{figs:bottleneckspuregit}
+		\label{figs:bottleneckspuregit} 
 	\end{figure}
 	Figure \ref{figs:bottleneckspuregit} is a parallel of Figure \ref{figs:leaderdelays} that demonstrates that this speedup is due to the greatly reduced times that the leader spends pulling mempool updates as the mempool size grows.
 	Whilst this bottleneck is much lower than before, it still takes up much more time than any other stage of the leader's execution.
@@ -1189,7 +1189,7 @@ let rec start_leader () =
 	In the previous sections, I have evaluated how transaction latencies evolve over time, and compared the results for different applied throughputs.
 	This does not, however, shed light on when the system reaches its maximum throughput capacity.
 	\begin{figure}
-		\includegraphics[width=0.9\textwidth] {figs/appliedvsobservedsingle.png}
+		\includegraphics[width=0.8\textwidth] {figs/appliedvsobservedsingle.png}
 		\caption{Observed throughput plateau with increasing applied throughput}
 		\label{figs:appliedobservedsingle}
 	\end{figure}
@@ -1231,20 +1231,20 @@ let rec start_leader () =
 	Figure \ref{figs:tworems} shows how the latency of making transactions varies with throughput when the pure Git protocol is used.
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.9\textwidth]{figs/2latencies_sizes_throughputs.png}
+		\includegraphics[width=0.8\textwidth]{figs/2latencies_sizes_throughputs.png}
 		\caption{Latency variations against blockchain size with two remote participants using pure Git}
 		\label{figs:tworems}
 	\end{figure}
 	For a throughput of around 10tps, transaction latencies will rise by 4.5s over 5000 transactions compared to 3.1s in the single participant case.
 	I consider this a modest increase that would indeed be solved by using a better synchronisation protocol as described in Section \ref{sect:bettersync}. 
-	With this protocol, Logan would satisfy \textbf{SC\_4}. \\
+	With this protocol, Logan would satisfy \textbf{SC\_4}.\\
 
 	Another difference to the case with only a single remote participant is the fact that transaction latencies now start at 11.9s, whereas they were 5.5s in the single participant case.
 	This is because native Git does not allow any parallelism when pulling updates from multiple different remote repositories, and therefore, all remote repositories must be pulled sequentially.
 	Even if a protocol is used that can achieve constant time blockchain appends, this result limits latencies to be linear in the number of remote nodes in a network which is undesirable. 
 	Indeed, using the OCaml Git implementation shows a similar increase of initial transaction latency from 2.7s to 4.5s.
 	It is unfortunate that neither OCaml Git nor pure Git are able to exploit more levels of IO parallelism, because it is not unreasonable to expect that these implementations should be able to handle concurrent pulls into isolated branches. 
-	Should this be possible, the latencies would only increase by a modest amount with the number of participants and Logan would be able to achieve \textbf{SC\_5}. \\
+	Should this be possible, the latencies would only increase by a modest amount with the number of participants and Logan would be able to achieve \textbf{SC\_5}.\\
 
 	Overall I conclude that Logan does not satisfy \textbf{SC\_4} or \textbf{SC\_5}, but a synchronisation mechanism should allow these goals to be reached. 
 	However, even with multiple nodes in a network, latencies will still be modest in comparison to the 10 minute latency of a Bitcoin transaction, so even in its current state I can consider my implementation to be somewhat successful.
@@ -1254,7 +1254,7 @@ let rec start_leader () =
 	Figure \ref{figs:tworemthrthr} shows the observed throughput against the applied throughput of a Logan system with two participants and one leader.
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.9\textwidth]{figs/appliedvsobserved2r.png}
+		\includegraphics[width=0.8\textwidth]{figs/appliedvsobserved2r.png}
 		\caption{Latency variations against blockchain size with two remote participants using pure Git}
 		\label{figs:tworemthrthr}
 	\end{figure}
@@ -1270,7 +1270,7 @@ let rec start_leader () =
 	Figure \ref{figs:confirmationtimes}  shows the time taken between a transaction being added to the blockchain's cache branch, and it being merged into the blockchain's main branch, i.e. after being pushed to a replica.
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.9\textwidth]{figs/confirmationlatencies.png}
+		\includegraphics[width=0.8\textwidth]{figs/confirmationlatencies.png}
 		\caption{Time taken between transactions being added to cache branch and being merged to main blockchain branch, for a single remote replica}
 		\label{figs:confirmationtimes}
 	\end{figure}
@@ -1279,7 +1279,7 @@ let rec start_leader () =
 	Importantly, for the case where there is one replica, the additional latencies are around 3s which is small and would be an acceptable waiting time for most applications.
 	In this case, the system's latencies are still well within the requirements of \textbf{SC\_3}.
 	Figure \ref{figs:confirmationtimes} also shows that using two replicas rather than one increases latencies by roughly 1.5s. 
-	I again conclude that this is a very acceptable latency in the context of \textbf{SC\_3}. \\
+	I again conclude that this is a very acceptable latency in the context of \textbf{SC\_3}.\\
 
 	Additionally if Logan were to implement my suggested approach of using a daemon thread to push transactions to replicas, there would be no additional latencies to the leader's loop cycle and this means that it should in theory be able to sustain exactly the same throughputs as it would without having any replicas.
 	I therefore consider this a successful demonstration of passive replication and a good starting point for developing a more complex fault tolerance solution.

@@ -96,7 +96,7 @@
 	Logan achieves consensus using a simple leader based protocol where a leader will poll participants for new updates to add to the blockchain.
 	Logan also provides the capability to run passive replicas which store the leader's state to allow full recovery in the even of a leader failure.
 	Logan can achieve latencies of around 10 seconds and throughputs of up to 30 transactions per second. 
-	Logan does not achieve all its success criteria but in this report I attribute this to the implementation of Git used, rather than Logan's implementation.
+	Logan achieves many but not all of its success criteria however in this report I attribute the unfulfilled criteria to the implementation of Git used, rather than Logan's implementation.
 	
 	\section*{Special Difficulties}
 	
@@ -122,6 +122,8 @@
 	\tableofcontents
 	
 	\listoffigures
+
+	\lstlistoflistings
 	
 	\newpage
 	\section*{Acknowledgements}
@@ -145,12 +147,12 @@
 	In this report I present `Logan', a blockchain library that I have built in OCaml which allows the easy creation of blockchain applications.
 	The blockchain is synchronised via a leader-based consensus mechanism with strict consistency.
 	Logan also provides the ability to ensure passive replication such that in the event of a leader failure, the leader's state at the point of failure can be recovered.
-	Developers using this library are also able to define custom validation of transactions being added to the blockchain.
-	Because the application is written in OCaml, it can be compiled to bytecode, unikernels or even javascript and is therefore suitable for a wide range of destination applications and devices.
+	Developers using this library are also able to define custom validation rules for transactions being added to the blockchain.
+	Because the application is written in OCaml, it can be compiled to bytecode, unikernels or even Javascript and is therefore suitable for a wide range of destination applications and devices.
 
 	\section{The History of the Blockchain}
-	The blockchain, in its simplest form, is a series of blocks of data, where each block contains the hash of the content of the previous block. 
-	Figure \ref{fig:mainblockchain} is a graphical representation of a typical blockchain data structure with a `genesis block' and different chains branching from it.\\
+	The blockchain, in its simplest form, is a series of data blocks, where each block contains the hash of the content of the previous block. 
+	Figure \ref{fig:mainblockchain} is a graphical representation of a typical blockchain data structure with a `genesis block' (the first block in the chain) and different chains branching from it.\\
 
 	\begin{figure}
 		\begin{center}
@@ -192,21 +194,21 @@
 	At the time of writing, cryptocurrencies are generating both a huge amount of excitement and cynicism in popular media. 
 	Aside from Bitcoin, cryptocurrencies like Ethereum \parencite{Ethereum} have introduced the concept of Smart Contracts which allow the execution of code on the blockchain.
 	Whilst it is possible to think of applications for blockchain technology in almost every sector, the development of applications outside the scope of crytocurrencies has been limited. 
-	If one considers the example of OCaml, there are currently no libraries which allow a user to easily get started with building blockchain applications. \\
+	If one considers the example of OCaml, there are currently no libraries which allow a user to easily get started with building blockchain applications, and this is what Logan aims to change. \\
 
 	\section{Work Completed}
 	I have created Logan, a library that allows developers to create blockchain applications with the ease of importing a library.
 	Logan was designed to exist outside the realm of cryptocurrencies and therefore assumes that all participants are trustworthy.
-	Consensus is achieved by using a simple leader-based mechanism where the leader will periodically pull updates from participants and add them to a central blockchain.
+	Consensus is achieved by using a simple leader-based mechanism where the leader periodically pulls updates from participants and adds them to a central blockchain.
 	This blockchain can viewed by all participants, with the guarantee of strict consistency.
 	The system is also capable of running passive replication so that in the case of leader failure, the state of the leader at the point of failure can be manually recovered.
 	To use Logan, all that a developer needs to specify is the location of the leader, participants and replicas, and to specify, if necessary, how the leader should perform validation.\\
 	
-	I have evaluated Logan's performance by observing how the throughput that the system achieves varies with applied throughput, and by measuring how the latencies change as the blockchain size increases.
+	I have evaluated Logan's performance by observing how the transaction throughput that the system achieves varies with applied throughput, and by measuring how the latencies change as the blockchain size increases.
 	My results showed that Logan is capable of dealing with throughputs and latencies which are much better than those achieved by Bitcoin.
 	I have also shown that for a network with remote participants, the latency of adding transactions increases linearly with blockchain size. 
-	However, I have been able to attribute this to the implementation of Git that Irmin/Ezirmin uses to pull updates over the network. 
-	I have also shown that pure Git achieves a much better efficiency and that a better OCaml implementation of this protocol would allow Logan to achieve constant transaction latency with blockchain size.
+	This is undesirable as it means performance will degrade for long blockchains, however, I have been able to attribute this to the implementation of Git that Irmin/Ezirmin uses to pull updates over the network. 
+	I have also shown that pure Git achieves a much better efficiency and that a better OCaml implementation of this protocol would allow Logan to achieve constant transaction latencies with blockchain size.
 	Finally, I have shown that participant and replica nodes can be added to a Logan network with only a modest increase in transaction latencies.
 
 	\chapter{Preparation}
@@ -218,7 +220,7 @@
 	This was particularly useful during the evaluation as it involved installing the project on many remote machines.
 	Being able to catch issues like dependency resolution or out-of-date build commands made the evaluation process much easier.
 	Lastly, I spent some time developing a requirements analysis for the final product. 
-	This analysis helped drive the design and development Logan as well as providing a baseline that was useful when evaluating its performance.
+	This analysis helped drive the design and development of Logan as well as providing a baseline that was useful when evaluating its performance.
 
 	\section{Starting Point}
 	The project built upon functionality provided by Irmin \parencite{Irmin} which is a distributed data store system. Irmin is fast, durable and has all the necessary capabilities required to build a blockchain.
@@ -231,14 +233,15 @@
 	Finally I will give a description of the Lwt library for threading as it is extensively used in Logan's codebase and specification.
 
 	\subsubsection*{Options}
+	The first of OCaml's language features that I will is the \texttt{Option}.
 	An \texttt{Option} is a built in data type that provides a powerful way of using OCaml's pattern matching.
 	By using the \texttt{Some(\ldots)} and \texttt{None} constructors, one can create something of the type \texttt{'a option}. 
 	This is comparable to the \texttt{null} type in languages such as Java, however as it is part of the type system, it forces the programmer to handle any cases where \texttt{null} could be returned. 
 
 	\subsubsection*{Modules and Functors}
 	Modules provide a way of grouping together related code in OCaml.
-	They can be thought of as similar to traditional namespaces, although there a few key differences.
-	OCaml also lets you define module type signatures which modules have to conform to.
+	They can be thought of as similar to traditional namespaces, although there are few key differences.
+	OCaml also lets you define module type signatures which modules have to conform to.\\
 	\begin{lstlisting}[caption={OCaml Modules and Functors},label={lst:modfun}]
 module type Math = sig
   type t
@@ -252,7 +255,7 @@ module IntegerMath : Math with type t = int = struct
   let subtract int1 int2 = int1 - int2
 end
 	\end{lstlisting}
-	Listing \ref{lst:modfun} is a simple example that defines a module signature \texttt{Math} for adding and subtracting a custom type.
+	\noindent Listing \ref{lst:modfun} is a simple example that defines a module signature \texttt{Math} for adding and subtracting a custom type.
 	The module \texttt{IntegerMath} is a module which adheres to this signature. 
 	The syntax \texttt{with type t = int} lets the compiler know that the type t is externally visible.\\
 
@@ -260,22 +263,23 @@ end
 	For instance a developer might want to abstract some lower level details of code used by a module.
 	In this case, she would have to create a whole new module for each possible implementation of this abstraction.
 	Functors make this process much easier by allowing modules to be created from other modules. 
-	This means that any abstracted details can be injected into a module through the use of a functor.
-	An example drawn from Ezirmin is a datastore that uses either an in-memory or on-disk format for storing data as shown in Listing \ref{lst:logmod}.
-	\begin{lstlisting}[caption={Ezirmin Log Module},label={lst:logmod}]
+	This means that any lower level details can be passed into a module through the use of a functor.
+	An example drawn from Ezirmin is a \texttt{Log}. 
+	This is datastore that uses either an in-memory or on-disk format for storing data as shown in Listing \ref{lst:logmod}.\\
+	\begin{lstlisting}[caption={Ezirmin Log Module},label={lst:logmod},float,floatplacement=H]
 module Log(AO : Irmin.AO_MAKER)(V: Tc.S0) = struct
   ...
 end
 	\end{lstlisting}
-	The parameter \texttt{AO} is a module used for creating append only stores, and the parameter module \texttt{V} defines a data type.
-	Both of these modules can be used withing the struct, which allows a flexible backend implementation.
+	\noindent The parameter \texttt{AO} is a module used for creating append only stores, and the parameter module \texttt{V} defines a data type.
+	Both of these modules can be used within the struct, which allows a flexible backend implementation.
 	The result of this is a functor, \texttt{Log}, which can be used to create a Log module with either an in-memory or on-disk backend.
 
 	\subsubsection*{Development Environment}
 	When developing a large scale system with OCaml, there are a couple of build systems available to use. 
 	jbuilder \parencite{jbuilder} is one of these systems which is becoming increasingly popular and is used daily by hundreds of developers.
 	jbuilder allows the developer to specify arbitrary directory structures containing executables, libraries and more.
-	I set up my project to compile Logan, which includes the interface for running both leader and participant nodes. 
+	I set up my jbuilder project to compile Logan, which includes the interface for running both leader and participant nodes. 
 	I also defined multiple executables for running both the leader and participants in example and test cases. 
 	I used GNU Make \parencite{GNUMake} to invoke jbuilder which allowed me to easily build and run any executables from the root of the directory.\\
 	
@@ -286,17 +290,17 @@ end
 
 	\subsubsection*{Lwt}
 	Lwt \parencite{Lwt} is a library which I spent some time familiarising myself. 
-	Lwt provides a way of interacting with threads in OCaml, although in Lwt they are known as `Promises'.
+	Lwt provides a way of interacting with threads in OCaml, although in Lwt they are known as `Promises'.\\
 	\begin{lstlisting}[caption={Lwt Promises},label={lst:lwt}]
 val Lwt.return : 'a -> 'a Lwt.t 
 val Lwt_main.run : 'a Lwt.t -> 'a
 val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 	\end{lstlisting}
-	Listing \ref{lst:lwt} shows the basic functions for creating, running and combining threads.
-	The above type \texttt{'a Lwt.t} refers to a thread which will eventually terminate with a value of type \texttt{'a}, and follows the well established Monad design pattern.
+	\noindent Listing \ref{lst:lwt} shows the basic functions for creating, running and combining threads.
+	The type \texttt{'a Lwt.t} refers to a thread which will eventually terminate with a value of type \texttt{'a}, and follows the well established Monad design pattern.
 	\texttt{Lwt.return} is a function that takes a value and will create a promise that immediately returns with this value.
 	This is useful when inserting static or precomputed variables into Lwt pipelines.
-	\texttt{Lwt\_main.run} is the dual of \texttt{Lst.return} and will run a Lwt promise until completion and then return its value.
+	\texttt{Lwt\_main.run} is the dual of \texttt{Lwt.return} and will run a Lwt promise until completion and then return its value.
 	This is useful when retrieving values from an Lwt pipeline.
 	Finally, \texttt{Lwt.bind} (or the infix notation \texttt{>>=}) will pass the result of a Lwt promise to a function returning another Lwt promise.
 	This is useful for chaining together Lwt promises in a pipeline.
@@ -307,9 +311,9 @@ val Lwt.bind : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 	Here, I will set out the criteria that I decided upon before starting development on the project.
 
 	\subsection{Data Structure}
-	It is required that any node in a Logan network should be able to add items to and view items in a blockchain. 
-	The data in the blockchain will be referred to as either \textit{blocks} or \textit{transactions}\footnote{The terms `block' and `transaction' will be used interchangeably here, however in general systems will haver blocks that contain many transactions. In Logan, this feature is configurable by the developer}. 
-	From a participant, it should be possible to transactions of arbitrary type. 
+	It is required that any node in a Logan network should be able to add items to and view items in the blockchain. 
+	The data in the blockchain will be referred to as either \textit{blocks} or \textit{transactions}\footnote{The terms `block' and `transaction' will be used interchangeably in this report, however in general, systems will have blocks that contain multiple transactions. In Logan, this feature can be reproduced if the developer specifies a block data type that contains multiple transactions.}. 
+	From a participant, it should be possible to add transactions of arbitrary type. 
 	It should also be possible to view an ordered list of all transactions which currently exist in the blockchain.
 	The latency of adding transactions should not increase as the size of the blockchain increases because it is important the library will cope well for systems with extremely long blockchains.\\
 
@@ -344,7 +348,10 @@ module Make(Config: I_Config): I_Blockchain with type t = Config.t = struct
   ...
 end
 	\end{lstlisting}
-	Listing \ref{lst:blockspec} is the initial technical specification that I used to define Logan, and the functions complete the following operations:
+	In Logan, a blockchain module is used to add and view transactions in the blockchain.
+	This blockchain module is created by a functor called \texttt{Make}.
+	This functor accepts an \texttt{I\_Config} module which defines how transactions are to be validated, and configuration details including the list of participating nodes and a module defining how data can be serialised and deserialised.
+	Listing \ref{lst:blockspec} is the initial technical specification that I used to define Logan, and the purpose of each component is as follows: 
 	\begin{itemize}
 		\item \texttt{I\_Config} contains information which is required to run the blockchain, including \texttt{remotes} which is a list of other participating nodes.
 		\item \texttt{I\_LogStringCoder} is a module that allows the user to specify arbitrary types to be stored on the blockchain, so long as they can be encoded to (and decoded from) a string.
@@ -357,8 +364,9 @@ end
 		This will return an error in the case that the transaction is not validated.
 	\end{itemize} 
 	This specification differs slightly from the final specification for Logan because it does not take into account the difference between leader and participant nodes.
-	The specification was deliberately designed \textit{without} focus on consensus so that the focus was on the external-facing functionality rather than the internal implementation. 
-	The final interface, while different, provides exactly this functionality.
+	The specification was deliberately designed \textit{without} focus on consensus.
+	It specifies solely the user facing components of the system because the way the system achieves consensus should be transparent to the developer.
+	The final interface differs from this specification slightly to take into account the different roles of leaders and participants, however, it fundamentally provides exactly the same functionality.
 
 	\subsection{Consensus}\label{Consensus Requirements}
 	Ensuring that Logan maintains consensus was a very crucial part of this project. 
@@ -373,11 +381,11 @@ end
 		\item[\textbf{SC\_2}] As a baseline, Bitcoin achieves a maximum throughput of roughly 10 transactions per second (tps) \parencite{ScalingBitcoin}.
 		Logan should be able to achieve comparable throughputs.
 		\item[\textbf{SC\_3}] Again as a baseline, transaction latency achieved by Bitcoin is more than 10 minutes \parencite{ScalingBitcoin}.
-		This is widely regarded as poor performance so Logan should be able to achieve better latencies of an order of magnitude of seconds.
+		This is widely regarded as poor performance so Logan should be able to achieve better latencies of under a minute.
 		\item[\textbf{SC\_4}] The latency of adding a block should be constant in the size of the blockchain.
 		\item[\textbf{SC\_5}] The consensus mechanism must be scalable. 
-		Within the scope of this project, it should be possible for the blockchain to be shared by 3 in a network. 
-		Latencies will inevitably grow with the number of nodes in the network.
+		Within the scope of this project, it should be possible for the blockchain to be shared by 3 nodes in a network. 
+		Latencies will inevitably grow with the number of nodes in the network, as is the case in most distributed systems.
 		Logan's performance should demonstrate only modest decreases in performance for increases in nodes in a network.
 	\end{itemize}
 
@@ -396,8 +404,8 @@ end
 	\section{System Architecture}\label{sec:sysarch}
 	Logan's goal is to allow multiple nodes in a distributed system to share a blockchain data structure.
 	Nodes in this system should be able to add transactions to the blockchain and read the entire history of previous transactions.
-	I shall refer to blocks in the blockchain as \textit{transactions} as if they contain only a single transaction, however they easily can be made to contain many transactions because the datatype of transactions is arbitrary and specified by the developer.
-	Logan aims to achieve consensus by using a leader-based approach where a leader can accept transactions from participants and commit them to the blockchain for everyone to see.
+	I shall refer to blocks in the blockchain as \textit{transactions} as if they contain only a single transaction, however they can easily be made to contain many transactions because the datatype of transactions is arbitrary and specified by the developer.
+	Logan aims to achieve consensus by using a centralised leader-based approach where a leader can accept transactions from participants and commit them to the blockchain for everyone to see.
 	Participants view the blockchain by retrieving the latest copy over the network from the leader.
 	Participants request for transactions to be committed by writing to their local mempool. 
 	The leader periodically polls the participant mempools over the network to find new transactions to add to the blockchain.
@@ -439,6 +447,7 @@ end
 	Rather than being addressed by a physical address, these blocks are addressed by the hash of their content.
 	Because the Block Store is content-addressable, once blocks are added, their content can never be updated.
 	Instead, updates to Irmin data structures are always made by adding new blocks to the store.
+	These new blocks can link to old blocks or replace them entirely depending on the data structure.
 	\subsubsection*{The Tag Store}
 	Any mutability in Irmin data structures derive from \textit{tags}.
 	Tags provide a way of indexing into any block in the Block Store.
@@ -455,8 +464,7 @@ end
 
 	\subsection{Ezirmin}
 	Ezirmin is a library that provides a simplified interface to the Irmin library. 
-	It is designed to provide a interface to Irmin without functors, but useful defaults instead. 
-	Importantly, it has a built in log data structure which uses Irmin's append-only store, saved on disk in the Git format.
+	Importantly, it has a built in log data structure which uses Irmin's append-only store, saved on disk in the Git format. \\
 
 	\begin{lstlisting}[caption={Ezirmin Log},label={lst:ezirminlog}]
 module type FS_Log = sig
@@ -471,13 +479,14 @@ end
 	\end{lstlisting}
 
 	Listing \ref{lst:ezirminlog} gives some of the interface for an Ezirmin log which uses a file system backend.
-	The log allows for items to be appended to and read from a log, and the concept of cursors is simply an abstraction for Irmin tags.
-	In particular, the function \texttt{read} will read from the item indexed by a cursor, and will return a new cursor for the next unread log item, alongside the result of the read.
+	The log provides the functions \texttt{append} and \texttt{read} which allow for items to be appended to and read from a log.
+	Additionally the log uses a \texttt{cursor} type which is simply an abstraction for Irmin tags.
+	A cursor to the latest item in a branch can be created with the function \texttt{get\_cursor}.
 
 	\subsubsection*{Ezirmin Log as a Blockchain}
 	Logan uses an Ezirmin Log as an implementation of a blockchain, and to verify that this is a valid data structure to use, I investigated the implementation of Ezirmin Logs.
 	Ezirmin Logs use Irmin blocks to store log entries, and therefore satisfy \textbf{DS\_1}. 
-	To verify that they also satisfy \textbf{DS\_2} I looked at the implementation of log items.
+	To verify that they also satisfy \textbf{DS\_2} I looked at the implementation of log items.\\
 
 	\begin{lstlisting}[caption={Ezirmin Log Item},label={lst:a_label}]
 type log_item =
@@ -491,13 +500,14 @@ type log_item =
 	Therefore this satisfies \textbf{DS\_2}.
 
 	\subsubsection*{Merging Ezirmin Logs}
-	Merging Ezirmin Logs causes new \texttt{Merge} blocks (as opposed to \texttt{Value} blocks) to be created that collate multiple log entries from divergent log histories.
+	Ezirmin logs usually store each log item in a \texttt{Value} block.
+	This is not always the case as merging updates from other logs may cause new \texttt{Merge} blocks to be created that collate and order the log entries which do not exist in both logs.
 	These entries are ordered by their timestamps and this means that after a merge, items may appear to have been inserted into the log history.
 	This behaviour is demonstrated in Figure \ref{fig:ezirminmerges}.
 	For a blockchain, this would mean that multiple participants may observe different orderings depending on whether they view the blockchain before or after a merge.
 	This is not desirable behaviour for a blockchain, so I have ensured that the blockchain data structure maintained by Logan is never merged with other structures, only appended to. 
 	Consequently, each blockchain transaction will exist in its own \texttt{Value} block and will never removed or reordered in the blockchain.
-	Therefore an Ezirmin Log satisfies both of my conditions to be considered a blockchain.
+	Therefore an Ezirmin Log satisfies both of my conditions to be considered a blockchain.\\
 
 	Aside from using an Ezirmin Log as the blockchain data structure for this project, I have also used a \textit{mempool} log to retrieve updates/transactions from remote mempools. 
 	This retrieval process uses the \texttt{Ezirmin.Repo.Sync} module to merge new log items into the leader's mempool.
@@ -563,9 +573,9 @@ type log_item =
 	The first bug occurs when updates are merged into a log over a network.\footnote{The issue on GitHub can be found at \href{https://github.com/kayceesrk/ezirmin/pull/7}{https://github.com/kayceesrk/ezirmin/pull/7}}
 	Irmin uses Git as a backend and in order to merge updates over a network, the \texttt{git pull} command is used.
 	In Git, objects are stored as blobs on the leaves of a tree and \texttt{git pull} works by retrieving all blobs at the leaf nodes of the tree for a given branch.
-	However in Ezirmin, blobs can contain pointers to other blobs, and \texttt{git pull} will not know to retrieve these blob too.
+	However in Ezirmin, blobs can contain pointers to other blobs, and \texttt{git pull} will not know to retrieve these blobs too.
 	This will cause an error when Ezirmin tries to read these objects which do not actually exist locally. 
-	The solution that I implemented to this problem is to use an internal branch which uses an Irmin Store to explicitly track every blob in the log.
+	The solution that I implemented to this problem is to use an \textit{internal} branch which contains an Irmin Store that explicitly tracks every blob in the log.
 	Items are added to this Irmin Store on the internal branch every time they are added to the log.
 	This operation inserts these blobs into the Git tree such that if \texttt{git pull} is performed on the internal branch, all the blocks required by the master branch will be retrieved.\\
 
@@ -588,9 +598,10 @@ type log_item =
 	\subsection{Existing Consensus Algorithms} 
 	\subsubsection*{Proof of Work} 
 	Proof of Work (PoW) is a consensus mechanism, used by many cryptocurrencies to avoid the double spending problem \parencite{Bitcoin}. 
-	This mechanism uses the concept of \textit{miners} which are nodes that add random \textit{nonce} values to blocks before computing the hash of the resulting block.
-	If the hash is preceded by a certain number of zeros, this is considered a proof of computational work and blocks are broadcast out to a network.
-	Participants can be sure that a block is agreed upon by consensus with a probability that increases with the size of the chain after that block. \\
+	This mechanism uses the concept of \textit{miners} which are nodes that add many different random \textit{nonce} values to blocks before computing the hash of the resulting block.
+	If the hash happens to be preceded by a certain number of zeros, this is considered a proof of computational work and the block is broadcast out to a network and added to every nodes copy of the blockchain.
+	Because this process is completely random, it is impossible for an adversary with control over less than half the network to maintain a blockchain that is longer than the genuine blockchain for an indefinite amount of time.
+	Participants can be sure, with increasing probability in the size of the blockchain, that a block is agreed upon by consensus if it is in the longest chain. \\
 
 	Importantly, this scheme assumes that no participant can be trusted 
 	and it also wastes a large amount of energy \parencite{BitcoinEnergy}.
@@ -1068,7 +1079,7 @@ let rec start_leader () =
 		\setlength{\itemindent}{2em}
 		\item[\textbf{SC\_1}] Logan should achieve strict consistency
 		\item[\textbf{SC\_2}] Logan should be able to achieve throughputs greater than 10tps
-		\item[\textbf{SC\_3}] Logan should be able to achieve latencies on the order of magnitude of seconds
+		\item[\textbf{SC\_3}] Logan should be able to achieve latencies of under a minute
 		\item[\textbf{SC\_4}] Logan should achieve constant latencies in the size of the blockchain
 		\item[\textbf{SC\_5}] Logan should have a scalable consensus mechanism 
 	\end{itemize}

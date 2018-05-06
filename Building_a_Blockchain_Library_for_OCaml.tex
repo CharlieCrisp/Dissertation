@@ -1092,6 +1092,11 @@ let rec start_leader () =
 	A better library than Git with finer locking would allow the following mechanism to work without hindering the performance of the main leader thread.
 	I am not aware of the existance of such a library so it would have to be built from scratch which would be outside the scope of this project.
 
+	\section{Summary}
+	In summary, in this chapter I detailed Logan's architecture and the data structure which it uses to store the blockchain and mempool.
+	I then described the approach that Logan takes to achieving consensus and how this was inspired by my research into other popular consensus protocols.
+	Finally I described how Logan implements passive replication to demonstrate how a more complex approach to fault tolerance may be implemented.
+
 	\chapter{Evaluation}
 	In this section I will describe my evaluation of Logan's performance.
 	I will start by evaluating performance for the case where there is a single participant on the same machine as the leader. 
@@ -1320,6 +1325,13 @@ let rec start_leader () =
 
 	Additionally if Logan were to implement my suggested approach of using a daemon thread to push transactions to replicas, there would be no additional latencies to the leader's loop cycle and this means that it should in theory be able to sustain exactly the same throughputs as it would without having any replicas.
 	I therefore consider this a successful demonstration of passive replication and a good starting point for developing a more complex fault tolerance solution.
+
+	\section{Summary}
+	In summary, in this section I have demonstrated how Logan can perform well with a single participant on the same machine as the leader. 
+	I have then shown how this performance scales to the situations with both one and two remote participants. 
+	Throughput of the system scales well although latencies grow linearly in the size of the blockchain and I have attributed this to the implementation of Git used by Logan.
+	I have motivated how a better synchronisation protocol would allow my implementation to achieve all its success criteria. 
+	Finally, I have shown that the effect of replication on the system is only modest, and I have shown how my approach to replication can be modified to have no effect on the main leader thread.
 
 	\chapter{Conclusion}
 	\section{Successes}

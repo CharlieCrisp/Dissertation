@@ -1,9 +1,8 @@
 @article{Bitcoin,
     author = {Satoshi Nakamoto},
     title = {{Bitcoin: A peer-to-peer electronic cash system}},
-    url={http://bitcoin.org/bitcoin.pdf},
     year = {2008}
-}
+},
 @InProceedings{10.1007/3-540-38424-3_32,
     author="Haber, Stuart
     and Stornetta, W. Scott",
@@ -51,11 +50,12 @@
     url={https://github.com/ethereum/wiki/wiki/Proof-of-Stake-FAQ}
 },
 @book{RealWorldOCaml,
-    author    = "Yaron, Minsky and Anil, Madhavapeddy and Jason, Hickey",
-    title     = {{Real World OCaml}},
-    year      = "2013",
-    publisher = "O'Reilly Media",
-    address   = "Sebastopol, California"
+  title={Real World OCaml},
+  author={Hickey, J.},
+  isbn={9781449324735},
+  url={https://books.google.co.uk/books?id=awVlAQAACAAJ},
+  year={2013},
+  publisher={O'Reilly Media}
 },
 @manual{jbuilder,
     title={{jbuilder}},
@@ -65,9 +65,13 @@
     title={{GNU Make}},
     url={https://www.gnu.org/software/make/}
 },
-@misc{Lwt,
-    title={{Lwt: A cooperative threads library for OCaml}},
-    url={https://ocsigen.org/lwt/}
+@inproceedings{Lwt,
+  title={Lwt: a cooperative thread library},
+  author={Vouillon, J{\'e}r{\^o}me},
+  booktitle={Proceedings of the 2008 ACM SIGPLAN workshop on ML},
+  pages={3--12},
+  year={2008},
+  organization={ACM}
 },
 @misc{BitcoinEnergy,
     title={{Bitcoin Energy Consumption Index}},
@@ -92,23 +96,19 @@
     address = {New York, NY, USA},
     keywords = {state machines, three-phase commit, voting},
 },
-@article{Replication,
-    author = {Défago, Xavier and Schiper, André},
-    year = {2002},
-    month = {10},
-    pages = {},
-    title = {{Specification of Replication Techniques, Semi-Passive Replication, and Lazy Consensus}}
-}
-@article{ScalingBitcoin,
-    author = {Croman, Kyle and Decker, Christian and Eyal, Ittay and Gencer, Adem Efe and Juels, Ari and Kosba, Ahmed and Miller, Andrew and Saxena, Prateek and Shi, Elaine and Gün Sirer, Emin and Song, Dawn and Wattenhofer, Roger},
-    year = {2016},
-    month = {02},
-    pages = {106-125},
-    title = {{On Scaling Decentralized Blockchains}},
-    volume = {9604},
-    isbn = {978-3-662-53356-7},
-    booktitle = {Bitcoin and Blockchain}
-}
+@techreport{Replication,
+  title={Specification of replication techniques, semi-passive replication and lazyt consensus},
+  author={D{\'e}fago, Xavier and Schiper, Andr{\'e}},
+  year={2002}
+},
+@inproceedings{ScalingBitcoin,
+  title={On scaling decentralized blockchains},
+  author={Croman, Kyle and Decker, Christian and Eyal, Ittay and Gencer, Adem Efe and Juels, Ari and Kosba, Ahmed and Miller, Andrew and Saxena, Prateek and Shi, Elaine and Sirer, Emin G{\"u}n and others},
+  booktitle={International Conference on Financial Cryptography and Data Security},
+  pages={106--125},
+  year={2016},
+  organization={Springer}
+},
 @article{Raft,
     author = {Ongaro, Diego and Ousterhout, John},
     title = {{In Search of an Understandable Consensus Algorithm}},

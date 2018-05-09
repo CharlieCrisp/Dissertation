@@ -249,7 +249,7 @@ module type Math = sig
   val subtract: t -> t -> t
 end
 
-module IntegerMath : Math with type t = int = struct 
+module IntegerMath : Math with type t = int = struct
   type t = int
   let add int1 int2 = int1 + int2
   let subtract int1 int2 = int1 - int2

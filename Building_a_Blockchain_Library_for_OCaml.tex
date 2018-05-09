@@ -209,6 +209,7 @@
 	I have also shown that for a network with remote participants, the latency of adding transactions increases linearly with blockchain size. 
 	This is undesirable as it means performance will degrade for long blockchains, however, I have been able to attribute this to the implementation of Git that Irmin/Ezirmin uses to pull updates over the network. 
 	I have also shown that pure Git achieves a much better efficiency and that a better OCaml implementation of this protocol would allow Logan to achieve constant transaction latencies with blockchain size.
+	During the project I have worked with the OCaml Git developers to flag the issues I have encountered so the library can be improved in the future
 	Finally, I have shown that participant and replica nodes can be added to a Logan network with only a modest increase in transaction latencies.
 
 	\chapter{Preparation}
@@ -1224,7 +1225,7 @@ let rec start_leader () =
 	This suggests that Git is still a very inefficient way of transferring updates to the leader.  
 	This could be due to many unnecessary overheads in the implementation of Git, such as the mechanism Git uses for finding new updates to be transferred between repositories. 
 	Therefore if a better protocol was used, even better performance could be achieved.
-	I am not aware of an implementation of a better protocol in OCaml so this would have to be built from scratch which is out of the scope of this project.\\
+	I am not aware of an implementation of a better protocol in OCaml but throughout the course of the project I have been working with the OCaml Git developers to flag the issues that I have encountered so that they can be fixed for future users of the platform.\\
 
 	\subsection{Throughput}
 	In the previous sections, I have evaluated how transaction latencies evolve over time, and compared the results for different applied throughputs.

@@ -1137,7 +1137,7 @@ let rec start_leader () =
 	Figure \ref{fig:locallatency} shows how the latency of Logan transactions varies as the size of the blockchain increases in the case that there is one participant on the same physical machine as the leader. 
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.8\textwidth]{figs/local_latency_vs_size.png}
+		\includegraphics[width=0.8\textwidth, height=10cm]{figs/local_latency_vs_size.pdf}
 		\caption{Latency variation with blockchain size on a local participant}
 		\label{fig:locallatency}
 	\end{figure}
@@ -1151,7 +1151,7 @@ let rec start_leader () =
 	Figure \ref{fig:singlocal} shows how the observed throughput varies with the applied throughput.  
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.8\textwidth]{figs/appliedvsobservedlocal.png} 
+		\includegraphics[width=0.8\textwidth]{figs/appliedvsobservedlocal.pdf} 
 		\caption{Observed throughput with increasing applied throughput for a single local participant. Measurements have not been taken below an applied throughput of 50 transactions per second as it is assumed that observed throughput matches observed throughput for this range.}
 		\label{fig:singlocal}
 	\end{figure}
@@ -1167,7 +1167,7 @@ let rec start_leader () =
 	In order to see how the system performs when network latencies are involved, I first looked at Logan's performance when there is just one leader and one remote participant, i.e. a participant on a different machine to the leader.
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.8\textwidth]{figs/latencies_sizes_throughputs.png}
+		\includegraphics[width=0.8\textwidth]{figs/latencies_sizes_throughputs.pdf}
 		\caption{Logan latencies with increasing blockchain size for one remote participant}
 		\label{figs:remlatencysize}
 	\end{figure} 
@@ -1185,7 +1185,7 @@ let rec start_leader () =
 	Figure \ref{figs:leaderdelays} shows how these delays increase linearly over time and compares them with the number of updates that are pulled in each poll cycle.
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.8\textwidth]{figs/leader_delays_num_pulled.png}
+		\includegraphics[width=0.8\textwidth]{figs/leader_delays_num_pulled.pdf}
 		\caption{Delays incurred by leader for every poll cycle. Throughput is constant at 10tps}
 		\label{figs:leaderdelays}
 	\end{figure}
@@ -1203,7 +1203,7 @@ let rec start_leader () =
 
 	\begin{figure} 
 		\centering
-		\includegraphics[width=0.8\textwidth]{figs/latency_sizes_throughputs.png}
+		\includegraphics[width=0.8\textwidth]{figs/latency_sizes_throughputs.pdf}
 		\caption{Logan latencies with increasing blockchain size for one remote participant. Leader is using pure Git}
 		\label{figs:latenciespuregit}
 	\end{figure}
@@ -1215,7 +1215,7 @@ let rec start_leader () =
 	So whilst the latencies are initially larger, they have much better constant factors using pure Git.
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.8\textwidth]{figs/bottlenecks.png}
+		\includegraphics[width=0.8\textwidth]{figs/bottlenecks.pdf}
 		\caption{Delays incurred by leader for every poll cycle when using pure Git. Throughput is constant at 10tps}
 		\label{figs:bottleneckspuregit}
 	\end{figure}
@@ -1231,8 +1231,8 @@ let rec start_leader () =
 	This does not, however, shed light on when the system reaches its maximum throughput capacity.
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.8\textwidth] {figs/appliedvsobservedsingle.png}
-		\caption{Observed throughput with increasing applied throughput for a single remote participant using pure Git. Measurements have not been taken below an applied throughput of 20 transactions per second as it is assumed that observed throughput matches observed throughput for this range.}
+		\includegraphics[width=0.8\textwidth] {figs/appliedvsobservedsingle.pdf}
+		\caption{Observed throughput with increasing applied throughput for a single remote participant using pure Git. Measurements have not been taken below an applied throughput of 20tps as it is assumed that observed throughput matches observed throughput for this range.}
 		\label{figs:appliedobservedsingle}
 	\end{figure}
 	Figure \ref{figs:appliedobservedsingle} shows how observed throughput varies with applied throughput. 
@@ -1240,7 +1240,7 @@ let rec start_leader () =
 	This figure shows that the system starts diverging from ideal performance at an applied throughput of around 30tps.
 	Whilst the performance gets worse, it does not plateau and the observed throughput never actually decreases.
 	This is because the participant is not capable of committing enough transactions to overload the leader in this scenario.
-	Overall, this result demonstrates that an ideal sustained operating throughput is around 20tps transactions per second which satisfies \textbf{SC\_2}.
+	Overall, this result demonstrates that an ideal sustained operating throughput is around 20tps which satisfies \textbf{SC\_2}.
 	Although the system will be able to handle bursts of higher throughputs, it will not be able to cope with these throughputs for sustained periods of time.
 
 	\subsection{Achieving Constant Time Latencies}\label{sect:bettersync}
@@ -1273,7 +1273,7 @@ let rec start_leader () =
 	Figure \ref{figs:tworems} shows how the latency of making transactions varies with throughput when the pure Git protocol is used with two remote participants.
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.8\textwidth]{figs/2latencies_sizes_throughputs.png}
+		\includegraphics[width=0.8\textwidth]{figs/2latencies_sizes_throughputs.pdf}
 		\caption{Logan latencies with increasing blockchain size for two remote participants.}
 		\label{figs:tworems}
 	\end{figure}
@@ -1296,8 +1296,8 @@ let rec start_leader () =
 	Figure \ref{figs:tworemthrthr} shows the observed throughput against the applied throughput of a Logan system with two participants and one leader.
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.8\textwidth]{figs/appliedvsobserved2r.png}
-		\caption{Observed throughput with increasing applied throughput for two remote participants using pure Git. Measurements have not been taken below an applied throughput of 20 transactions per second as it is assumed that observed throughput matches observed throughput for this range.}
+		\includegraphics[width=0.8\textwidth]{figs/appliedvsobserved2r.pdf}
+		\caption{Observed throughput with increasing applied throughput for two remote participants using pure Git. Measurements have not been taken below an applied throughput of 20tps as it is assumed that observed throughput matches observed throughput for this range.}
 		\label{figs:tworemthrthr}
 	\end{figure}
 	The system starts to diverge from ideal throughput at around 30tps, indicating that a suitable sustained operating throughput would be around 20tps.
@@ -1312,7 +1312,7 @@ let rec start_leader () =
 	Figure \ref{figs:confirmationtimes}  shows the time taken between a transaction being added to the blockchain's cache branch, and it being merged into the blockchain's main branch, i.e. after being pushed to a replica.
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.8\textwidth]{figs/confirmationlatencies.png}
+		\includegraphics[width=0.8\textwidth]{figs/confirmationlatencies.pdf}
 		\caption{Time taken between transactions being added to cache branch and being merged to main blockchain branch, for a single remote replica}
 		\label{figs:confirmationtimes}
 	\end{figure}

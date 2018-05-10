@@ -76,7 +76,7 @@
 	College:            & \bf Pembroke College                     \\
 	Project Title:      & \bf Building a Blockchain Library for OCaml \\
 	Examination:        & \bf Computer Science Tripos -- Part II, July 2018  \\
-	Word Count:         & \bf 11736\\
+	Word Count:         & \bf 11740\\
 	Project Originator: & KC Sivaramakrishnan                    \\
 	Supervisor:         & KC Sivaramakrishnan                    
 	\end{tabular}
@@ -207,9 +207,9 @@
 	I have evaluated Logan's performance by observing how the transaction throughput that the system achieves varies with applied throughput, and by measuring how the latencies change as the blockchain size increases.
 	My results showed that Logan is capable of dealing with throughputs and latencies which are much better than those achieved by Bitcoin.
 	I have also shown that for a network with remote participants, the latency of adding transactions increases linearly with blockchain size. 
-	This is undesirable as it means performance will degrade for long blockchains, however, I have been able to attribute this to the implementation of Git that Irmin/Ezirmin uses to pull updates over the network. 
+	This is undesirable as it means performance will degrade for long blockchains, however, I have been able to attribute this to the implementation of OCaml Git that Irmin/Ezirmin uses to pull updates over the network, rather than Logan's implementation. 
 	I have also shown that pure Git achieves a much better efficiency and that a better OCaml implementation of this protocol would allow Logan to achieve constant transaction latencies with blockchain size.
-	During the project I have worked with the OCaml Git developers to flag the issues I have encountered so the library can be improved in the future
+	During the project I have worked with the OCaml Git developers to flag the issues I have encountered so the library can be improved in the future.
 	Finally, I have shown that participant and replica nodes can be added to a Logan network with only a modest increase in transaction latencies.
 
 	\chapter{Preparation}
@@ -1340,7 +1340,7 @@ let rec start_leader () =
 	I have designed and implemented Logan, a blockchain library that achieves that goal.
 	Logan uses a leader based approach for consensus and can achieve latencies of around 10s and throughputs of up to 30tps.
 	Logan uses Git to store data and to communicate over the network and this has proved to be a large bottleneck in this project. 
-	Latencies are linear in the size of the blockchain if there are multiple nodes in a network and this is due to Git's coarse grained locking.
+	Latencies are linear in the size of the blockchain if there are multiple nodes in a network and this is due to the implementation of OCaml Git, not Logan.
 	However, I have shown that Git is the only bottleneck in Logan's operation and that a better synchronisation protocol would allow linear blockchain appends and very reasonable latencies. 
 
 	\section{Possible Further Work}
